@@ -55,6 +55,11 @@ struct TodayContentView: View {
     @Bindable var store: HabitStore
     @State private var selectedDate = Date()
     @State private var selectedHabit: Habit?
+    @State private var selectedGroup: HabitGroup?
+
+    // Alert state for deleting empty groups
+    @State private var groupToDeleteAfterHabit: HabitGroup? = nil
+    @State private var showDeleteGroupAlert: Bool = false
 
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let marginLeft = JournalTheme.Dimensions.marginLeft
@@ -118,7 +123,13 @@ struct TodayContentView: View {
                                     lineHeight: lineHeight,
                                     store: store,
                                     selectedDate: selectedDate,
-                                    onSelectHabit: { selectedHabit = $0 }
+                                    onSelectHabit: { selectedHabit = $0 },
+                                    onDelete: { store.deleteGroup(group) },
+                                    onLastHabitDeleted: {
+                                        groupToDeleteAfterHabit = group
+                                        showDeleteGroupAlert = true
+                                    },
+                                    onLongPress: { selectedGroup = group }
                                 )
                             }
                         }
@@ -180,6 +191,22 @@ struct TodayContentView: View {
                 HabitDetailView(store: store, habit: habit)
             }
         }
+        .sheet(item: $selectedGroup) { group in
+            EditGroupView(store: store, group: group)
+        }
+        .alert("Delete Empty Group?", isPresented: $showDeleteGroupAlert) {
+            Button("Keep Group") {
+                groupToDeleteAfterHabit = nil
+            }
+            Button("Delete Group", role: .destructive) {
+                if let group = groupToDeleteAfterHabit {
+                    store.deleteGroup(group)
+                }
+                groupToDeleteAfterHabit = nil
+            }
+        } message: {
+            Text("The group '\(groupToDeleteAfterHabit?.name ?? "")' is now empty. Would you like to delete it?")
+        }
     }
 
     private var formattedDate: String {
@@ -228,7 +255,7 @@ struct HabitLinedRow: View {
     @State private var hasPassedDeleteThreshold: Bool = false
 
     // Constants
-    private let completionThreshold: CGFloat = 0.75
+    private let completionThreshold: CGFloat = 0.3
     private let deleteThreshold: CGFloat = 0.5
     private let marginLeft = JournalTheme.Dimensions.marginLeft
 
@@ -471,7 +498,7 @@ struct HabitLinedRow: View {
     }
 }
 
-/// A group row with nested habits
+/// A group row with nested habits and swipe-to-delete
 struct GroupLinedRow: View {
     let group: HabitGroup
     let habits: [Habit]
@@ -479,7 +506,15 @@ struct GroupLinedRow: View {
     let store: HabitStore
     let selectedDate: Date
     let onSelectHabit: (Habit) -> Void
+    let onDelete: () -> Void
+    let onLastHabitDeleted: () -> Void
+    let onLongPress: () -> Void
 
+    // Delete gesture state
+    @State private var deleteOffset: CGFloat = 0
+    @State private var hasPassedDeleteThreshold: Bool = false
+
+    private let deleteThreshold: CGFloat = 0.5
     private let marginLeft = JournalTheme.Dimensions.marginLeft
 
     private var isSatisfied: Bool {
@@ -490,32 +525,112 @@ struct GroupLinedRow: View {
         group.completedCount(habits: store.habits, for: selectedDate)
     }
 
+    private var deleteProgress: CGFloat {
+        guard deleteOffset < 0 else { return 0 }
+        return min(1, abs(deleteOffset) / 200)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            // Group header
-            HStack(spacing: 12) {
-                Circle()
-                    .strokeBorder(isSatisfied ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.completedGray, lineWidth: 1.5)
-                    .background(
+            // Group header with delete gesture
+            GeometryReader { geometry in
+                let hitboxWidth = geometry.size.width
+
+                ZStack {
+                    // Delete background (red, only shown when swiping left)
+                    if deleteOffset < 0 {
+                        HStack {
+                            Spacer()
+                            ZStack {
+                                JournalTheme.Colors.negativeRedDark
+
+                                Image(systemName: "trash")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundStyle(.white)
+                                    .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
+                            }
+                            .frame(width: abs(deleteOffset))
+                        }
+                    }
+
+                    // Group header content
+                    HStack(spacing: 12) {
                         Circle()
-                            .fill(isSatisfied ? JournalTheme.Colors.inkBlue.opacity(0.1) : Color.clear)
-                    )
-                    .frame(width: 20, height: 20)
+                            .strokeBorder(isSatisfied ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.completedGray, lineWidth: 1.5)
+                            .background(
+                                Circle()
+                                    .fill(isSatisfied ? JournalTheme.Colors.inkBlue.opacity(0.1) : Color.clear)
+                            )
+                            .frame(width: 20, height: 20)
 
-                Text(group.name)
-                    .font(JournalTheme.Fonts.habitName())
-                    .foregroundStyle(isSatisfied ? JournalTheme.Colors.completedGray : JournalTheme.Colors.inkBlack)
+                        Text(group.name)
+                            .font(JournalTheme.Fonts.habitName())
+                            .foregroundStyle(isSatisfied ? JournalTheme.Colors.completedGray : JournalTheme.Colors.inkBlack)
 
-                Text("(\(completedCount)/\(group.requireCount))")
-                    .font(JournalTheme.Fonts.habitCriteria())
-                    .foregroundStyle(JournalTheme.Colors.completedGray)
+                        Text("(\(completedCount)/\(group.requireCount))")
+                            .font(JournalTheme.Fonts.habitCriteria())
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
 
-                Spacer()
+                        Spacer()
+                    }
+                    .frame(height: lineHeight, alignment: .bottom)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, marginLeft + 8)
+                    .padding(.trailing, 16)
+                    .background(Color.clear)
+                    .offset(x: deleteOffset)
+                }
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 10, coordinateSpace: .local)
+                        .onChanged { value in
+                            let translation = value.translation.width
+
+                            if translation < 0 {
+                                // Swiping LEFT - delete gesture
+                                deleteOffset = translation
+
+                                // Check delete threshold for haptic
+                                let progress = abs(translation) / hitboxWidth
+                                let currentlyPastDelete = progress >= deleteThreshold
+                                if currentlyPastDelete != hasPassedDeleteThreshold {
+                                    hasPassedDeleteThreshold = currentlyPastDelete
+                                    HapticFeedback.thresholdCrossed()
+                                }
+                            }
+                        }
+                        .onEnded { value in
+                            let translation = value.translation.width
+
+                            if translation < 0 {
+                                let progress = abs(translation) / hitboxWidth
+
+                                if progress >= deleteThreshold {
+                                    // Delete the group
+                                    HapticFeedback.completionConfirmed()
+                                    deleteOffset = 0
+                                    withAnimation(.easeOut(duration: 0.25)) {
+                                        onDelete()
+                                    }
+                                } else {
+                                    // Snap back
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        deleteOffset = 0
+                                    }
+                                }
+                            }
+                            hasPassedDeleteThreshold = false
+                        }
+                )
+                .simultaneousGesture(
+                    LongPressGesture(minimumDuration: 0.5)
+                        .onEnded { _ in
+                            HapticFeedback.selection()
+                            onLongPress()
+                        }
+                )
             }
-            .frame(height: lineHeight, alignment: .bottom)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, marginLeft + 8)
-            .padding(.trailing, 16)
+            .frame(height: lineHeight)
 
             // Child habits (indented)
             ForEach(habits) { habit in
@@ -525,7 +640,14 @@ struct GroupLinedRow: View {
                     lineHeight: lineHeight,
                     onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
                     onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                    onDelete: { store.deleteHabit(habit) },
+                    onDelete: {
+                        // Check if this is the last habit in the group
+                        let isLastHabit = habits.count == 1
+                        store.deleteHabit(habit)
+                        if isLastHabit {
+                            onLastHabitDeleted()
+                        }
+                    },
                     onLongPress: { onSelectHabit(habit) }
                 )
                 .padding(.leading, 24)
