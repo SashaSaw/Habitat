@@ -317,19 +317,22 @@ struct HabitLinedRow: View {
                     }
                     .background(
                         GeometryReader { textGeometry in
-                            Color.clear.onAppear {
-                                textWidth = textGeometry.size.width
-                            }
+                            Color.clear
+                                .onAppear {
+                                    textWidth = textGeometry.size.width
+                                }
+                                .onChange(of: textGeometry.size.width) { _, newWidth in
+                                    textWidth = newWidth
+                                }
                         }
                     )
                     .overlay(alignment: .leading) {
-                        if strikethroughProgress > 0 {
-                            StrikethroughLine(
-                                width: textWidth,
-                                color: JournalTheme.Colors.inkBlue,
-                                progress: $strikethroughProgress
-                            )
-                        }
+                        // Always show the strikethrough overlay, let the Canvas decide visibility
+                        StrikethroughLine(
+                            width: textWidth > 0 ? textWidth : 200, // Fallback width
+                            color: JournalTheme.Colors.inkBlue,
+                            progress: $strikethroughProgress
+                        )
                     }
 
                     Spacer()
@@ -350,6 +353,17 @@ struct HabitLinedRow: View {
                         onLongPress()
                     }
             )
+            .onTapGesture {
+                // Tap to undo completion
+                if isCompleted {
+                    withAnimation(JournalTheme.Animations.strikethrough) {
+                        strikethroughProgress = 0.0
+                        hasPassedThreshold = false
+                    }
+                    HapticFeedback.selection()
+                    onUncomplete()
+                }
+            }
             .onChange(of: isCompleted) { _, newValue in
                 // Sync with external state changes (only when not dragging)
                 if !isDragging {

@@ -7,12 +7,32 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 /// Main app view with tab navigation
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var selectedTab = 0
     @State private var habitStore: HabitStore?
+
+    init() {
+        // Make tab bar fully transparent
+        let tabBarAppearance = UITabBarAppearance()
+        tabBarAppearance.configureWithTransparentBackground()
+        tabBarAppearance.backgroundColor = UIColor.clear
+        tabBarAppearance.shadowColor = UIColor.clear
+        UITabBar.appearance().standardAppearance = tabBarAppearance
+        UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+
+        // Make navigation bar fully transparent
+        let navBarAppearance = UINavigationBarAppearance()
+        navBarAppearance.configureWithTransparentBackground()
+        navBarAppearance.backgroundColor = UIColor.clear
+        navBarAppearance.shadowColor = UIColor.clear
+        UINavigationBar.appearance().standardAppearance = navBarAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
+        UINavigationBar.appearance().compactAppearance = navBarAppearance
+    }
 
     var body: some View {
         Group {

@@ -135,6 +135,40 @@ struct HandDrawnCross: View {
     }
 }
 
+/// Hand-drawn strikethrough line shape
+struct StrikethroughShape: Shape {
+    var progress: CGFloat
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        guard progress > 0 else { return path }
+
+        let startY = rect.midY
+        let actualWidth = rect.width
+
+        // Simple slightly wavy line
+        path.move(to: CGPoint(x: 0, y: startY))
+
+        // Create a hand-drawn looking line with slight wave
+        let midPoint = actualWidth / 2
+        path.addQuadCurve(
+            to: CGPoint(x: midPoint, y: startY - 1),
+            control: CGPoint(x: midPoint / 2, y: startY + 1)
+        )
+        path.addQuadCurve(
+            to: CGPoint(x: actualWidth, y: startY),
+            control: CGPoint(x: midPoint + midPoint / 2, y: startY - 1)
+        )
+
+        return path.trimmedPath(from: 0, to: progress)
+    }
+}
+
 /// Hand-drawn strikethrough line for completed habits
 /// Now accepts external progress binding for swipe gesture control
 struct StrikethroughLine: View {
@@ -149,43 +183,13 @@ struct StrikethroughLine: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            Canvas { context, canvasSize in
-                guard progress > 0 else { return }
-
-                var path = Path()
-
-                let startY = canvasSize.height / 2
-                let actualWidth = min(width, canvasSize.width)
-
-                // Simple slightly wavy line
-                path.move(to: CGPoint(x: 0, y: startY))
-
-                // Create a hand-drawn looking line with slight wave
-                let midPoint = actualWidth / 2
-                path.addQuadCurve(
-                    to: CGPoint(x: midPoint, y: startY - 1),
-                    control: CGPoint(x: midPoint / 2, y: startY + 1)
-                )
-                path.addQuadCurve(
-                    to: CGPoint(x: actualWidth, y: startY),
-                    control: CGPoint(x: midPoint + midPoint / 2, y: startY - 1)
-                )
-
-                let trimmedPath = path.trimmedPath(from: 0, to: progress)
-
-                context.stroke(
-                    trimmedPath,
-                    with: .color(color),
-                    style: StrokeStyle(
-                        lineWidth: 2,
-                        lineCap: .round,
-                        lineJoin: .round
-                    )
-                )
-            }
-        }
-        .frame(height: 4)
+        StrikethroughShape(progress: progress)
+            .stroke(color, style: StrokeStyle(
+                lineWidth: 2,
+                lineCap: .round,
+                lineJoin: .round
+            ))
+            .frame(width: width, height: 4)
     }
 }
 
@@ -245,15 +249,20 @@ struct CompletionIndicator: View {
 
 #Preview("Strikethrough") {
     struct PreviewWrapper: View {
-        @State private var progress: CGFloat = 0.7
+        @State private var progress: CGFloat = 1.0
         var body: some View {
             VStack(spacing: 20) {
                 Text("Complete this task")
-                    .overlay(
+                    .overlay(alignment: .leading) {
                         StrikethroughLine(width: 150, progress: $progress)
-                    )
+                    }
                 Slider(value: $progress, in: 0...1)
                     .padding()
+                Button("Toggle") {
+                    withAnimation {
+                        progress = progress == 1.0 ? 0.0 : 1.0
+                    }
+                }
             }
             .padding()
         }
