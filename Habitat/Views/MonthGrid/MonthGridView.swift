@@ -1,5 +1,107 @@
 import SwiftUI
 import SwiftData
+import UIKit
+
+/// A scroll view that locks scrolling to one axis at a time with a sticky header
+struct AxisLockedScrollView<Header: View, Content: View>: UIViewRepresentable {
+    let header: Header
+    let content: Content
+
+    init(@ViewBuilder _ header: () -> Header, @ViewBuilder content: () -> Content) {
+        self.header = header()
+        self.content = content()
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIView(context: Context) -> UIView {
+        let containerView = UIView()
+        containerView.backgroundColor = .clear
+
+        // Main scroll view for content
+        let scrollView = UIScrollView()
+        scrollView.delegate = context.coordinator
+        scrollView.isDirectionalLockEnabled = true
+        scrollView.alwaysBounceHorizontal = false
+        scrollView.showsHorizontalScrollIndicator = true
+        scrollView.showsVerticalScrollIndicator = true
+        scrollView.decelerationRate = .fast
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+
+        // Header hosting controller
+        let headerHosting = UIHostingController(rootView: header)
+        headerHosting.view.backgroundColor = .clear
+        headerHosting.view.translatesAutoresizingMaskIntoConstraints = false
+
+        // Content hosting controller
+        let contentHosting = UIHostingController(rootView: content)
+        contentHosting.view.backgroundColor = .clear
+        contentHosting.view.translatesAutoresizingMaskIntoConstraints = false
+
+        scrollView.addSubview(contentHosting.view)
+        containerView.addSubview(scrollView)
+        containerView.addSubview(headerHosting.view)
+
+        // Store references
+        context.coordinator.contentHosting = contentHosting
+        context.coordinator.headerHosting = headerHosting
+        context.coordinator.headerView = headerHosting.view
+
+        NSLayoutConstraint.activate([
+            // Header at top, clips to container bounds horizontally
+            headerHosting.view.topAnchor.constraint(equalTo: containerView.topAnchor),
+            headerHosting.view.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+
+            // Scroll view fills container but starts below header
+            scrollView.topAnchor.constraint(equalTo: headerHosting.view.bottomAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+
+            // Content inside scroll view
+            contentHosting.view.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentHosting.view.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentHosting.view.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentHosting.view.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor)
+        ])
+
+        return containerView
+    }
+
+    func updateUIView(_ containerView: UIView, context: Context) {
+        context.coordinator.contentHosting?.rootView = content
+        context.coordinator.headerHosting?.rootView = header
+    }
+
+    class Coordinator: NSObject, UIScrollViewDelegate {
+        var contentHosting: UIHostingController<Content>?
+        var headerHosting: UIHostingController<Header>?
+        var headerView: UIView?
+        private var isDecelerating = false
+
+        func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+            if isDecelerating {
+                scrollView.setContentOffset(scrollView.contentOffset, animated: false)
+            }
+            isDecelerating = false
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            // Sync header horizontal position with scroll view
+            headerView?.transform = CGAffineTransform(translationX: -scrollView.contentOffset.x, y: 0)
+        }
+
+        func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+            isDecelerating = decelerate
+        }
+
+        func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+            isDecelerating = false
+        }
+    }
+}
 
 /// Month Grid View showing habit completion over the month
 struct MonthGridView: View {
@@ -95,7 +197,8 @@ struct MonthGridContentView: View {
     }
 
     var body: some View {
-        ScrollView([.horizontal, .vertical]) {
+        AxisLockedScrollView {
+            // Sticky header
             VStack(alignment: .leading, spacing: 0) {
                 // Month header
                 Text(Self.monthFormatter.string(from: selectedMonth))
@@ -104,30 +207,29 @@ struct MonthGridContentView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
 
+                if hasContent {
+                    HabitHeaderRowView(habits: standaloneHabits, groups: groups)
+                }
+            }
+        } content: {
+            // Scrollable content
+            VStack(alignment: .leading, spacing: 0) {
                 if !hasContent {
                     Text("No \(showMustDos ? "must-do" : "nice-to-do") habits")
                         .font(JournalTheme.Fonts.habitCriteria())
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                         .padding()
                 } else {
-                    // Grid
-                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
-                        Section {
-                            // Day rows
-                            ForEach(monthDates, id: \.self) { date in
-                                DayRowView(
-                                    date: date,
-                                    habits: standaloneHabits,
-                                    groups: groups,
-                                    allHabits: store.habits,
-                                    isGoodDay: showMustDos ? store.isGoodDay(for: date) : false,
-                                    showGoodDayHighlight: showMustDos
-                                )
-                            }
-                        } header: {
-                            // Habit and group name headers
-                            HabitHeaderRowView(habits: standaloneHabits, groups: groups)
-                        }
+                    // Day rows
+                    ForEach(monthDates, id: \.self) { date in
+                        DayRowView(
+                            date: date,
+                            habits: standaloneHabits,
+                            groups: groups,
+                            allHabits: store.habits,
+                            isGoodDay: showMustDos ? store.isGoodDay(for: date) : false,
+                            showGoodDayHighlight: showMustDos
+                        )
                     }
                 }
             }
