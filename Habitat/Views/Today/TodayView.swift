@@ -53,13 +53,19 @@ struct TodayView: View {
 /// The actual content of the Today View - aligns text to paper lines
 struct TodayContentView: View {
     @Bindable var store: HabitStore
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedDate = Date()
+    @State private var lastKnownDay: Date = Calendar.current.startOfDay(for: Date())
     @State private var selectedHabit: Habit?
     @State private var selectedGroup: HabitGroup?
 
     // Alert state for deleting empty groups
     @State private var groupToDeleteAfterHabit: HabitGroup? = nil
     @State private var showDeleteGroupAlert: Bool = false
+
+    // Celebration state
+    @State private var showCelebration: Bool = false
+    @State private var wasGoodDay: Bool = false
 
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let marginLeft = JournalTheme.Dimensions.marginLeft
@@ -75,9 +81,17 @@ struct TodayContentView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         // Title "Today" - takes 2 lines
                         LinedRow(height: lineHeight * 2) {
-                            Text("Today")
-                                .font(JournalTheme.Fonts.title())
-                                .foregroundStyle(JournalTheme.Colors.inkBlack)
+                            HStack(spacing: 8) {
+                                Text("Today")
+                                    .font(JournalTheme.Fonts.title())
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                                if store.isGoodDay(for: selectedDate) {
+                                    Text("✓ Must-dos complete!")
+                                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
+                                }
+                            }
                         }
 
                         // Date header - takes 1 line
@@ -184,6 +198,11 @@ struct TodayContentView: View {
                         }
                     }
                 }
+
+                // Celebration overlay
+                if showCelebration {
+                    CelebrationOverlay(isShowing: $showCelebration)
+                }
             }
         }
         .sheet(item: $selectedHabit) { habit in
@@ -206,6 +225,38 @@ struct TodayContentView: View {
             }
         } message: {
             Text("The group '\(groupToDeleteAfterHabit?.name ?? "")' is now empty. Would you like to delete it?")
+        }
+        .onAppear {
+            wasGoodDay = store.isGoodDay(for: selectedDate)
+        }
+        .onChange(of: store.habits.map { $0.isCompleted(for: selectedDate) }) { _, _ in
+            let isNowGoodDay = store.isGoodDay(for: selectedDate)
+            if isNowGoodDay && !wasGoodDay {
+                // Just became a good day - celebrate!
+                withAnimation {
+                    showCelebration = true
+                }
+                HapticFeedback.completionConfirmed()
+            }
+            wasGoodDay = isNowGoodDay
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                let today = Calendar.current.startOfDay(for: Date())
+                if today != lastKnownDay {
+                    selectedDate = Date()
+                    lastKnownDay = today
+                    wasGoodDay = store.isGoodDay(for: selectedDate)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            let today = Calendar.current.startOfDay(for: Date())
+            if today != lastKnownDay {
+                selectedDate = Date()
+                lastKnownDay = today
+                wasGoodDay = store.isGoodDay(for: selectedDate)
+            }
         }
     }
 
@@ -653,6 +704,206 @@ struct GroupLinedRow: View {
                 .padding(.leading, 24)
             }
         }
+    }
+}
+
+// MARK: - Celebration Overlay
+
+struct CelebrationOverlay: View {
+    @Binding var isShowing: Bool
+    @State private var confettiParticles: [ConfettiParticle] = []
+    @State private var textOpacity: Double = 0
+    @State private var textScale: Double = 0.5
+    @State private var congratsScale: Double = 1.0
+
+    var body: some View {
+        ZStack {
+            // White overlay to dim the background
+            Color.white
+                .opacity(0.7)
+                .ignoresSafeArea()
+
+            // Green overlay background
+            JournalTheme.Colors.goodDayGreen
+                .opacity(0.5)
+                .ignoresSafeArea()
+
+            // Confetti particles
+            ForEach(confettiParticles) { particle in
+                ConfettiPiece(particle: particle)
+            }
+
+            // Celebration text
+            VStack(spacing: 16) {
+                Text("Congratulations!")
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
+                    .scaleEffect(congratsScale)
+
+                Text("Today was a good day!")
+                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.8))
+                
+                Text("Give yourself a pat on the back!")
+                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.8))
+
+                Text("Tap anywhere to continue")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.goodDayGreenDark.opacity(0.8))
+                    .padding(.top, 20)
+            }
+            .opacity(textOpacity)
+            .scaleEffect(textScale)
+        }
+        .onTapGesture {
+            withAnimation(.easeOut(duration: 0.3)) {
+                isShowing = false
+            }
+        }
+        .onAppear {
+            // Animate text in
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                textOpacity = 1
+                textScale = 1
+            }
+
+            // Pulse animation for Congratulations - expand then shrink over 3 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    congratsScale = 1.1
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        congratsScale = 1.0
+                    }
+                }
+            }
+
+            // Create confetti from both sides
+            createConfetti()
+        }
+    }
+
+    private func createConfetti() {
+        let colors: [Color] = [
+            JournalTheme.Colors.goodDayGreenDark,
+            JournalTheme.Colors.goodDayGreen,
+            JournalTheme.Colors.inkBlue,
+            Color.yellow,
+            Color.orange,
+            Color.pink
+        ]
+
+        // Left side confetti (angled right and up)
+        for i in 0..<25 {
+            let particle = ConfettiParticle(
+                id: i,
+                x: -20,
+                y: UIScreen.main.bounds.height * 0.6,
+                color: colors.randomElement() ?? .green,
+                velocityX: CGFloat.random(in: 150...350),
+                velocityY: CGFloat.random(in: (-600)...(-300)),
+                rotation: Double.random(in: 0...360),
+                rotationSpeed: Double.random(in: (-720)...720),
+                size: CGFloat.random(in: 8...14),
+                shape: ConfettiShape.allCases.randomElement() ?? .rectangle
+            )
+            confettiParticles.append(particle)
+        }
+
+        // Right side confetti (angled left and up)
+        for i in 25..<50 {
+            let particle = ConfettiParticle(
+                id: i,
+                x: UIScreen.main.bounds.width + 20,
+                y: UIScreen.main.bounds.height * 0.6,
+                color: colors.randomElement() ?? .green,
+                velocityX: CGFloat.random(in: (-350)...(-150)),
+                velocityY: CGFloat.random(in: (-600)...(-300)),
+                rotation: Double.random(in: 0...360),
+                rotationSpeed: Double.random(in: (-720)...720),
+                size: CGFloat.random(in: 8...14),
+                shape: ConfettiShape.allCases.randomElement() ?? .rectangle
+            )
+            confettiParticles.append(particle)
+        }
+    }
+}
+
+struct ConfettiParticle: Identifiable {
+    let id: Int
+    var x: CGFloat
+    var y: CGFloat
+    let color: Color
+    let velocityX: CGFloat
+    let velocityY: CGFloat
+    var rotation: Double
+    let rotationSpeed: Double
+    let size: CGFloat
+    let shape: ConfettiShape
+}
+
+enum ConfettiShape: CaseIterable {
+    case rectangle
+    case circle
+    case triangle
+}
+
+struct ConfettiPiece: View {
+    let particle: ConfettiParticle
+    @State private var position: CGPoint
+    @State private var rotation: Double
+    @State private var opacity: Double = 1
+
+    init(particle: ConfettiParticle) {
+        self.particle = particle
+        _position = State(initialValue: CGPoint(x: particle.x, y: particle.y))
+        _rotation = State(initialValue: particle.rotation)
+    }
+
+    var body: some View {
+        Group {
+            switch particle.shape {
+            case .rectangle:
+                Rectangle()
+                    .fill(particle.color)
+                    .frame(width: particle.size, height: particle.size * 0.6)
+            case .circle:
+                Circle()
+                    .fill(particle.color)
+                    .frame(width: particle.size, height: particle.size)
+            case .triangle:
+                Triangle()
+                    .fill(particle.color)
+                    .frame(width: particle.size, height: particle.size)
+            }
+        }
+        .rotationEffect(.degrees(rotation))
+        .position(position)
+        .opacity(opacity)
+        .onAppear {
+            // Animate the particle with physics
+            withAnimation(.easeOut(duration: 2.5)) {
+                position = CGPoint(
+                    x: particle.x + particle.velocityX * 2,
+                    y: particle.y + particle.velocityY * 2 + 800 // gravity pulls down
+                )
+                rotation = particle.rotation + particle.rotationSpeed * 2
+                opacity = 0
+            }
+        }
+    }
+}
+
+struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 
