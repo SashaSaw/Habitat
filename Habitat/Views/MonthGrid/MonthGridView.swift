@@ -230,6 +230,7 @@ struct DayRowView: View {
                     showCross: showGoodDayHighlight // Only show crosses in must-do view
                 )
                 .frame(width: 60)
+                .padding(.horizontal, 4)
             }
 
             // Group completion cells
@@ -241,6 +242,7 @@ struct DayRowView: View {
                     showCross: showGoodDayHighlight
                 )
                 .frame(width: 60)
+                .padding(.horizontal, 4)
             }
         }
         .padding(.vertical, 6)
