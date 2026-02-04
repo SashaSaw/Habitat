@@ -305,6 +305,9 @@ struct HabitLinedRow: View {
     @State private var deleteOffset: CGFloat = 0
     @State private var hasPassedDeleteThreshold: Bool = false
 
+    // Auto-reset timer for incomplete gestures
+    @State private var resetTask: Task<Void, Never>? = nil
+
     // Constants
     private let completionThreshold: CGFloat = 0.3
     private let deleteDistanceThreshold: CGFloat = 150 // Fixed pixel distance for delete
@@ -451,6 +454,35 @@ struct HabitLinedRow: View {
                     strikethroughProgress = newValue ? 1.0 : 0.0
                     hasPassedThreshold = newValue
                 }
+            }
+        }
+        .onChange(of: isDragging) { _, newValue in
+            if !newValue {
+                // Dragging ended - start 1-second reset timer
+                resetTask?.cancel()
+                resetTask = Task {
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.5 seconds
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            // Reset if still in incomplete state
+                            if !isCompleted && strikethroughProgress > 0 && strikethroughProgress < 1 {
+                                withAnimation(JournalTheme.Animations.strikethrough) {
+                                    strikethroughProgress = 0
+                                    hasPassedThreshold = false
+                                }
+                            }
+                            if deleteOffset != 0 {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    deleteOffset = 0
+                                    hasPassedDeleteThreshold = false
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Dragging started - cancel any pending reset
+                resetTask?.cancel()
             }
         }
     }
