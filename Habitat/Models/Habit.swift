@@ -17,6 +17,7 @@ final class Habit {
     var isActive: Bool
     var createdAt: Date
     var sortOrder: Int
+    var isHobby: Bool = false
 
     // Relationship to daily logs
     @Relationship(deleteRule: .cascade, inverse: \DailyLog.habit)
@@ -36,7 +37,8 @@ final class Habit {
         bestStreak: Int = 0,
         isActive: Bool = true,
         createdAt: Date = Date(),
-        sortOrder: Int = 0
+        sortOrder: Int = 0,
+        isHobby: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -52,6 +54,7 @@ final class Habit {
         self.isActive = isActive
         self.createdAt = createdAt
         self.sortOrder = sortOrder
+        self.isHobby = isHobby
     }
 
     /// Returns the display text for the habit (name + criteria if applicable)

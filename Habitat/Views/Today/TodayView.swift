@@ -67,6 +67,10 @@ struct TodayContentView: View {
     @State private var showCelebration: Bool = false
     @State private var wasGoodDay: Bool = false
 
+    // Hobby completion overlay state
+    @State private var showHobbyOverlay: Bool = false
+    @State private var completingHobby: Habit? = nil
+
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let marginLeft = JournalTheme.Dimensions.marginLeft
 
@@ -121,7 +125,13 @@ struct TodayContentView: View {
                                     habit: habit,
                                     isCompleted: habit.isCompleted(for: selectedDate),
                                     lineHeight: lineHeight,
-                                    onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
+                                    onComplete: {
+                                        store.setCompletion(for: habit, completed: true, on: selectedDate)
+                                        if habit.isHobby {
+                                            completingHobby = habit
+                                            showHobbyOverlay = true
+                                        }
+                                    },
                                     onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
                                     onDelete: { store.deleteHabit(habit) },
                                     onLongPress: { selectedHabit = habit }
@@ -143,7 +153,11 @@ struct TodayContentView: View {
                                         groupToDeleteAfterHabit = group
                                         showDeleteGroupAlert = true
                                     },
-                                    onLongPress: { selectedGroup = group }
+                                    onLongPress: { selectedGroup = group },
+                                    onHobbyComplete: { habit in
+                                        completingHobby = habit
+                                        showHobbyOverlay = true
+                                    }
                                 )
                             }
                         }
@@ -167,7 +181,13 @@ struct TodayContentView: View {
                                     habit: habit,
                                     isCompleted: habit.isCompleted(for: selectedDate),
                                     lineHeight: lineHeight,
-                                    onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
+                                    onComplete: {
+                                        store.setCompletion(for: habit, completed: true, on: selectedDate)
+                                        if habit.isHobby {
+                                            completingHobby = habit
+                                            showHobbyOverlay = true
+                                        }
+                                    },
                                     onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
                                     onDelete: { store.deleteHabit(habit) },
                                     onLongPress: { selectedHabit = habit }
@@ -230,6 +250,22 @@ struct TodayContentView: View {
                 // Celebration overlay
                 if showCelebration {
                     CelebrationOverlay(isShowing: $showCelebration)
+                }
+
+                // Hobby completion overlay
+                if showHobbyOverlay, let hobby = completingHobby {
+                    HobbyCompletionOverlay(
+                        habit: hobby,
+                        onSave: { note, image in
+                            store.saveHobbyCompletion(for: hobby, on: selectedDate, note: note, image: image)
+                            showHobbyOverlay = false
+                            completingHobby = nil
+                        },
+                        onDismiss: {
+                            showHobbyOverlay = false
+                            completingHobby = nil
+                        }
+                    )
                 }
             }
         }
@@ -806,6 +842,7 @@ struct GroupLinedRow: View {
     let onDelete: () -> Void
     let onLastHabitDeleted: () -> Void
     let onLongPress: () -> Void
+    var onHobbyComplete: ((Habit) -> Void)? = nil
 
     // Delete gesture state
     @State private var deleteOffset: CGFloat = 0
@@ -941,7 +978,12 @@ struct GroupLinedRow: View {
                     habit: habit,
                     isCompleted: habit.isCompleted(for: selectedDate),
                     lineHeight: lineHeight,
-                    onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
+                    onComplete: {
+                        store.setCompletion(for: habit, completed: true, on: selectedDate)
+                        if habit.isHobby {
+                            onHobbyComplete?(habit)
+                        }
+                    },
                     onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
                     onDelete: {
                         // Check if this is the last habit in the group

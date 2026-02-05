@@ -27,9 +27,11 @@ struct AxisLockedScrollView<Header: View, Content: View>: UIViewRepresentable {
         scrollView.delegate = context.coordinator
         scrollView.isDirectionalLockEnabled = true
         scrollView.alwaysBounceHorizontal = false
+        scrollView.alwaysBounceVertical = true
         scrollView.showsHorizontalScrollIndicator = allowHorizontalScroll
         scrollView.showsVerticalScrollIndicator = true
         scrollView.decelerationRate = .fast
+        scrollView.contentInsetAdjustmentBehavior = .never
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         // Store scroll view reference for updates
@@ -103,6 +105,12 @@ struct AxisLockedScrollView<Header: View, Content: View>: UIViewRepresentable {
                 context.coordinator.headerView?.transform = .identity
             }
         }
+
+        // Force layout update to recalculate content size
+        context.coordinator.contentHosting?.view.invalidateIntrinsicContentSize()
+        context.coordinator.headerHosting?.view.invalidateIntrinsicContentSize()
+        containerView.setNeedsLayout()
+        containerView.layoutIfNeeded()
     }
 
     class Coordinator: NSObject, UIScrollViewDelegate {
@@ -213,6 +221,9 @@ struct MonthGridContentView: View {
     @Binding var selectedMonth: Date
     let showMustDos: Bool
 
+    // Sheet state for hobby log detail
+    @State private var selectedHobbyLog: HobbyLogSelection? = nil
+
     // Static formatters for performance
     private static let monthFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -297,7 +308,10 @@ struct MonthGridContentView: View {
                             allHabits: store.habits,
                             isGoodDay: showMustDos ? store.isGoodDay(for: date) : false,
                             showGoodDayHighlight: showMustDos,
-                            needsHorizontalScroll: needsHorizontalScroll
+                            needsHorizontalScroll: needsHorizontalScroll,
+                            onHobbyTap: { habit, date in
+                                selectedHobbyLog = HobbyLogSelection(habit: habit, date: date)
+                            }
                         )
                     }
                 }
@@ -305,6 +319,15 @@ struct MonthGridContentView: View {
             .padding(.bottom, 100)
         }
         .graphPaperBackground()
+        .sheet(item: $selectedHobbyLog) { selection in
+            HobbyLogDetailSheet(
+                habit: selection.habit,
+                date: selection.date,
+                onDismiss: {
+                    selectedHobbyLog = nil
+                }
+            )
+        }
     }
 }
 
@@ -383,6 +406,7 @@ struct DayRowView: View {
     let isGoodDay: Bool
     let showGoodDayHighlight: Bool
     let needsHorizontalScroll: Bool
+    var onHobbyTap: ((Habit, Date) -> Void)? = nil
 
     // Static formatters for performance
     private static let dayFormatter: DateFormatter = {
@@ -426,10 +450,18 @@ struct DayRowView: View {
                     isCompleted: habit.isCompleted(for: date),
                     habitType: habit.type,
                     isFuture: isFuture,
-                    showCross: showGoodDayHighlight // Only show crosses in must-do view
+                    showCross: showGoodDayHighlight, // Only show crosses in must-do view
+                    isHobby: habit.isHobby,
+                    hasHobbyContent: habit.isHobby && habit.log(for: date)?.hasContent == true
                 )
                 .frame(width: 60)
                 .padding(.horizontal, 4)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if habit.isHobby, !isFuture, habit.isCompleted(for: date) {
+                        onHobbyTap?(habit, date)
+                    }
+                }
             }
 
             // Group completion cells
@@ -478,30 +510,42 @@ struct GridCellView: View {
     let habitType: HabitType
     let isFuture: Bool
     let showCross: Bool
+    var isHobby: Bool = false
+    var hasHobbyContent: Bool = false
 
     var body: some View {
-        Group {
-            if isFuture {
-                // Future dates are empty
-                Color.clear
-            } else if habitType == .negative {
-                // Negative habits: inverted logic
-                // Completed = slipped (bad) = cross
-                // Not completed = avoided (good) = checkmark
-                if isCompleted {
-                    HandDrawnCross(size: 18, color: JournalTheme.Colors.negativeRedDark)
+        ZStack {
+            Group {
+                if isFuture {
+                    // Future dates are empty
+                    Color.clear
+                } else if habitType == .negative {
+                    // Negative habits: inverted logic
+                    // Completed = slipped (bad) = cross
+                    // Not completed = avoided (good) = checkmark
+                    if isCompleted {
+                        HandDrawnCross(size: 18, color: JournalTheme.Colors.negativeRedDark)
+                    } else {
+                        HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.goodDayGreenDark)
+                    }
+                } else if isCompleted {
+                    // Positive habit completed - show checkmark
+                    HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.inkBlue)
+                } else if showCross {
+                    // Not completed in must-do view - show cross
+                    HandDrawnCross(size: 18, color: JournalTheme.Colors.negativeRedDark.opacity(0.6))
                 } else {
-                    HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.goodDayGreenDark)
+                    // Not completed in nice-to-do view - empty
+                    Color.clear
                 }
-            } else if isCompleted {
-                // Positive habit completed - show checkmark
-                HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.inkBlue)
-            } else if showCross {
-                // Not completed in must-do view - show cross
-                HandDrawnCross(size: 18, color: JournalTheme.Colors.negativeRedDark.opacity(0.6))
-            } else {
-                // Not completed in nice-to-do view - empty
-                Color.clear
+            }
+
+            // Show indicator for hobbies with content
+            if isHobby && isCompleted && hasHobbyContent && !isFuture {
+                Circle()
+                    .fill(JournalTheme.Colors.goodDayGreenDark)
+                    .frame(width: 6, height: 6)
+                    .offset(x: 10, y: -10)
             }
         }
         .frame(width: 24, height: 24)

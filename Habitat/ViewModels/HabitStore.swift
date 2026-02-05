@@ -104,7 +104,8 @@ final class HabitStore {
         frequencyType: FrequencyType = .daily,
         frequencyTarget: Int = 1,
         successCriteria: String? = nil,
-        groupId: UUID? = nil
+        groupId: UUID? = nil,
+        isHobby: Bool = false
     ) {
         let maxSortOrder = habits.map { $0.sortOrder }.max() ?? 0
         let habit = Habit(
@@ -116,7 +117,8 @@ final class HabitStore {
             frequencyTarget: frequencyTarget,
             successCriteria: successCriteria,
             groupId: groupId,
-            sortOrder: maxSortOrder + 1
+            sortOrder: maxSortOrder + 1,
+            isHobby: isHobby
         )
         modelContext.insert(habit)
         saveContext()
@@ -241,6 +243,34 @@ final class HabitStore {
 
         // Update streaks
         updateStreak(for: habit)
+
+        saveContext()
+    }
+
+    /// Saves hobby completion with optional note and photo
+    func saveHobbyCompletion(for habit: Habit, on date: Date, note: String?, image: UIImage?) {
+        var photoPath: String? = nil
+        if let image = image {
+            photoPath = PhotoStorageService.shared.savePhoto(image, for: habit.id, on: date)
+        }
+
+        // Update existing DailyLog with note and photoPath
+        let log = DailyLog.createOrUpdate(
+            for: habit,
+            on: date,
+            completed: true,
+            note: note,
+            photoPath: photoPath,
+            context: modelContext
+        )
+
+        // Ensure the log properties are set directly (SwiftData sometimes needs this)
+        if let note = note {
+            log.note = note
+        }
+        if let photoPath = photoPath {
+            log.photoPath = photoPath
+        }
 
         saveContext()
     }

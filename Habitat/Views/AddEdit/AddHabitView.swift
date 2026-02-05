@@ -14,6 +14,7 @@ struct AddHabitView: View {
     @State private var frequencyTarget: Int = 4
     @State private var successCriteria = ""
     @State private var selectedGroupId: UUID?
+    @State private var isHobby: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -43,6 +44,19 @@ struct AddHabitView: View {
                     Text(type == .positive
                         ? "Something you want to do"
                         : "Something you want to avoid - shown in Don't Do section")
+                }
+
+                // Hobby Section (only for positive habits)
+                if type == .positive {
+                    Section {
+                        Toggle("This is a hobby", isOn: $isHobby)
+                    } footer: {
+                        if isHobby {
+                            Text("You'll be prompted to add photos and notes when completing")
+                        } else {
+                            Text("Enable to track photos and notes for this activity")
+                        }
+                    }
                 }
 
                 // Tier Section (only for positive habits)
@@ -136,7 +150,8 @@ struct AddHabitView: View {
             frequencyType: frequencyType,
             frequencyTarget: target,
             successCriteria: successCriteria.isEmpty ? nil : successCriteria,
-            groupId: selectedGroupId
+            groupId: selectedGroupId,
+            isHobby: type == .positive && isHobby // Only positive habits can be hobbies
         )
 
         // If assigned to a group, update the group's habit list
@@ -164,6 +179,7 @@ struct EditHabitView: View {
     @State private var frequencyTarget: Int
     @State private var successCriteria: String
     @State private var selectedGroupId: UUID?
+    @State private var isHobby: Bool
     @State private var showingDeleteConfirmation = false
 
     init(store: HabitStore, habit: Habit) {
@@ -177,6 +193,7 @@ struct EditHabitView: View {
         _selectedGroupId = State(initialValue: habit.groupId)
         _frequencyType = State(initialValue: habit.frequencyType)
         _frequencyTarget = State(initialValue: habit.frequencyTarget)
+        _isHobby = State(initialValue: habit.isHobby)
     }
 
     var body: some View {
@@ -242,6 +259,17 @@ struct EditHabitView: View {
                         .pickerStyle(.segmented)
                     } header: {
                         Text("Priority")
+                    }
+
+                    // Hobby Section
+                    Section {
+                        Toggle("This is a hobby", isOn: $isHobby)
+                    } footer: {
+                        if isHobby {
+                            Text("You'll be prompted to add photos and notes when completing")
+                        } else {
+                            Text("Enable to track photos and notes for this activity")
+                        }
                     }
                 }
 
@@ -315,6 +343,7 @@ struct EditHabitView: View {
         habit.successCriteria = successCriteria.isEmpty ? nil : successCriteria
         habit.frequencyType = frequencyType
         habit.frequencyTarget = frequencyType == .daily ? 1 : frequencyTarget
+        habit.isHobby = type == .positive && isHobby // Only positive habits can be hobbies
 
         store.updateHabit(habit)
         dismiss()

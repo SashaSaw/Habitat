@@ -22,6 +22,11 @@ struct HabitDetailView: View {
                 // Recent Activity
                 RecentActivitySection(habit: habit)
 
+                // Hobby Logs Section (only for hobbies with content)
+                if habit.isHobby {
+                    HobbyLogsSection(habit: habit)
+                }
+
                 // Actions
                 ActionsSection(
                     onEdit: { showingEditSheet = true },
@@ -293,6 +298,142 @@ struct ActionsSection: View {
                         .stroke(JournalTheme.Colors.negativeRedDark.opacity(0.5), lineWidth: 1.5)
                 )
             }
+        }
+    }
+}
+
+/// Section showing hobby logs with photos and notes
+struct HobbyLogsSection: View {
+    let habit: Habit
+
+    @State private var selectedLogDate: HobbyLogSelection? = nil
+
+    private var logsWithContent: [DailyLog] {
+        habit.dailyLogs
+            .filter { $0.completed && $0.hasContent }
+            .sorted { $0.date > $1.date }
+    }
+
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Hobby Logs")
+                .font(JournalTheme.Fonts.sectionHeader())
+                .foregroundStyle(JournalTheme.Colors.inkBlue)
+
+            if logsWithContent.isEmpty {
+                Text("No photos or notes recorded yet")
+                    .font(JournalTheme.Fonts.habitCriteria())
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.7))
+                            .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+                    )
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(logsWithContent.prefix(5)) { log in
+                        HobbyLogRow(log: log, dateFormatter: dateFormatter)
+                            .onTapGesture {
+                                selectedLogDate = HobbyLogSelection(habit: habit, date: log.date)
+                            }
+                    }
+
+                    if logsWithContent.count > 5 {
+                        Text("+ \(logsWithContent.count - 5) more entries")
+                            .font(JournalTheme.Fonts.habitCriteria())
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                            .padding(.top, 4)
+                    }
+                }
+            }
+        }
+        .sheet(item: $selectedLogDate) { selection in
+            HobbyLogDetailSheet(
+                habit: selection.habit,
+                date: selection.date,
+                onDismiss: {
+                    selectedLogDate = nil
+                }
+            )
+        }
+    }
+}
+
+/// A single row showing a hobby log entry
+struct HobbyLogRow: View {
+    let log: DailyLog
+    let dateFormatter: DateFormatter
+
+    @State private var loadedImage: UIImage? = nil
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Thumbnail or placeholder
+            if let image = loadedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 50, height: 50)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else if log.photoPath != nil {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(JournalTheme.Colors.lineLight)
+                    .frame(width: 50, height: 50)
+                    .overlay(
+                        Image(systemName: "photo")
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                    )
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(JournalTheme.Colors.lineLight)
+                    .frame(width: 50, height: 50)
+                    .overlay(
+                        Image(systemName: "note.text")
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                    )
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(dateFormatter.string(from: log.date))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                if let note = log.note, !note.isEmpty {
+                    Text(note)
+                        .font(JournalTheme.Fonts.habitCriteria())
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.7))
+                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+        )
+        .onAppear {
+            loadPhoto()
+        }
+    }
+
+    private func loadPhoto() {
+        if let photoPath = log.photoPath {
+            loadedImage = PhotoStorageService.shared.loadPhoto(from: photoPath)
         }
     }
 }
