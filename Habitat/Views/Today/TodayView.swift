@@ -107,7 +107,7 @@ struct TodayContentView: View {
                         }
 
                         // Must-Do Section
-                        if !store.mustDoHabits.isEmpty || !store.mustDoGroups.isEmpty {
+                        if !store.standalonePositiveMustDoHabits.isEmpty || !store.mustDoGroups.isEmpty {
                             LinedRow(height: lineHeight) {
                                 Text("MUST DO")
                                     .font(JournalTheme.Fonts.sectionHeader())
@@ -115,8 +115,8 @@ struct TodayContentView: View {
                                     .tracking(2)
                             }
 
-                            // Standalone must-do habits
-                            ForEach(store.standaloneMustDoHabits) { habit in
+                            // Standalone must-do habits (positive only)
+                            ForEach(store.standalonePositiveMustDoHabits) { habit in
                                 HabitLinedRow(
                                     habit: habit,
                                     isCompleted: habit.isCompleted(for: selectedDate),
@@ -127,7 +127,7 @@ struct TodayContentView: View {
                                     onLongPress: { selectedHabit = habit }
                                 )
                             }
-                            .animation(.easeInOut(duration: 0.25), value: store.standaloneMustDoHabits.count)
+                            .animation(.easeInOut(duration: 0.25), value: store.standalonePositiveMustDoHabits.count)
 
                             // Must-do groups with their habits
                             ForEach(store.mustDoGroups) { group in
@@ -153,8 +153,8 @@ struct TodayContentView: View {
                             EmptyView()
                         }
 
-                        // Nice-To-Do Section
-                        if !store.niceToDoHabits.isEmpty {
+                        // Nice-To-Do Section (positive only)
+                        if !store.positiveNiceToDoHabits.isEmpty {
                             LinedRow(height: lineHeight) {
                                 Text("NICE TO DO")
                                     .font(JournalTheme.Fonts.sectionHeader())
@@ -162,7 +162,7 @@ struct TodayContentView: View {
                                     .tracking(2)
                             }
 
-                            ForEach(store.niceToDoHabits) { habit in
+                            ForEach(store.positiveNiceToDoHabits) { habit in
                                 HabitLinedRow(
                                     habit: habit,
                                     isCompleted: habit.isCompleted(for: selectedDate),
@@ -173,7 +173,35 @@ struct TodayContentView: View {
                                     onLongPress: { selectedHabit = habit }
                                 )
                             }
-                            .animation(.easeInOut(duration: 0.25), value: store.niceToDoHabits.count)
+                            .animation(.easeInOut(duration: 0.25), value: store.positiveNiceToDoHabits.count)
+                        }
+
+                        // DON'T DO Section (negative habits)
+                        if !store.negativeHabits.isEmpty {
+                            LinedRow(height: lineHeight) {
+                                EmptyView()
+                            }
+
+                            LinedRow(height: lineHeight) {
+                                Text("DON'T DO")
+                                    .font(JournalTheme.Fonts.sectionHeader())
+                                    .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                                    .tracking(2)
+                            }
+
+                            ForEach(store.negativeHabits) { habit in
+                                NegativeHabitLinedRow(
+                                    habit: habit,
+                                    isCompleted: habit.isCompleted(for: selectedDate),
+                                    daysSince: store.calculateDaysSinceLastDone(for: habit),
+                                    lineHeight: lineHeight,
+                                    onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
+                                    onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
+                                    onDelete: { store.deleteHabit(habit) },
+                                    onLongPress: { selectedHabit = habit }
+                                )
+                            }
+                            .animation(.easeInOut(duration: 0.25), value: store.negativeHabits.count)
                         }
 
                         // Empty state
@@ -584,6 +612,180 @@ struct HabitLinedRow: View {
                     }
                 } else {
                     // Snap back
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        deleteOffset = 0
+                    }
+                }
+                hasPassedDeleteThreshold = false
+            }
+    }
+}
+
+/// A negative habit row showing "X days" streak and red slip indicator
+struct NegativeHabitLinedRow: View {
+    let habit: Habit
+    let isCompleted: Bool // "completed" means slipped today
+    let daysSince: Int
+    let lineHeight: CGFloat
+    let onComplete: () -> Void // Mark as slipped
+    let onUncomplete: () -> Void // Undo slip
+    let onDelete: () -> Void
+    let onLongPress: () -> Void
+
+    // Delete gesture state
+    @State private var deleteOffset: CGFloat = 0
+    @State private var hasPassedDeleteThreshold: Bool = false
+    @State private var isDragging: Bool = false
+    @State private var resetTask: Task<Void, Never>? = nil
+
+    private let deleteDistanceThreshold: CGFloat = 150
+    private let marginLeft = JournalTheme.Dimensions.marginLeft
+
+    private var deleteProgress: CGFloat {
+        guard deleteOffset < 0 else { return 0 }
+        return min(1, abs(deleteOffset) / deleteDistanceThreshold)
+    }
+
+    var body: some View {
+        ZStack {
+            // Delete background (red, only shown when swiping left)
+            if deleteOffset < 0 {
+                HStack {
+                    Spacer()
+                    ZStack {
+                        JournalTheme.Colors.negativeRedDark
+
+                        Image(systemName: "trash")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(.white)
+                            .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
+                    }
+                    .frame(width: abs(deleteOffset))
+                }
+            }
+
+            // Main content
+            HStack(spacing: 12) {
+                // Slip indicator - X mark if slipped today
+                if isCompleted {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                } else {
+                    Circle()
+                        .strokeBorder(JournalTheme.Colors.completedGray, lineWidth: 1.5)
+                        .frame(width: 20, height: 20)
+                }
+
+                // Habit name
+                Text(habit.name)
+                    .font(JournalTheme.Fonts.habitName())
+                    .foregroundStyle(
+                        isCompleted
+                            ? JournalTheme.Colors.negativeRedDark
+                            : JournalTheme.Colors.inkBlack
+                    )
+
+                if let criteria = habit.successCriteria, !criteria.isEmpty {
+                    Text("(\(criteria))")
+                        .font(JournalTheme.Fonts.habitCriteria())
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                }
+
+                Spacer()
+
+                // Days since streak display
+                if !isCompleted {
+                    Text("\(daysSince) days")
+                        .font(JournalTheme.Fonts.streakCount())
+                        .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
+                } else {
+                    Text("Slipped")
+                        .font(JournalTheme.Fonts.streakCount())
+                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                }
+            }
+            .frame(height: lineHeight, alignment: .bottom)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, marginLeft + 8)
+            .padding(.trailing, 16)
+            .background(Color.clear)
+            .offset(x: deleteOffset)
+        }
+        .frame(height: lineHeight)
+        .contentShape(Rectangle())
+        .gesture(deleteGesture())
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onEnded { _ in
+                    HapticFeedback.selection()
+                    onLongPress()
+                }
+        )
+        .onTapGesture {
+            if isCompleted {
+                // Tap to undo slip
+                HapticFeedback.selection()
+                onUncomplete()
+            } else {
+                // Tap to mark as slipped
+                HapticFeedback.thresholdCrossed()
+                onComplete()
+            }
+        }
+        .onChange(of: isDragging) { _, newValue in
+            if !newValue {
+                resetTask?.cancel()
+                resetTask = Task {
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            if deleteOffset != 0 {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    deleteOffset = 0
+                                    hasPassedDeleteThreshold = false
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                resetTask?.cancel()
+            }
+        }
+    }
+
+    private func deleteGesture() -> some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .local)
+            .onChanged { value in
+                let horizontal = abs(value.translation.width)
+                let vertical = abs(value.translation.height)
+                let translation = value.translation.width
+
+                guard horizontal > vertical, translation < 0 else { return }
+
+                isDragging = true
+                deleteOffset = translation
+
+                let currentlyPastDelete = abs(translation) >= deleteDistanceThreshold
+                if currentlyPastDelete != hasPassedDeleteThreshold {
+                    hasPassedDeleteThreshold = currentlyPastDelete
+                    HapticFeedback.thresholdCrossed()
+                }
+            }
+            .onEnded { value in
+                isDragging = false
+                let translation = value.translation.width
+
+                guard translation < 0 else { return }
+
+                if abs(translation) >= deleteDistanceThreshold {
+                    HapticFeedback.completionConfirmed()
+                    deleteOffset = 0
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        onDelete()
+                    }
+                } else {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         deleteOffset = 0
                     }

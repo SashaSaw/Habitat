@@ -57,6 +57,24 @@ final class HabitStore {
         habits.filter { $0.tier == .niceToDo }
     }
 
+    /// All negative habits (things to avoid)
+    var negativeHabits: [Habit] {
+        habits.filter { $0.type == .negative }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    /// Positive must-do habits not in any group (excludes negative)
+    var standalonePositiveMustDoHabits: [Habit] {
+        let groupedHabitIds = Set(mustDoGroups.flatMap { $0.habitIds })
+        return mustDoHabits.filter {
+            !groupedHabitIds.contains($0.id) && $0.type == .positive
+        }
+    }
+
+    /// Positive nice-to-do habits (excludes negative)
+    var positiveNiceToDoHabits: [Habit] {
+        niceToDoHabits.filter { $0.type == .positive }
+    }
+
     var mustDoGroups: [HabitGroup] {
         groups.filter { $0.tier == .mustDo }
     }
@@ -230,16 +248,16 @@ final class HabitStore {
     // MARK: - Good Day Logic
 
     func isGoodDay(for date: Date) -> Bool {
-        // Get standalone must-do habits (not in any group)
-        let standaloneMustDos = mustDoHabits.filter { $0.groupId == nil }
+        // Get standalone POSITIVE must-do habits (not in any group, excludes negative)
+        let standaloneMustDos = mustDoHabits.filter { $0.groupId == nil && $0.type == .positive }
 
-        // If there are no must-do habits AND no must-do groups, it's not a "good day"
+        // If there are no positive must-do habits AND no must-do groups, it's not a "good day"
         // (nothing to complete means no achievement)
         if standaloneMustDos.isEmpty && mustDoGroups.isEmpty {
             return false
         }
 
-        // All standalone must-do habits must be completed
+        // All standalone positive must-do habits must be completed
         let allMustDosCompleted = standaloneMustDos.allSatisfy { $0.isCompleted(for: date) }
 
         // All must-do groups must be satisfied
@@ -247,7 +265,10 @@ final class HabitStore {
             group.isSatisfied(habits: habits, for: date)
         }
 
-        return allMustDosCompleted && allGroupsSatisfied
+        // All negative habits must NOT be completed (no slips)
+        let noNegativeSlips = negativeHabits.allSatisfy { !$0.isCompleted(for: date) }
+
+        return allMustDosCompleted && allGroupsSatisfied && noNegativeSlips
     }
 
     /// Returns good days in a date range
@@ -269,12 +290,42 @@ final class HabitStore {
     // MARK: - Streak Calculation
 
     func updateStreak(for habit: Habit) {
-        let streak = calculateCurrentStreak(for: habit)
-        habit.currentStreak = streak
-
-        if streak > habit.bestStreak {
-            habit.bestStreak = streak
+        if habit.type == .negative {
+            // For negative habits, streak = days since last done
+            let daysSince = calculateDaysSinceLastDone(for: habit)
+            habit.currentStreak = daysSince
+            if daysSince > habit.bestStreak {
+                habit.bestStreak = daysSince
+            }
+        } else {
+            // Existing logic for positive habits
+            let streak = calculateCurrentStreak(for: habit)
+            habit.currentStreak = streak
+            if streak > habit.bestStreak {
+                habit.bestStreak = streak
+            }
         }
+    }
+
+    /// Calculates days since habit was last completed (for negative habits)
+    func calculateDaysSinceLastDone(for habit: Habit) -> Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        let completedLogs = habit.dailyLogs
+            .filter { $0.completed }
+            .sorted { $0.date > $1.date }
+
+        guard let lastCompletedLog = completedLogs.first else {
+            // Never completed - count from creation date
+            let creationDay = calendar.startOfDay(for: habit.createdAt)
+            let daysSinceCreation = calendar.dateComponents([.day], from: creationDay, to: today).day ?? 0
+            return max(0, daysSinceCreation)
+        }
+
+        let lastCompletedDate = calendar.startOfDay(for: lastCompletedLog.date)
+        let daysSince = calendar.dateComponents([.day], from: lastCompletedDate, to: today).day ?? 0
+        return max(0, daysSince)
     }
 
     func calculateCurrentStreak(for habit: Habit) -> Int {

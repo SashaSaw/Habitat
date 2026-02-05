@@ -29,22 +29,6 @@ struct AddHabitView: View {
                     Text("Basic Info")
                 }
 
-                // Tier Section
-                Section {
-                    Picker("Tier", selection: $tier) {
-                        ForEach(HabitTier.allCases, id: \.self) { tier in
-                            Text(tier.displayName).tag(tier)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                } header: {
-                    Text("Priority")
-                } footer: {
-                    Text(tier == .mustDo
-                        ? "Must-do habits are required for a 'good day'"
-                        : "Nice-to-do habits are bonus and tracked separately")
-                }
-
                 // Type Section
                 Section {
                     Picker("Type", selection: $type) {
@@ -58,7 +42,25 @@ struct AddHabitView: View {
                 } footer: {
                     Text(type == .positive
                         ? "Something you want to do"
-                        : "Something you want to avoid")
+                        : "Something you want to avoid - shown in Don't Do section")
+                }
+
+                // Tier Section (only for positive habits)
+                if type == .positive {
+                    Section {
+                        Picker("Tier", selection: $tier) {
+                            ForEach(HabitTier.allCases, id: \.self) { tier in
+                                Text(tier.displayName).tag(tier)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    } header: {
+                        Text("Priority")
+                    } footer: {
+                        Text(tier == .mustDo
+                            ? "Must-do habits are required for a 'good day'"
+                            : "Nice-to-do habits are bonus and tracked separately")
+                    }
                 }
 
                 // Frequency Section
@@ -217,18 +219,6 @@ struct EditHabitView: View {
                     Text("Statistics")
                 }
 
-                // Tier Section
-                Section {
-                    Picker("Tier", selection: $tier) {
-                        ForEach(HabitTier.allCases, id: \.self) { tier in
-                            Text(tier.displayName).tag(tier)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                } header: {
-                    Text("Priority")
-                }
-
                 // Type Section
                 Section {
                     Picker("Type", selection: $type) {
@@ -239,6 +229,20 @@ struct EditHabitView: View {
                     .pickerStyle(.segmented)
                 } header: {
                     Text("Habit Type")
+                }
+
+                // Tier Section (only for positive habits)
+                if type == .positive {
+                    Section {
+                        Picker("Tier", selection: $tier) {
+                            ForEach(HabitTier.allCases, id: \.self) { tier in
+                                Text(tier.displayName).tag(tier)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    } header: {
+                        Text("Priority")
+                    }
                 }
 
                 // Frequency Section

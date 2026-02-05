@@ -6,8 +6,10 @@ import UIKit
 struct AxisLockedScrollView<Header: View, Content: View>: UIViewRepresentable {
     let header: Header
     let content: Content
+    let allowHorizontalScroll: Bool
 
-    init(@ViewBuilder _ header: () -> Header, @ViewBuilder content: () -> Content) {
+    init(allowHorizontalScroll: Bool = true, @ViewBuilder _ header: () -> Header, @ViewBuilder content: () -> Content) {
+        self.allowHorizontalScroll = allowHorizontalScroll
         self.header = header()
         self.content = content()
     }
@@ -25,10 +27,13 @@ struct AxisLockedScrollView<Header: View, Content: View>: UIViewRepresentable {
         scrollView.delegate = context.coordinator
         scrollView.isDirectionalLockEnabled = true
         scrollView.alwaysBounceHorizontal = false
-        scrollView.showsHorizontalScrollIndicator = true
+        scrollView.showsHorizontalScrollIndicator = allowHorizontalScroll
         scrollView.showsVerticalScrollIndicator = true
         scrollView.decelerationRate = .fast
         scrollView.translatesAutoresizingMaskIntoConstraints = false
+
+        // Store scroll view reference for updates
+        context.coordinator.scrollView = scrollView
 
         // Header hosting controller
         let headerHosting = UIHostingController(rootView: header)
@@ -48,6 +53,16 @@ struct AxisLockedScrollView<Header: View, Content: View>: UIViewRepresentable {
         context.coordinator.contentHosting = contentHosting
         context.coordinator.headerHosting = headerHosting
         context.coordinator.headerView = headerHosting.view
+        context.coordinator.allowHorizontalScroll = allowHorizontalScroll
+
+        // Width constraints (used when horizontal scroll is disabled to keep content aligned)
+        let contentWidthConstraint = contentHosting.view.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor)
+        contentWidthConstraint.isActive = !allowHorizontalScroll
+        context.coordinator.contentWidthConstraint = contentWidthConstraint
+
+        let headerWidthConstraint = headerHosting.view.widthAnchor.constraint(equalTo: containerView.widthAnchor)
+        headerWidthConstraint.isActive = !allowHorizontalScroll
+        context.coordinator.headerWidthConstraint = headerWidthConstraint
 
         NSLayoutConstraint.activate([
             // Header at top, clips to container bounds horizontally
@@ -73,12 +88,31 @@ struct AxisLockedScrollView<Header: View, Content: View>: UIViewRepresentable {
     func updateUIView(_ containerView: UIView, context: Context) {
         context.coordinator.contentHosting?.rootView = content
         context.coordinator.headerHosting?.rootView = header
+        context.coordinator.allowHorizontalScroll = allowHorizontalScroll
+
+        // Update width constraints based on horizontal scroll setting
+        context.coordinator.contentWidthConstraint?.isActive = !allowHorizontalScroll
+        context.coordinator.headerWidthConstraint?.isActive = !allowHorizontalScroll
+
+        // Update scroll view horizontal scroll capability
+        if let scrollView = context.coordinator.scrollView {
+            scrollView.showsHorizontalScrollIndicator = allowHorizontalScroll
+            // Reset horizontal offset if horizontal scroll is disabled
+            if !allowHorizontalScroll {
+                scrollView.contentOffset.x = 0
+                context.coordinator.headerView?.transform = .identity
+            }
+        }
     }
 
     class Coordinator: NSObject, UIScrollViewDelegate {
         var contentHosting: UIHostingController<Content>?
         var headerHosting: UIHostingController<Header>?
         var headerView: UIView?
+        var scrollView: UIScrollView?
+        var contentWidthConstraint: NSLayoutConstraint?
+        var headerWidthConstraint: NSLayoutConstraint?
+        var allowHorizontalScroll: Bool = true
         private var isDecelerating = false
 
         func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
@@ -89,6 +123,10 @@ struct AxisLockedScrollView<Header: View, Content: View>: UIViewRepresentable {
         }
 
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            // If horizontal scroll is disabled, prevent horizontal movement
+            if !allowHorizontalScroll && scrollView.contentOffset.x != 0 {
+                scrollView.contentOffset.x = 0
+            }
             // Sync header horizontal position with scroll view
             headerView?.transform = CGAffineTransform(translationX: -scrollView.contentOffset.x, y: 0)
         }
@@ -109,6 +147,17 @@ struct MonthGridView: View {
     @State private var selectedMonth = Date()
     @State private var showingNiceToDoGrid = false
 
+    init(store: HabitStore) {
+        self.store = store
+        // Configure navigation bar title color
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.titleTextAttributes = [.foregroundColor: UIColor(JournalTheme.Colors.inkBlack)]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(JournalTheme.Colors.inkBlack)]
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
+
     var body: some View {
         NavigationStack {
             MonthGridContentView(
@@ -117,6 +166,7 @@ struct MonthGridView: View {
                 showMustDos: !showingNiceToDoGrid
             )
             .navigationTitle(showingNiceToDoGrid ? "Nice To Do" : "Must Do")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -126,6 +176,7 @@ struct MonthGridView: View {
                     } label: {
                         Text(showingNiceToDoGrid ? "Must Do" : "Nice To Do")
                             .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(JournalTheme.Colors.inkBlue)
                     }
                 }
 
@@ -137,6 +188,7 @@ struct MonthGridView: View {
                             }
                         } label: {
                             Image(systemName: "chevron.left")
+                                .foregroundStyle(JournalTheme.Colors.inkBlue)
                         }
 
                         Button {
@@ -145,10 +197,12 @@ struct MonthGridView: View {
                             }
                         } label: {
                             Image(systemName: "chevron.right")
+                                .foregroundStyle(JournalTheme.Colors.inkBlue)
                         }
                     }
                 }
             }
+            .tint(JournalTheme.Colors.inkBlue)
         }
     }
 }
@@ -166,18 +220,23 @@ struct MonthGridContentView: View {
         return formatter
     }()
 
-    // Standalone habits (not in any group)
+    // Standalone habits (not in any group) - positive only
     private var standaloneHabits: [Habit] {
         if showMustDos {
-            return store.standaloneMustDoHabits
+            return store.standalonePositiveMustDoHabits
         } else {
-            return store.niceToDoHabits
+            return store.positiveNiceToDoHabits
         }
     }
 
     // Groups (only for must-do view)
     private var groups: [HabitGroup] {
         showMustDos ? store.mustDoGroups : []
+    }
+
+    // Negative habits (only shown in must-do view)
+    private var negativeHabits: [Habit] {
+        showMustDos ? store.negativeHabits : []
     }
 
     private var calendar: Calendar { Calendar.current }
@@ -193,11 +252,19 @@ struct MonthGridContentView: View {
     }
 
     private var hasContent: Bool {
-        !standaloneHabits.isEmpty || !groups.isEmpty
+        !standaloneHabits.isEmpty || !groups.isEmpty || !negativeHabits.isEmpty
+    }
+
+    /// Determines if horizontal scrolling is needed based on column count
+    /// Day column = 66pt, each habit/group column = 68pt
+    private var needsHorizontalScroll: Bool {
+        let columnCount = standaloneHabits.count + groups.count + negativeHabits.count
+        // Enable horizontal scroll when we have more than 4 columns (roughly > 340pt of content)
+        return columnCount > 4
     }
 
     var body: some View {
-        AxisLockedScrollView {
+        AxisLockedScrollView(allowHorizontalScroll: needsHorizontalScroll) {
             // Sticky header
             VStack(alignment: .leading, spacing: 0) {
                 // Month header
@@ -208,7 +275,7 @@ struct MonthGridContentView: View {
                     .padding(.vertical, 12)
 
                 if hasContent {
-                    HabitHeaderRowView(habits: standaloneHabits, groups: groups)
+                    HabitHeaderRowView(habits: standaloneHabits, groups: groups, negativeHabits: negativeHabits, needsHorizontalScroll: needsHorizontalScroll)
                 }
             }
         } content: {
@@ -226,9 +293,11 @@ struct MonthGridContentView: View {
                             date: date,
                             habits: standaloneHabits,
                             groups: groups,
+                            negativeHabits: negativeHabits,
                             allHabits: store.habits,
                             isGoodDay: showMustDos ? store.isGoodDay(for: date) : false,
-                            showGoodDayHighlight: showMustDos
+                            showGoodDayHighlight: showMustDos,
+                            needsHorizontalScroll: needsHorizontalScroll
                         )
                     }
                 }
@@ -243,6 +312,8 @@ struct MonthGridContentView: View {
 struct HabitHeaderRowView: View {
     let habits: [Habit]
     let groups: [HabitGroup]
+    let negativeHabits: [Habit]
+    let needsHorizontalScroll: Bool
 
     var body: some View {
         HStack(spacing: 0) {
@@ -253,7 +324,7 @@ struct HabitHeaderRowView: View {
                 .frame(width: 50, alignment: .leading)
                 .padding(.horizontal, 8)
 
-            // Habit column headers
+            // Positive habit column headers
             ForEach(habits) { habit in
                 Text(habit.name)
                     .font(.system(size: 11, weight: .medium))
@@ -272,9 +343,33 @@ struct HabitHeaderRowView: View {
                     .frame(width: 60, alignment: .center)
                     .padding(.horizontal, 4)
             }
+
+            // Negative habit column headers (red text)
+            ForEach(negativeHabits) { habit in
+                Text(habit.name)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                    .lineLimit(2)
+                    .frame(width: 60, alignment: .center)
+                    .padding(.horizontal, 4)
+            }
         }
+        .modifier(ConditionalFixedSize(enabled: needsHorizontalScroll))
         .padding(.vertical, 8)
         .background(Color.clear)
+    }
+}
+
+/// Conditionally applies fixedSize modifier
+struct ConditionalFixedSize: ViewModifier {
+    let enabled: Bool
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.fixedSize(horizontal: true, vertical: false)
+        } else {
+            content
+        }
     }
 }
 
@@ -283,9 +378,11 @@ struct DayRowView: View {
     let date: Date
     let habits: [Habit]
     let groups: [HabitGroup]
+    let negativeHabits: [Habit]
     let allHabits: [Habit] // All habits for checking group satisfaction
     let isGoodDay: Bool
     let showGoodDayHighlight: Bool
+    let needsHorizontalScroll: Bool
 
     // Static formatters for performance
     private static let dayFormatter: DateFormatter = {
@@ -323,7 +420,7 @@ struct DayRowView: View {
             .frame(width: 50, alignment: .leading)
             .padding(.horizontal, 8)
 
-            // Habit completion cells
+            // Positive habit completion cells
             ForEach(habits) { habit in
                 GridCellView(
                     isCompleted: habit.isCompleted(for: date),
@@ -346,7 +443,20 @@ struct DayRowView: View {
                 .frame(width: 60)
                 .padding(.horizontal, 4)
             }
+
+            // Negative habit cells
+            ForEach(negativeHabits) { habit in
+                GridCellView(
+                    isCompleted: habit.isCompleted(for: date),
+                    habitType: habit.type,
+                    isFuture: isFuture,
+                    showCross: true // Always show indicator for negative habits
+                )
+                .frame(width: 60)
+                .padding(.horizontal, 4)
+            }
         }
+        .modifier(ConditionalFixedSize(enabled: needsHorizontalScroll))
         .padding(.vertical, 6)
         .background(
             Group {
@@ -374,8 +484,17 @@ struct GridCellView: View {
             if isFuture {
                 // Future dates are empty
                 Color.clear
+            } else if habitType == .negative {
+                // Negative habits: inverted logic
+                // Completed = slipped (bad) = cross
+                // Not completed = avoided (good) = checkmark
+                if isCompleted {
+                    HandDrawnCross(size: 18, color: JournalTheme.Colors.negativeRedDark)
+                } else {
+                    HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.goodDayGreenDark)
+                }
             } else if isCompleted {
-                // Completed - show checkmark
+                // Positive habit completed - show checkmark
                 HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.inkBlue)
             } else if showCross {
                 // Not completed in must-do view - show cross
