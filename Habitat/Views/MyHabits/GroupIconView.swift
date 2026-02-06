@@ -35,7 +35,7 @@ struct GroupIconView: View {
 
                     // Fill empty slots
                     ForEach(0..<max(0, 4 - previewHabits.count), id: \.self) { _ in
-                        Circle()
+                        RoundedRectangle(cornerRadius: 6)
                             .fill(Color.clear)
                             .frame(width: 24, height: 24)
                     }
@@ -60,6 +60,12 @@ struct GroupIconView: View {
 /// Mini habit icon for group preview
 struct MiniHabitIcon: View {
     let habit: Habit
+
+    /// Custom image from data if available
+    private var customImage: UIImage? {
+        guard let data = habit.iconImageData else { return nil }
+        return UIImage(data: data)
+    }
 
     /// Extracts the first emoji from the habit name
     private var emoji: String? {
@@ -88,17 +94,25 @@ struct MiniHabitIcon: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(backgroundColor)
-                .frame(width: 24, height: 24)
-
-            if let emoji = emoji {
-                Text(emoji)
-                    .font(.system(size: 12))
+            if let customImage = customImage {
+                Image(uiImage: customImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 24, height: 24)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
             } else {
-                Text(initial)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.white)
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(backgroundColor)
+                    .frame(width: 24, height: 24)
+
+                if let emoji = emoji {
+                    Text(emoji)
+                        .font(.system(size: 12))
+                } else {
+                    Text(initial)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
+                }
             }
         }
     }

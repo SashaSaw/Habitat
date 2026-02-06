@@ -18,6 +18,7 @@ final class Habit {
     var createdAt: Date
     var sortOrder: Int
     var isHobby: Bool = false
+    @Attribute(.externalStorage) var iconImageData: Data? = nil
 
     // Relationship to daily logs
     @Relationship(deleteRule: .cascade, inverse: \DailyLog.habit)

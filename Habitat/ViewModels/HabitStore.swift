@@ -149,7 +149,8 @@ final class HabitStore {
         frequencyTarget: Int = 1,
         successCriteria: String? = nil,
         groupId: UUID? = nil,
-        isHobby: Bool = false
+        isHobby: Bool = false,
+        iconImageData: Data? = nil
     ) {
         let maxSortOrder = habits.map { $0.sortOrder }.max() ?? 0
         let habit = Habit(
@@ -164,14 +165,15 @@ final class HabitStore {
             sortOrder: maxSortOrder + 1,
             isHobby: isHobby
         )
+        habit.iconImageData = iconImageData
         modelContext.insert(habit)
         saveContext()
-        fetchHabits()
+        fetchData()
     }
 
     func updateHabit(_ habit: Habit) {
         saveContext()
-        fetchHabits()
+        fetchData()
     }
 
     func deleteHabit(_ habit: Habit) {
