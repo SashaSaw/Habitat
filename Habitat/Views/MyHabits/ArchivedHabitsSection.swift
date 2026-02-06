@@ -51,21 +51,27 @@ struct ArchivedHabitsSection: View {
                         HabitIconHStack(
                             store: store,
                             habits: habits,
+                            groups: [],
                             isArchived: true,
                             onSelectHabit: onSelectHabit,
+                            onSelectGroup: { _ in },
                             onArchive: nil,
                             onUnarchive: onUnarchive,
-                            onDelete: onDelete
+                            onDelete: onDelete,
+                            onDeleteGroup: { _ in }
                         )
                     } else {
                         HabitIconGrid(
                             store: store,
                             habits: habits,
+                            groups: [],
                             isArchived: true,
                             onSelectHabit: onSelectHabit,
+                            onSelectGroup: { _ in },
                             onArchive: nil,
                             onUnarchive: onUnarchive,
-                            onDelete: onDelete
+                            onDelete: onDelete,
+                            onDeleteGroup: { _ in }
                         )
                     }
                 }

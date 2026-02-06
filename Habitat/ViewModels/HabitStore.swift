@@ -241,6 +241,34 @@ final class HabitStore {
         fetchData()
     }
 
+    /// Creates a new group by combining two habits (iOS folder-style creation)
+    func createGroupFromHabits(_ habit1: Habit, _ habit2: Habit) -> HabitGroup {
+        // Use the tier of the first habit
+        let tier = habit1.tier
+
+        // Create a default name
+        let groupName = "New Group"
+
+        let maxSortOrder = groups.map { $0.sortOrder }.max() ?? 0
+        let group = HabitGroup(
+            name: groupName,
+            tier: tier,
+            requireCount: 1,
+            habitIds: [habit1.id, habit2.id],
+            sortOrder: maxSortOrder + 1
+        )
+        modelContext.insert(group)
+
+        // Update habits to reference this group
+        habit1.groupId = group.id
+        habit2.groupId = group.id
+
+        saveContext()
+        fetchData()
+
+        return group
+    }
+
     func addHabitToGroup(_ habit: Habit, group: HabitGroup) {
         if !group.habitIds.contains(habit.id) {
             group.habitIds.append(habit.id)

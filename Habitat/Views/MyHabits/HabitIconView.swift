@@ -97,6 +97,44 @@ extension Character {
     }
 }
 
+/// Add Habit button styled like a habit icon
+struct AddHabitIconView: View {
+    let onTap: () -> Void
+
+    private let iconSize: CGFloat = 72
+
+    var body: some View {
+        VStack(spacing: 8) {
+            // Icon circle with plus
+            ZStack {
+                Circle()
+                    .fill(JournalTheme.Colors.lineLight)
+                    .frame(width: iconSize, height: iconSize)
+                    .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+
+                Circle()
+                    .strokeBorder(JournalTheme.Colors.completedGray.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                    .frame(width: iconSize, height: iconSize)
+
+                Image(systemName: "plus")
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+            }
+
+            // Label
+            Text("Add Habit")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(width: iconSize + 16)
+        }
+        .onTapGesture {
+            onTap()
+        }
+    }
+}
+
 #Preview {
     let habit = Habit(name: "Guitar", tier: .mustDo)
     return HabitIconView(habit: habit, isArchived: false, onTap: {})

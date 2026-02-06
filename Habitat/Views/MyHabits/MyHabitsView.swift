@@ -5,10 +5,12 @@ import SwiftData
 struct MyHabitsView: View {
     @Bindable var store: HabitStore
     @State private var showingAddHabit = false
-    @State private var showingAddGroup = false
     @State private var selectedHabit: Habit?
+    @State private var selectedGroup: HabitGroup?
     @State private var habitToDelete: Habit?
-    @State private var showDeleteConfirmation = false
+    @State private var groupToDelete: HabitGroup?
+    @State private var showDeleteHabitConfirmation = false
+    @State private var showDeleteGroupConfirmation = false
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -39,26 +41,12 @@ struct MyHabitsView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
-                            showingAddHabit = true
-                        } label: {
-                            Label("Add Habit", systemImage: "plus.circle")
-                        }
-
-                        Button {
-                            showingAddGroup = true
-                        } label: {
-                            Label("Add Group", systemImage: "folder.badge.plus")
-                        }
-
-                        Divider()
-
-                        Button {
                             store.createSampleData()
                         } label: {
                             Label("Load Sample Data", systemImage: "tray.and.arrow.down")
                         }
                     } label: {
-                        Image(systemName: "plus")
+                        Image(systemName: "ellipsis.circle")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(JournalTheme.Colors.inkBlue)
                     }
@@ -67,15 +55,19 @@ struct MyHabitsView: View {
             .sheet(isPresented: $showingAddHabit) {
                 AddHabitView(store: store)
             }
-            .sheet(isPresented: $showingAddGroup) {
-                AddGroupView(store: store)
-            }
             .sheet(item: $selectedHabit) { habit in
                 NavigationStack {
                     HabitDetailView(store: store, habit: habit)
                 }
             }
-            .alert("Delete Habit?", isPresented: $showDeleteConfirmation) {
+            .sheet(item: $selectedGroup) { group in
+                GroupDetailSheet(
+                    group: group,
+                    store: store,
+                    onDismiss: { selectedGroup = nil }
+                )
+            }
+            .alert("Delete Habit?", isPresented: $showDeleteHabitConfirmation) {
                 Button("Cancel", role: .cancel) {
                     habitToDelete = nil
                 }
@@ -87,6 +79,19 @@ struct MyHabitsView: View {
                 }
             } message: {
                 Text("This will permanently delete '\(habitToDelete?.name ?? "")' and all its history.")
+            }
+            .alert("Delete Group?", isPresented: $showDeleteGroupConfirmation) {
+                Button("Cancel", role: .cancel) {
+                    groupToDelete = nil
+                }
+                Button("Delete", role: .destructive) {
+                    if let group = groupToDelete {
+                        store.deleteGroup(group)
+                    }
+                    groupToDelete = nil
+                }
+            } message: {
+                Text("This will delete the group '\(groupToDelete?.name ?? "")'. The habits inside will not be deleted.")
             }
         }
     }
@@ -109,47 +114,49 @@ struct MyHabitsView: View {
                 .padding(.horizontal)
                 .padding(.top, 16)
 
-                // Empty state
-                if store.liveHabits.isEmpty && store.archivedHabits.isEmpty {
-                    emptyState
-                } else {
-                    // Live habits section
-                    if !store.liveHabits.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("ACTIVE")
-                                .font(JournalTheme.Fonts.sectionHeader())
-                                .foregroundStyle(JournalTheme.Colors.sectionHeader)
-                                .tracking(2)
-                                .padding(.horizontal)
-
-                            HabitIconGrid(
-                                store: store,
-                                habits: store.liveHabits,
-                                isArchived: false,
-                                onSelectHabit: { selectedHabit = $0 },
-                                onArchive: { store.archiveHabit($0) },
-                                onUnarchive: nil,
-                                onDelete: { habit in
-                                    habitToDelete = habit
-                                    showDeleteConfirmation = true
-                                }
-                            )
-                        }
+                // Live habits section (always show to include Add button)
+                VStack(alignment: .leading, spacing: 12) {
+                    if !store.liveHabits.isEmpty || !store.groups.isEmpty {
+                        Text("ACTIVE")
+                            .font(JournalTheme.Fonts.sectionHeader())
+                            .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                            .tracking(2)
+                            .padding(.horizontal)
                     }
 
-                    // Archived habits section
-                    ArchivedHabitsSection(
+                    HabitIconGrid(
                         store: store,
-                        habits: store.archivedHabits,
-                        isLandscape: false,
+                        habits: store.liveHabits,
+                        groups: store.groups,
+                        isArchived: false,
                         onSelectHabit: { selectedHabit = $0 },
-                        onUnarchive: { store.unarchiveHabit($0) },
+                        onSelectGroup: { selectedGroup = $0 },
+                        onArchive: { store.archiveHabit($0) },
+                        onUnarchive: nil,
                         onDelete: { habit in
                             habitToDelete = habit
-                            showDeleteConfirmation = true
-                        }
+                            showDeleteHabitConfirmation = true
+                        },
+                        onDeleteGroup: { group in
+                            groupToDelete = group
+                            showDeleteGroupConfirmation = true
+                        },
+                        onAddHabit: { showingAddHabit = true }
                     )
                 }
+
+                // Archived habits section
+                ArchivedHabitsSection(
+                    store: store,
+                    habits: store.archivedHabits,
+                    isLandscape: false,
+                    onSelectHabit: { selectedHabit = $0 },
+                    onUnarchive: { store.unarchiveHabit($0) },
+                    onDelete: { habit in
+                        habitToDelete = habit
+                        showDeleteHabitConfirmation = true
+                    }
+                )
 
                 Spacer(minLength: 100)
             }
@@ -161,28 +168,35 @@ struct MyHabitsView: View {
     private var landscapeLayout: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Live habits - horizontal scroll
-                if !store.liveHabits.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
+                // Live habits - horizontal scroll (always show to include Add button)
+                VStack(alignment: .leading, spacing: 8) {
+                    if !store.liveHabits.isEmpty || !store.groups.isEmpty {
                         Text("ACTIVE")
                             .font(JournalTheme.Fonts.sectionHeader())
                             .foregroundStyle(JournalTheme.Colors.sectionHeader)
                             .tracking(2)
                             .padding(.horizontal)
-
-                        HabitIconHStack(
-                            store: store,
-                            habits: store.liveHabits,
-                            isArchived: false,
-                            onSelectHabit: { selectedHabit = $0 },
-                            onArchive: { store.archiveHabit($0) },
-                            onUnarchive: nil,
-                            onDelete: { habit in
-                                habitToDelete = habit
-                                showDeleteConfirmation = true
-                            }
-                        )
                     }
+
+                    HabitIconHStack(
+                        store: store,
+                        habits: store.liveHabits,
+                        groups: store.groups,
+                        isArchived: false,
+                        onSelectHabit: { selectedHabit = $0 },
+                        onSelectGroup: { selectedGroup = $0 },
+                        onArchive: { store.archiveHabit($0) },
+                        onUnarchive: nil,
+                        onDelete: { habit in
+                            habitToDelete = habit
+                            showDeleteHabitConfirmation = true
+                        },
+                        onDeleteGroup: { group in
+                            groupToDelete = group
+                            showDeleteGroupConfirmation = true
+                        },
+                        onAddHabit: { showingAddHabit = true }
+                    )
                 }
 
                 // Archived habits
@@ -194,7 +208,7 @@ struct MyHabitsView: View {
                     onUnarchive: { store.unarchiveHabit($0) },
                     onDelete: { habit in
                         habitToDelete = habit
-                        showDeleteConfirmation = true
+                        showDeleteHabitConfirmation = true
                     }
                 )
             }
@@ -202,25 +216,6 @@ struct MyHabitsView: View {
         }
     }
 
-    // MARK: - Empty State
-
-    private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "square.grid.2x2")
-                .font(.system(size: 48))
-                .foregroundStyle(JournalTheme.Colors.completedGray)
-
-            Text("No habits yet")
-                .font(JournalTheme.Fonts.habitName())
-                .foregroundStyle(JournalTheme.Colors.completedGray)
-
-            Text("Tap + to add your first habit")
-                .font(JournalTheme.Fonts.habitCriteria())
-                .foregroundStyle(JournalTheme.Colors.completedGray)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 60)
-    }
 }
 
 #Preview {
