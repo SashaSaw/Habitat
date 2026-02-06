@@ -4,48 +4,11 @@ import SwiftData
 /// Main Today View showing all habits for the current day
 struct TodayView: View {
     @Bindable var store: HabitStore
-    @State private var showingAddHabit = false
-    @State private var showingAddGroup = false
 
     var body: some View {
         NavigationStack {
             TodayContentView(store: store)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            showingAddHabit = true
-                        } label: {
-                            Label("Add Habit", systemImage: "plus.circle")
-                        }
-
-                        Button {
-                            showingAddGroup = true
-                        } label: {
-                            Label("Add Group", systemImage: "folder.badge.plus")
-                        }
-
-                        Divider()
-
-                        Button {
-                            store.createSampleData()
-                        } label: {
-                            Label("Load Sample Data", systemImage: "tray.and.arrow.down")
-                        }
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(JournalTheme.Colors.inkBlue)
-                    }
-                }
-            }
             .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $showingAddHabit) {
-                AddHabitView(store: store)
-            }
-            .sheet(isPresented: $showingAddGroup) {
-                AddGroupView(store: store)
-            }
         }
     }
 }
@@ -231,7 +194,7 @@ struct TodayContentView: View {
                                     Text("No habits yet")
                                         .font(JournalTheme.Fonts.habitName())
                                         .foregroundStyle(JournalTheme.Colors.completedGray)
-                                    Text("Tap + to add your first habit")
+                                    Text("Go to My Habits tab to add habits")
                                         .font(JournalTheme.Fonts.habitCriteria())
                                         .foregroundStyle(JournalTheme.Colors.completedGray)
                                 }

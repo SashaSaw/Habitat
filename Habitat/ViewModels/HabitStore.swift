@@ -7,6 +7,7 @@ final class HabitStore {
     private var modelContext: ModelContext
 
     var habits: [Habit] = []
+    var allHabits: [Habit] = []
     var groups: [HabitGroup] = []
     var selectedDate: Date = Date()
 
@@ -19,6 +20,7 @@ final class HabitStore {
 
     func fetchData() {
         fetchHabits()
+        fetchAllHabits()
         fetchGroups()
     }
 
@@ -33,6 +35,48 @@ final class HabitStore {
             print("Failed to fetch habits: \(error)")
             habits = []
         }
+    }
+
+    private func fetchAllHabits() {
+        let descriptor = FetchDescriptor<Habit>(
+            sortBy: [SortDescriptor(\.sortOrder), SortDescriptor(\.createdAt)]
+        )
+        do {
+            allHabits = try modelContext.fetch(descriptor)
+        } catch {
+            print("Failed to fetch all habits: \(error)")
+            allHabits = []
+        }
+    }
+
+    // MARK: - Live/Archived Habits
+
+    var liveHabits: [Habit] {
+        allHabits.filter { $0.isActive }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    var archivedHabits: [Habit] {
+        allHabits.filter { !$0.isActive }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    func archiveHabit(_ habit: Habit) {
+        habit.isActive = false
+        saveContext()
+        fetchData()
+    }
+
+    func unarchiveHabit(_ habit: Habit) {
+        habit.isActive = true
+        saveContext()
+        fetchData()
+    }
+
+    func reorderHabits(_ habits: [Habit]) {
+        for (index, habit) in habits.enumerated() {
+            habit.sortOrder = index
+        }
+        saveContext()
+        fetchAllHabits()
     }
 
     private func fetchGroups() {

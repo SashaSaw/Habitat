@@ -29,7 +29,16 @@ struct HabitDetailView: View {
 
                 // Actions
                 ActionsSection(
+                    habit: habit,
                     onEdit: { showingEditSheet = true },
+                    onArchive: {
+                        if habit.isActive {
+                            store.archiveHabit(habit)
+                        } else {
+                            store.unarchiveHabit(habit)
+                        }
+                        dismiss()
+                    },
                     onDelete: { showingDeleteConfirmation = true }
                 )
 
@@ -258,9 +267,11 @@ struct RecentActivitySection: View {
     }
 }
 
-/// Actions section with edit and delete buttons
+/// Actions section with edit, archive, and delete buttons
 struct ActionsSection: View {
+    let habit: Habit
     let onEdit: () -> Void
+    let onArchive: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
@@ -279,6 +290,23 @@ struct ActionsSection: View {
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(JournalTheme.Colors.inkBlue, lineWidth: 1.5)
+                )
+            }
+
+            Button {
+                onArchive()
+            } label: {
+                HStack {
+                    Image(systemName: habit.isActive ? "archivebox" : "arrow.up.bin")
+                    Text(habit.isActive ? "Archive Habit" : "Unarchive Habit")
+                }
+                .font(JournalTheme.Fonts.habitName())
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(JournalTheme.Colors.completedGray.opacity(0.5), lineWidth: 1.5)
                 )
             }
 
