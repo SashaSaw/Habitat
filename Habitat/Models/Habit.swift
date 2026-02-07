@@ -20,6 +20,12 @@ final class Habit {
     var isHobby: Bool = false
     @Attribute(.externalStorage) var iconImageData: Data? = nil
 
+    // Notification scheduling
+    var notificationsEnabled: Bool = false
+    var dailyNotificationMinutes: [Int] = []      // Minutes from midnight (0-1440), up to 5
+    var weeklyNotificationDays: [Int] = []        // Weekday indices (1=Sun, 2=Mon, ..., 7=Sat)
+    var weeklyNotificationTime: Int = 540         // Default 9:00 AM
+
     // Relationship to daily logs
     @Relationship(deleteRule: .cascade, inverse: \DailyLog.habit)
     var dailyLogs: [DailyLog] = []

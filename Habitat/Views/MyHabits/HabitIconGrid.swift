@@ -73,7 +73,8 @@ struct HabitIconGrid: View {
                 AddHabitIconView(onTap: onAddHabit)
             }
         }
-        .padding(.horizontal)
+        .padding(.leading, JournalTheme.Dimensions.marginLeft + 8)
+        .padding(.trailing, 16)
     }
 
     // MARK: - Habit Icon with Drag/Drop
@@ -249,7 +250,8 @@ struct HabitIconHStack: View {
                     AddHabitIconView(onTap: onAddHabit)
                 }
             }
-            .padding(.horizontal)
+            .padding(.leading, JournalTheme.Dimensions.marginLeft + 8)
+            .padding(.trailing, 16)
             .padding(.vertical, 8)
         }
     }

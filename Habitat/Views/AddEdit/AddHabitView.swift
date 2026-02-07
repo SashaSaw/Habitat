@@ -610,6 +610,11 @@ struct AddHabitView: View {
     @State private var isHobby: Bool = false
     @State private var iconImageData: Data?
 
+    // Notification scheduling
+    @State private var notificationsEnabled: Bool = false
+    @State private var dailyNotificationMinutes: [Int] = []
+    @State private var weeklyNotificationDays: Set<Int> = []
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -709,6 +714,16 @@ struct AddHabitView: View {
                         }
                     }
 
+                    // Notification Schedule (only for daily and weekly)
+                    if frequencyType != .monthly {
+                        NotificationScheduleSection(
+                            frequencyType: frequencyType,
+                            notificationsEnabled: $notificationsEnabled,
+                            dailyNotificationMinutes: $dailyNotificationMinutes,
+                            weeklyNotificationDays: $weeklyNotificationDays
+                        )
+                    }
+
                     // Success Criteria Section
                     FormCard(
                         header: "Success Criteria",
@@ -787,7 +802,10 @@ struct AddHabitView: View {
             successCriteria: successCriteria.isEmpty ? nil : successCriteria,
             groupId: selectedGroupId,
             isHobby: type == .positive && isHobby,
-            iconImageData: iconImageData
+            iconImageData: iconImageData,
+            notificationsEnabled: notificationsEnabled,
+            dailyNotificationMinutes: dailyNotificationMinutes,
+            weeklyNotificationDays: Array(weeklyNotificationDays)
         )
 
         if let groupId = selectedGroupId,
@@ -820,6 +838,11 @@ struct EditHabitView: View {
     @State private var iconImageData: Data?
     @State private var showingDeleteConfirmation = false
 
+    // Notification scheduling
+    @State private var notificationsEnabled: Bool
+    @State private var dailyNotificationMinutes: [Int]
+    @State private var weeklyNotificationDays: Set<Int>
+
     init(store: HabitStore, habit: Habit) {
         self.store = store
         self.habit = habit
@@ -833,6 +856,9 @@ struct EditHabitView: View {
         _frequencyTarget = State(initialValue: habit.frequencyTarget)
         _isHobby = State(initialValue: habit.isHobby)
         _iconImageData = State(initialValue: habit.iconImageData)
+        _notificationsEnabled = State(initialValue: habit.notificationsEnabled)
+        _dailyNotificationMinutes = State(initialValue: habit.dailyNotificationMinutes)
+        _weeklyNotificationDays = State(initialValue: Set(habit.weeklyNotificationDays))
     }
 
     var body: some View {
@@ -948,11 +974,23 @@ struct EditHabitView: View {
                             if frequencyType == .weekly {
                                 Stepper("Target: \(frequencyTarget)x per week", value: $frequencyTarget, in: 1...7)
                                     .font(JournalTheme.Fonts.habitName())
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
                             } else if frequencyType == .monthly {
                                 Stepper("Target: \(frequencyTarget)x per month", value: $frequencyTarget, in: 1...31)
                                     .font(JournalTheme.Fonts.habitName())
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
                             }
                         }
+                    }
+
+                    // Notification Schedule (only for daily and weekly)
+                    if frequencyType != .monthly {
+                        NotificationScheduleSection(
+                            frequencyType: frequencyType,
+                            notificationsEnabled: $notificationsEnabled,
+                            dailyNotificationMinutes: $dailyNotificationMinutes,
+                            weeklyNotificationDays: $weeklyNotificationDays
+                        )
                     }
 
                     // Success Criteria
@@ -1032,7 +1070,18 @@ struct EditHabitView: View {
         habit.isHobby = type == .positive && isHobby
         habit.iconImageData = iconImageData
 
+        // Notification settings
+        habit.notificationsEnabled = notificationsEnabled
+        habit.dailyNotificationMinutes = dailyNotificationMinutes
+        habit.weeklyNotificationDays = Array(weeklyNotificationDays)
+
         store.updateHabit(habit)
+
+        // Schedule notifications
+        Task {
+            await NotificationService.shared.scheduleNotifications(for: habit)
+        }
+
         dismiss()
     }
 }

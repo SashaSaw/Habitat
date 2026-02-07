@@ -41,7 +41,8 @@ struct ArchivedHabitsSection: View {
 
                         Spacer()
                     }
-                    .padding(.horizontal)
+                    .padding(.leading, JournalTheme.Dimensions.marginLeft + 8)
+                    .padding(.trailing, 16)
                 }
                 .buttonStyle(.plain)
 

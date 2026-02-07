@@ -96,7 +96,7 @@ struct TodayContentView: View {
                                         }
                                     },
                                     onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                                    onDelete: { store.deleteHabit(habit) },
+                                    onArchive: { store.archiveHabit(habit) },
                                     onLongPress: { selectedHabit = habit }
                                 )
                             }
@@ -152,7 +152,7 @@ struct TodayContentView: View {
                                         }
                                     },
                                     onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                                    onDelete: { store.deleteHabit(habit) },
+                                    onArchive: { store.archiveHabit(habit) },
                                     onLongPress: { selectedHabit = habit }
                                 )
                             }
@@ -180,7 +180,7 @@ struct TodayContentView: View {
                                     lineHeight: lineHeight,
                                     onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
                                     onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                                    onDelete: { store.deleteHabit(habit) },
+                                    onArchive: { store.archiveHabit(habit) },
                                     onLongPress: { selectedHabit = habit }
                                 )
                             }
@@ -312,14 +312,14 @@ struct LinedRow<Content: View>: View {
     }
 }
 
-/// A habit row with swipe-to-strikethrough gesture and swipe-left-to-delete
+/// A habit row with swipe-to-strikethrough gesture and swipe-left-to-archive
 struct HabitLinedRow: View {
     let habit: Habit
     let isCompleted: Bool
     let lineHeight: CGFloat
     let onComplete: () -> Void
     let onUncomplete: () -> Void
-    let onDelete: () -> Void
+    let onArchive: () -> Void
     let onLongPress: () -> Void
 
     // Swipe gesture state
@@ -328,29 +328,29 @@ struct HabitLinedRow: View {
     @State private var hasPassedThreshold: Bool = false
     @State private var textWidth: CGFloat = 0
 
-    // Delete gesture state
-    @State private var deleteOffset: CGFloat = 0
-    @State private var hasPassedDeleteThreshold: Bool = false
+    // Archive gesture state
+    @State private var archiveOffset: CGFloat = 0
+    @State private var hasPassedArchiveThreshold: Bool = false
 
     // Auto-reset timer for incomplete gestures
     @State private var resetTask: Task<Void, Never>? = nil
 
     // Constants
     private let completionThreshold: CGFloat = 0.3
-    private let deleteDistanceThreshold: CGFloat = 150 // Fixed pixel distance for delete
+    private let archiveDistanceThreshold: CGFloat = 150 // Fixed pixel distance for archive
     private let marginLeft = JournalTheme.Dimensions.marginLeft
 
     init(habit: Habit, isCompleted: Bool, lineHeight: CGFloat,
          onComplete: @escaping () -> Void,
          onUncomplete: @escaping () -> Void,
-         onDelete: @escaping () -> Void,
+         onArchive: @escaping () -> Void,
          onLongPress: @escaping () -> Void) {
         self.habit = habit
         self.isCompleted = isCompleted
         self.lineHeight = lineHeight
         self.onComplete = onComplete
         self.onUncomplete = onUncomplete
-        self.onDelete = onDelete
+        self.onArchive = onArchive
         self.onLongPress = onLongPress
         // Initialize progress based on completion state
         self._strikethroughProgress = State(initialValue: isCompleted ? 1.0 : 0.0)
@@ -362,27 +362,27 @@ struct HabitLinedRow: View {
         strikethroughProgress >= completionThreshold
     }
 
-    // Delete progress as percentage (0 to 1) for visual feedback
-    private var deleteProgress: CGFloat {
-        guard deleteOffset < 0 else { return 0 }
-        return min(1, abs(deleteOffset) / deleteDistanceThreshold)
+    // Archive progress as percentage (0 to 1) for visual feedback
+    private var archiveProgress: CGFloat {
+        guard archiveOffset < 0 else { return 0 }
+        return min(1, abs(archiveOffset) / archiveDistanceThreshold)
     }
 
     var body: some View {
         ZStack {
-            // Delete background (red, only shown when swiping left)
-            if deleteOffset < 0 {
+            // Archive background (orange, only shown when swiping left)
+            if archiveOffset < 0 {
                 HStack {
                     Spacer()
                     ZStack {
-                        JournalTheme.Colors.negativeRedDark
+                        Color.orange
 
-                        Image(systemName: "trash")
+                        Image(systemName: "archivebox")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(.white)
-                            .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
+                            .opacity(archiveProgress > 0.3 ? 1 : archiveProgress * 3)
                     }
-                    .frame(width: abs(deleteOffset))
+                    .frame(width: abs(archiveOffset))
                 }
             }
 
@@ -450,12 +450,12 @@ struct HabitLinedRow: View {
             .padding(.leading, marginLeft + 8)
             .padding(.trailing, 16)
             .background(Color.clear)
-            .offset(x: deleteOffset)
+            .offset(x: archiveOffset)
         }
         .frame(height: lineHeight)
         .contentShape(Rectangle())
-        // Delete gesture on full row (left swipes only)
-        .gesture(deleteGesture())
+        // Archive gesture on full row (left swipes only)
+        .gesture(archiveGesture())
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in
@@ -485,10 +485,10 @@ struct HabitLinedRow: View {
         }
         .onChange(of: isDragging) { _, newValue in
             if !newValue {
-                // Dragging ended - start 1-second reset timer
+                // Dragging ended - start reset timer
                 resetTask?.cancel()
                 resetTask = Task {
-                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.5 seconds
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
                     if !Task.isCancelled {
                         await MainActor.run {
                             // Reset if still in incomplete state
@@ -498,10 +498,10 @@ struct HabitLinedRow: View {
                                     hasPassedThreshold = false
                                 }
                             }
-                            if deleteOffset != 0 {
+                            if archiveOffset != 0 {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    deleteOffset = 0
-                                    hasPassedDeleteThreshold = false
+                                    archiveOffset = 0
+                                    hasPassedArchiveThreshold = false
                                 }
                             }
                         }
@@ -569,8 +569,8 @@ struct HabitLinedRow: View {
             }
     }
 
-    // Delete gesture (left swipe) - on full row
-    private func deleteGesture() -> some Gesture {
+    // Archive gesture (left swipe) - on full row
+    private func archiveGesture() -> some Gesture {
         DragGesture(minimumDistance: 20, coordinateSpace: .local)
             .onChanged { value in
                 let horizontal = abs(value.translation.width)
@@ -581,17 +581,17 @@ struct HabitLinedRow: View {
                 guard horizontal > vertical, translation < 0 else { return }
 
                 isDragging = true
-                deleteOffset = translation
+                archiveOffset = translation
 
-                // Reset completion progress if we're deleting
+                // Reset completion progress if we're archiving
                 if strikethroughProgress > 0 && !isCompleted {
                     strikethroughProgress = 0
                 }
 
-                // Check delete threshold for haptic (using fixed pixel distance)
-                let currentlyPastDelete = abs(translation) >= deleteDistanceThreshold
-                if currentlyPastDelete != hasPassedDeleteThreshold {
-                    hasPassedDeleteThreshold = currentlyPastDelete
+                // Check archive threshold for haptic (using fixed pixel distance)
+                let currentlyPastArchive = abs(translation) >= archiveDistanceThreshold
+                if currentlyPastArchive != hasPassedArchiveThreshold {
+                    hasPassedArchiveThreshold = currentlyPastArchive
                     HapticFeedback.thresholdCrossed()
                 }
             }
@@ -602,20 +602,20 @@ struct HabitLinedRow: View {
                 // Only handle left swipes
                 guard translation < 0 else { return }
 
-                if abs(translation) >= deleteDistanceThreshold {
-                    // Delete the habit
+                if abs(translation) >= archiveDistanceThreshold {
+                    // Archive the habit
                     HapticFeedback.completionConfirmed()
-                    deleteOffset = 0
+                    archiveOffset = 0
                     withAnimation(.easeOut(duration: 0.25)) {
-                        onDelete()
+                        onArchive()
                     }
                 } else {
                     // Snap back
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        deleteOffset = 0
+                        archiveOffset = 0
                     }
                 }
-                hasPassedDeleteThreshold = false
+                hasPassedArchiveThreshold = false
             }
     }
 }
@@ -628,38 +628,38 @@ struct NegativeHabitLinedRow: View {
     let lineHeight: CGFloat
     let onComplete: () -> Void // Mark as slipped
     let onUncomplete: () -> Void // Undo slip
-    let onDelete: () -> Void
+    let onArchive: () -> Void
     let onLongPress: () -> Void
 
-    // Delete gesture state
-    @State private var deleteOffset: CGFloat = 0
-    @State private var hasPassedDeleteThreshold: Bool = false
+    // Archive gesture state
+    @State private var archiveOffset: CGFloat = 0
+    @State private var hasPassedArchiveThreshold: Bool = false
     @State private var isDragging: Bool = false
     @State private var resetTask: Task<Void, Never>? = nil
 
-    private let deleteDistanceThreshold: CGFloat = 150
+    private let archiveDistanceThreshold: CGFloat = 150
     private let marginLeft = JournalTheme.Dimensions.marginLeft
 
-    private var deleteProgress: CGFloat {
-        guard deleteOffset < 0 else { return 0 }
-        return min(1, abs(deleteOffset) / deleteDistanceThreshold)
+    private var archiveProgress: CGFloat {
+        guard archiveOffset < 0 else { return 0 }
+        return min(1, abs(archiveOffset) / archiveDistanceThreshold)
     }
 
     var body: some View {
         ZStack {
-            // Delete background (red, only shown when swiping left)
-            if deleteOffset < 0 {
+            // Archive background (orange, only shown when swiping left)
+            if archiveOffset < 0 {
                 HStack {
                     Spacer()
                     ZStack {
-                        JournalTheme.Colors.negativeRedDark
+                        Color.orange
 
-                        Image(systemName: "trash")
+                        Image(systemName: "archivebox")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(.white)
-                            .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
+                            .opacity(archiveProgress > 0.3 ? 1 : archiveProgress * 3)
                     }
-                    .frame(width: abs(deleteOffset))
+                    .frame(width: abs(archiveOffset))
                 }
             }
 
@@ -709,11 +709,11 @@ struct NegativeHabitLinedRow: View {
             .padding(.leading, marginLeft + 8)
             .padding(.trailing, 16)
             .background(Color.clear)
-            .offset(x: deleteOffset)
+            .offset(x: archiveOffset)
         }
         .frame(height: lineHeight)
         .contentShape(Rectangle())
-        .gesture(deleteGesture())
+        .gesture(archiveGesture())
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in
@@ -739,10 +739,10 @@ struct NegativeHabitLinedRow: View {
                     try? await Task.sleep(nanoseconds: 100_000_000)
                     if !Task.isCancelled {
                         await MainActor.run {
-                            if deleteOffset != 0 {
+                            if archiveOffset != 0 {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    deleteOffset = 0
-                                    hasPassedDeleteThreshold = false
+                                    archiveOffset = 0
+                                    hasPassedArchiveThreshold = false
                                 }
                             }
                         }
@@ -754,7 +754,7 @@ struct NegativeHabitLinedRow: View {
         }
     }
 
-    private func deleteGesture() -> some Gesture {
+    private func archiveGesture() -> some Gesture {
         DragGesture(minimumDistance: 20, coordinateSpace: .local)
             .onChanged { value in
                 let horizontal = abs(value.translation.width)
@@ -764,11 +764,11 @@ struct NegativeHabitLinedRow: View {
                 guard horizontal > vertical, translation < 0 else { return }
 
                 isDragging = true
-                deleteOffset = translation
+                archiveOffset = translation
 
-                let currentlyPastDelete = abs(translation) >= deleteDistanceThreshold
-                if currentlyPastDelete != hasPassedDeleteThreshold {
-                    hasPassedDeleteThreshold = currentlyPastDelete
+                let currentlyPastArchive = abs(translation) >= archiveDistanceThreshold
+                if currentlyPastArchive != hasPassedArchiveThreshold {
+                    hasPassedArchiveThreshold = currentlyPastArchive
                     HapticFeedback.thresholdCrossed()
                 }
             }
@@ -778,18 +778,18 @@ struct NegativeHabitLinedRow: View {
 
                 guard translation < 0 else { return }
 
-                if abs(translation) >= deleteDistanceThreshold {
+                if abs(translation) >= archiveDistanceThreshold {
                     HapticFeedback.completionConfirmed()
-                    deleteOffset = 0
+                    archiveOffset = 0
                     withAnimation(.easeOut(duration: 0.25)) {
-                        onDelete()
+                        onArchive()
                     }
                 } else {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        deleteOffset = 0
+                        archiveOffset = 0
                     }
                 }
-                hasPassedDeleteThreshold = false
+                hasPassedArchiveThreshold = false
             }
     }
 }
@@ -948,10 +948,10 @@ struct GroupLinedRow: View {
                         }
                     },
                     onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                    onDelete: {
-                        // Check if this is the last habit in the group
+                    onArchive: {
+                        // Check if this is the last active habit in the group
                         let isLastHabit = habits.count == 1
-                        store.deleteHabit(habit)
+                        store.archiveHabit(habit)
                         if isLastHabit {
                             onLastHabitDeleted()
                         }

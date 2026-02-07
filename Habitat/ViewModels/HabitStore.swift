@@ -150,7 +150,10 @@ final class HabitStore {
         successCriteria: String? = nil,
         groupId: UUID? = nil,
         isHobby: Bool = false,
-        iconImageData: Data? = nil
+        iconImageData: Data? = nil,
+        notificationsEnabled: Bool = false,
+        dailyNotificationMinutes: [Int] = [],
+        weeklyNotificationDays: [Int] = []
     ) {
         let maxSortOrder = habits.map { $0.sortOrder }.max() ?? 0
         let habit = Habit(
@@ -166,9 +169,20 @@ final class HabitStore {
             isHobby: isHobby
         )
         habit.iconImageData = iconImageData
+        habit.notificationsEnabled = notificationsEnabled
+        habit.dailyNotificationMinutes = dailyNotificationMinutes
+        habit.weeklyNotificationDays = weeklyNotificationDays
+
         modelContext.insert(habit)
         saveContext()
         fetchData()
+
+        // Schedule notifications for the new habit
+        if notificationsEnabled {
+            Task {
+                await NotificationService.shared.scheduleNotifications(for: habit)
+            }
+        }
     }
 
     func updateHabit(_ habit: Habit) {
@@ -177,13 +191,19 @@ final class HabitStore {
     }
 
     func deleteHabit(_ habit: Habit) {
+        // Cancel any scheduled notifications for this habit
+        Task {
+            await NotificationService.shared.cancelNotifications(for: habit)
+        }
+
         // Remove from any groups
         for group in groups where group.habitIds.contains(habit.id) {
             group.habitIds.removeAll { $0 == habit.id }
         }
 
-        // Remove from local array first (faster than re-fetching)
+        // Remove from local arrays
         habits.removeAll { $0.id == habit.id }
+        allHabits.removeAll { $0.id == habit.id }
 
         // Then delete from database
         modelContext.delete(habit)

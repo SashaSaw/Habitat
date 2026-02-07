@@ -35,23 +35,7 @@ struct MyHabitsView: View {
                     }
                 }
             }
-            .navigationTitle("My Habits")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            store.createSampleData()
-                        } label: {
-                            Label("Load Sample Data", systemImage: "tray.and.arrow.down")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(JournalTheme.Colors.inkBlue)
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             .sheet(isPresented: $showingAddHabit) {
                 AddHabitView(store: store)
             }
@@ -111,7 +95,8 @@ struct MyHabitsView: View {
                         .font(JournalTheme.Fonts.habitCriteria())
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
-                .padding(.horizontal)
+                .padding(.leading, JournalTheme.Dimensions.marginLeft + 8)
+                .padding(.trailing, 16)
                 .padding(.top, 16)
 
                 // Live habits section (always show to include Add button)
@@ -121,7 +106,7 @@ struct MyHabitsView: View {
                             .font(JournalTheme.Fonts.sectionHeader())
                             .foregroundStyle(JournalTheme.Colors.sectionHeader)
                             .tracking(2)
-                            .padding(.horizontal)
+                            .padding(.leading, JournalTheme.Dimensions.marginLeft + 8)
                     }
 
                     HabitIconGrid(

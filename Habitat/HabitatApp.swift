@@ -28,6 +28,13 @@ struct HabitatApp: App {
         }
     }()
 
+    init() {
+        // Request notification permission on app launch
+        Task {
+            _ = await NotificationService.shared.requestPermission()
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
