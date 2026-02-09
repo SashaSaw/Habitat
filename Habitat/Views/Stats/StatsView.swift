@@ -194,12 +194,12 @@ struct HabitCompletionSection: View {
                 .font(JournalTheme.Fonts.sectionHeader())
                 .foregroundStyle(JournalTheme.Colors.inkBlue)
 
-            if store.habits.isEmpty {
+            if store.recurringHabits.isEmpty {
                 Text("No habits yet")
                     .font(JournalTheme.Fonts.habitCriteria())
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             } else {
-                ForEach(store.habits) { habit in
+                ForEach(store.recurringHabits) { habit in
                     HabitCompletionRow(habit: habit, store: store)
                 }
             }

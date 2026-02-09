@@ -305,7 +305,7 @@ struct MonthGridContentView: View {
                             habits: standaloneHabits,
                             groups: groups,
                             negativeHabits: negativeHabits,
-                            allHabits: store.habits,
+                            allHabits: store.recurringHabits,
                             isGoodDay: showMustDos ? store.isGoodDay(for: date) : false,
                             showGoodDayHighlight: showMustDos,
                             needsHorizontalScroll: needsHorizontalScroll,

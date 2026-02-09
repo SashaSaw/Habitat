@@ -111,6 +111,11 @@ final class HabitStore {
         habits.filter { $0.isTask }
     }
 
+    /// All recurring habits (excludes one-off tasks) — for stats and month views
+    var recurringHabits: [Habit] {
+        habits.filter { !$0.isTask }
+    }
+
     /// Positive must-do habits not in any group (excludes negative)
     var standalonePositiveMustDoHabits: [Habit] {
         let groupedHabitIds = Set(mustDoGroups.flatMap { $0.habitIds })
@@ -119,9 +124,29 @@ final class HabitStore {
         }
     }
 
-    /// Positive nice-to-do habits (excludes negative)
+    /// Positive nice-to-do habits (excludes negative and tasks)
     var positiveNiceToDoHabits: [Habit] {
-        niceToDoHabits.filter { $0.type == .positive }
+        niceToDoHabits.filter { $0.type == .positive && !$0.isTask }
+    }
+
+    /// Uncompleted one-off tasks: created today OR rolled over from previous days, excluding completed
+    var todayVisibleTasks: [Habit] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        return habits.filter { habit in
+            guard habit.isTask else { return false }
+            // Exclude completed tasks (they appear in todayCompletedTasks)
+            guard !habit.isCompleted(for: today) else { return false }
+            let createdDay = calendar.startOfDay(for: habit.createdAt)
+            // Show if created today, or if created before today and still uncompleted (rollover)
+            return createdDay == today || !habit.isCompleted(for: createdDay)
+        }
+    }
+
+    /// Completed tasks for today (to show in done section)
+    var todayCompletedTasks: [Habit] {
+        let today = Date()
+        return habits.filter { $0.isTask && $0.isCompleted(for: today) }
     }
 
     var mustDoGroups: [HabitGroup] {

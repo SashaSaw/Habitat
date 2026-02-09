@@ -159,6 +159,62 @@ struct TodayContentView: View {
                             .animation(.easeInOut(duration: 0.25), value: store.positiveNiceToDoHabits.count)
                         }
 
+                        // TODAY ONLY Section (one-off tasks)
+                        if !store.todayVisibleTasks.isEmpty || !store.todayCompletedTasks.isEmpty {
+                            LinedRow(height: lineHeight) {
+                                EmptyView()
+                            }
+
+                            LinedRow(height: lineHeight) {
+                                HStack(spacing: 8) {
+                                    Text("◇ TODAY ONLY")
+                                        .font(JournalTheme.Fonts.sectionHeader())
+                                        .foregroundStyle(JournalTheme.Colors.teal)
+                                        .tracking(2)
+
+                                    // Count badge
+                                    let uncompletedCount = store.todayVisibleTasks.count
+                                    if uncompletedCount > 0 {
+                                        Text("\(uncompletedCount)")
+                                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                                            .foregroundStyle(.white)
+                                            .frame(width: 18, height: 18)
+                                            .background(Circle().fill(JournalTheme.Colors.teal))
+                                    }
+                                }
+                            }
+
+                            // Uncompleted tasks
+                            ForEach(store.todayVisibleTasks) { task in
+                                TaskLinedRow(
+                                    habit: task,
+                                    isCompleted: false,
+                                    lineHeight: lineHeight,
+                                    onComplete: {
+                                        store.setCompletion(for: task, completed: true, on: selectedDate)
+                                    },
+                                    onUncomplete: { },
+                                    onDelete: { store.deleteHabit(task) }
+                                )
+                            }
+                            .animation(.easeInOut(duration: 0.25), value: store.todayVisibleTasks.count)
+
+                            // Completed tasks
+                            ForEach(store.todayCompletedTasks) { task in
+                                TaskLinedRow(
+                                    habit: task,
+                                    isCompleted: true,
+                                    lineHeight: lineHeight,
+                                    onComplete: { },
+                                    onUncomplete: {
+                                        store.setCompletion(for: task, completed: false, on: selectedDate)
+                                    },
+                                    onDelete: { store.deleteHabit(task) }
+                                )
+                            }
+                            .animation(.easeInOut(duration: 0.25), value: store.todayCompletedTasks.count)
+                        }
+
                         // DON'T DO Section (negative habits)
                         if !store.negativeHabits.isEmpty {
                             LinedRow(height: lineHeight) {
@@ -790,6 +846,292 @@ struct NegativeHabitLinedRow: View {
                     }
                 }
                 hasPassedArchiveThreshold = false
+            }
+    }
+}
+
+/// A one-off task row with square checkbox, teal accent, swipe-to-strikethrough, and swipe-left-to-delete
+struct TaskLinedRow: View {
+    let habit: Habit
+    let isCompleted: Bool
+    let lineHeight: CGFloat
+    let onComplete: () -> Void
+    let onUncomplete: () -> Void
+    let onDelete: () -> Void
+
+    // Swipe-to-complete gesture state
+    @State private var strikethroughProgress: CGFloat
+    @State private var isDragging: Bool = false
+    @State private var hasPassedThreshold: Bool = false
+    @State private var textWidth: CGFloat = 0
+
+    // Delete gesture state (swipe left)
+    @State private var deleteOffset: CGFloat = 0
+    @State private var hasPassedDeleteThreshold: Bool = false
+
+    // Auto-reset timer
+    @State private var resetTask: Task<Void, Never>? = nil
+
+    // Constants
+    private let completionThreshold: CGFloat = 0.3
+    private let deleteDistanceThreshold: CGFloat = 150
+    private let marginLeft = JournalTheme.Dimensions.marginLeft
+
+    init(habit: Habit, isCompleted: Bool, lineHeight: CGFloat,
+         onComplete: @escaping () -> Void,
+         onUncomplete: @escaping () -> Void,
+         onDelete: @escaping () -> Void) {
+        self.habit = habit
+        self.isCompleted = isCompleted
+        self.lineHeight = lineHeight
+        self.onComplete = onComplete
+        self.onUncomplete = onUncomplete
+        self.onDelete = onDelete
+        self._strikethroughProgress = State(initialValue: isCompleted ? 1.0 : 0.0)
+        self._hasPassedThreshold = State(initialValue: isCompleted)
+    }
+
+    private var isVisuallyCompleted: Bool {
+        strikethroughProgress >= completionThreshold
+    }
+
+    private var deleteProgress: CGFloat {
+        guard deleteOffset < 0 else { return 0 }
+        return min(1, abs(deleteOffset) / deleteDistanceThreshold)
+    }
+
+    var body: some View {
+        ZStack {
+            // Delete background (coral, only shown when swiping left)
+            if deleteOffset < 0 {
+                HStack {
+                    Spacer()
+                    ZStack {
+                        JournalTheme.Colors.coral
+
+                        Image(systemName: "trash")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(.white)
+                            .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
+                    }
+                    .frame(width: abs(deleteOffset))
+                }
+            }
+
+            // Main content
+            HStack(spacing: 12) {
+                // Square checkbox with rounded corners (teal) — distinguishes tasks from habits
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(
+                        isVisuallyCompleted ? JournalTheme.Colors.teal : JournalTheme.Colors.completedGray,
+                        lineWidth: 1.5
+                    )
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(isVisuallyCompleted ? JournalTheme.Colors.teal.opacity(0.15) : Color.clear)
+                    )
+                    .overlay {
+                        if isVisuallyCompleted {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(JournalTheme.Colors.teal)
+                        }
+                    }
+                    .frame(width: 20, height: 20)
+
+                // Task text with strikethrough overlay
+                HStack(spacing: 6) {
+                    Text(habit.name)
+                        .font(JournalTheme.Fonts.habitName())
+                        .foregroundStyle(
+                            isVisuallyCompleted
+                                ? JournalTheme.Colors.completedGray
+                                : JournalTheme.Colors.inkBlack
+                        )
+                }
+                .background(
+                    GeometryReader { textGeometry in
+                        Color.clear
+                            .onAppear { textWidth = textGeometry.size.width }
+                            .onChange(of: textGeometry.size.width) { _, newWidth in
+                                textWidth = newWidth
+                            }
+                    }
+                )
+                .overlay(alignment: .leading) {
+                    StrikethroughLine(
+                        width: textWidth > 0 ? textWidth : 200,
+                        color: JournalTheme.Colors.teal,
+                        progress: $strikethroughProgress
+                    )
+                }
+                // Completion gesture only on text area
+                .contentShape(Rectangle())
+                .gesture(completionGesture(hitboxWidth: textWidth > 0 ? textWidth : 200))
+
+                Spacer()
+
+                // TODAY badge
+                if !isVisuallyCompleted {
+                    Text("TODAY")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.teal)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(JournalTheme.Colors.teal.opacity(0.12))
+                        )
+                }
+            }
+            .frame(height: lineHeight, alignment: .bottom)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, marginLeft + 8)
+            .padding(.trailing, 16)
+            .background(Color.clear)
+            .offset(x: deleteOffset)
+        }
+        .frame(height: lineHeight)
+        .contentShape(Rectangle())
+        // Delete gesture on full row (left swipes only)
+        .gesture(deleteGesture())
+        .onTapGesture {
+            // Tap to undo completion
+            if isCompleted {
+                withAnimation(JournalTheme.Animations.strikethrough) {
+                    strikethroughProgress = 0.0
+                    hasPassedThreshold = false
+                }
+                HapticFeedback.selection()
+                onUncomplete()
+            }
+        }
+        .onChange(of: isCompleted) { _, newValue in
+            if !isDragging {
+                withAnimation(JournalTheme.Animations.strikethrough) {
+                    strikethroughProgress = newValue ? 1.0 : 0.0
+                    hasPassedThreshold = newValue
+                }
+            }
+        }
+        .onChange(of: isDragging) { _, newValue in
+            if !newValue {
+                resetTask?.cancel()
+                resetTask = Task {
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            if !isCompleted && strikethroughProgress > 0 && strikethroughProgress < 1 {
+                                withAnimation(JournalTheme.Animations.strikethrough) {
+                                    strikethroughProgress = 0
+                                    hasPassedThreshold = false
+                                }
+                            }
+                            if deleteOffset != 0 {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    deleteOffset = 0
+                                    hasPassedDeleteThreshold = false
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                resetTask?.cancel()
+            }
+        }
+    }
+
+    // Completion gesture (right swipe) - only on text area
+    private func completionGesture(hitboxWidth: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .local)
+            .onChanged { value in
+                let horizontal = abs(value.translation.width)
+                let vertical = abs(value.translation.height)
+                let translation = value.translation.width
+
+                guard horizontal > vertical, translation > 0 else { return }
+
+                isDragging = true
+
+                if isCompleted {
+                    // Already completed - ignore right swipe
+                } else {
+                    let forwardProgress = translation / hitboxWidth
+                    strikethroughProgress = max(0, min(1, forwardProgress))
+
+                    let currentlyPastThreshold = strikethroughProgress >= completionThreshold
+                    if currentlyPastThreshold != hasPassedThreshold {
+                        hasPassedThreshold = currentlyPastThreshold
+                        HapticFeedback.thresholdCrossed()
+                    }
+                }
+            }
+            .onEnded { value in
+                isDragging = false
+                let translation = value.translation.width
+
+                guard translation > 0 else { return }
+
+                if !isCompleted {
+                    if strikethroughProgress >= completionThreshold {
+                        withAnimation(JournalTheme.Animations.strikethrough) {
+                            strikethroughProgress = 1.0
+                        }
+                        HapticFeedback.completionConfirmed()
+                        onComplete()
+                        hasPassedThreshold = true
+                    } else {
+                        withAnimation(JournalTheme.Animations.strikethrough) {
+                            strikethroughProgress = 0
+                        }
+                        hasPassedThreshold = false
+                    }
+                }
+            }
+    }
+
+    // Delete gesture (left swipe) - on full row
+    private func deleteGesture() -> some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .local)
+            .onChanged { value in
+                let horizontal = abs(value.translation.width)
+                let vertical = abs(value.translation.height)
+                let translation = value.translation.width
+
+                guard horizontal > vertical, translation < 0 else { return }
+
+                isDragging = true
+                deleteOffset = translation
+
+                if strikethroughProgress > 0 && !isCompleted {
+                    strikethroughProgress = 0
+                }
+
+                let currentlyPastDelete = abs(translation) >= deleteDistanceThreshold
+                if currentlyPastDelete != hasPassedDeleteThreshold {
+                    hasPassedDeleteThreshold = currentlyPastDelete
+                    HapticFeedback.thresholdCrossed()
+                }
+            }
+            .onEnded { value in
+                isDragging = false
+                let translation = value.translation.width
+
+                guard translation < 0 else { return }
+
+                if abs(translation) >= deleteDistanceThreshold {
+                    HapticFeedback.completionConfirmed()
+                    deleteOffset = 0
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        onDelete()
+                    }
+                } else {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        deleteOffset = 0
+                    }
+                }
+                hasPassedDeleteThreshold = false
             }
     }
 }
