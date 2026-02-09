@@ -274,6 +274,14 @@ struct MonthGridContentView: View {
         return columnCount > 4
     }
 
+    /// Calculates the x-offset where negative habit columns begin
+    private var negativeColumnXOffset: CGFloat {
+        let dayColumnWidth: CGFloat = 66 // 50 + 8*2
+        let habitColumnWidth: CGFloat = 68 // 60 + 4*2
+        let positiveColumns = CGFloat(standaloneHabits.count + groups.count)
+        return dayColumnWidth + positiveColumns * habitColumnWidth
+    }
+
     var body: some View {
         AxisLockedScrollView(allowHorizontalScroll: needsHorizontalScroll) {
             // Sticky header
@@ -314,6 +322,23 @@ struct MonthGridContentView: View {
                             }
                         )
                     }
+                }
+            }
+            .overlay {
+                // Continuous bold red dotted line for negative column divider
+                if !negativeHabits.isEmpty {
+                    GeometryReader { geo in
+                        Path { path in
+                            let x = negativeColumnXOffset - 2.5
+                            path.move(to: CGPoint(x: x, y: 0))
+                            path.addLine(to: CGPoint(x: x, y: geo.size.height))
+                        }
+                        .stroke(
+                            JournalTheme.Colors.negativeRedDark,
+                            style: StrokeStyle(lineWidth: 2.5, dash: [5, 3])
+                        )
+                    }
+                    .allowsHitTesting(false)
                 }
             }
             .padding(.bottom, 100)
@@ -367,7 +392,7 @@ struct HabitHeaderRowView: View {
                     .padding(.horizontal, 4)
             }
 
-            // Negative habit column headers (red text)
+            // Negative habit column headers (no per-row divider - handled by continuous overlay)
             ForEach(negativeHabits) { habit in
                 Text(habit.name)
                     .font(.system(size: 11, weight: .medium))
@@ -380,6 +405,27 @@ struct HabitHeaderRowView: View {
         .modifier(ConditionalFixedSize(enabled: needsHorizontalScroll))
         .padding(.vertical, 8)
         .background(Color.clear)
+        .overlay {
+            // Bold red dotted line in header row area
+            if !negativeHabits.isEmpty {
+                GeometryReader { geo in
+                    let dayColumnWidth: CGFloat = 66
+                    let habitColumnWidth: CGFloat = 68
+                    let positiveColumns = CGFloat(habits.count + groups.count)
+                    let xOffset = dayColumnWidth + positiveColumns * habitColumnWidth - 2.5
+
+                    Path { path in
+                        path.move(to: CGPoint(x: xOffset, y: 0))
+                        path.addLine(to: CGPoint(x: xOffset, y: geo.size.height))
+                    }
+                    .stroke(
+                        JournalTheme.Colors.negativeRedDark,
+                        style: StrokeStyle(lineWidth: 2.5, dash: [5, 3])
+                    )
+                }
+                .allowsHitTesting(false)
+            }
+        }
     }
 }
 
@@ -476,7 +522,7 @@ struct DayRowView: View {
                 .padding(.horizontal, 4)
             }
 
-            // Negative habit cells
+            // Negative habit cells (no per-cell background - handled by continuous overlay)
             ForEach(negativeHabits) { habit in
                 GridCellView(
                     isCompleted: habit.isCompleted(for: date),
@@ -522,15 +568,18 @@ struct GridCellView: View {
                 } else if habitType == .negative {
                     // Negative habits: inverted logic
                     // Completed = slipped (bad) = cross
-                    // Not completed = avoided (good) = checkmark
+                    // Not completed = avoided (good) = empty/dash
                     if isCompleted {
                         HandDrawnCross(size: 18, color: JournalTheme.Colors.negativeRedDark)
                     } else {
-                        HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.goodDayGreenDark)
+                        // Show subtle dash to indicate "no slip"
+                        Text("–")
+                            .font(.system(size: 14, weight: .light))
+                            .foregroundStyle(JournalTheme.Colors.completedGray.opacity(0.5))
                     }
                 } else if isCompleted {
-                    // Positive habit completed - show checkmark
-                    HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.inkBlue)
+                    // Positive habit completed - show green checkmark
+                    HandDrawnCheckmark(size: 18, color: JournalTheme.Colors.goodDayGreenDark)
                 } else if showCross {
                     // Not completed in must-do view - show cross
                     HandDrawnCross(size: 18, color: JournalTheme.Colors.negativeRedDark.opacity(0.6))
@@ -551,6 +600,7 @@ struct GridCellView: View {
         .frame(width: 24, height: 24)
     }
 }
+
 
 #Preview {
     ContentView()

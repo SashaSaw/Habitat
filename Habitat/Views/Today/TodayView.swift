@@ -895,16 +895,28 @@ struct NegativeHabitLinedRow: View {
 
             // Main content
             HStack(spacing: 12) {
-                // Slip indicator - X mark if slipped today
-                if isCompleted {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
-                } else {
-                    Circle()
-                        .strokeBorder(JournalTheme.Colors.completedGray, lineWidth: 1.5)
-                        .frame(width: 20, height: 20)
-                }
+                // Slip indicator — rounded square, X mark if slipped
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(
+                        isCompleted
+                            ? JournalTheme.Colors.negativeRedDark
+                            : JournalTheme.Colors.completedGray,
+                        lineWidth: 1.5
+                    )
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(isCompleted
+                                ? JournalTheme.Colors.negativeRedDark.opacity(0.12)
+                                : Color.clear)
+                    )
+                    .overlay {
+                        if isCompleted {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                        }
+                    }
+                    .frame(width: 20, height: 20)
 
                 // Habit name
                 Text(habit.name)
@@ -923,15 +935,27 @@ struct NegativeHabitLinedRow: View {
 
                 Spacer()
 
-                // Days since streak display
+                // Days since / slipped pill badge
                 if !isCompleted {
                     Text("\(daysSince) days")
-                        .font(JournalTheme.Fonts.streakCount())
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(JournalTheme.Colors.goodDayGreenDark.opacity(0.12))
+                        )
                 } else {
                     Text("Slipped")
-                        .font(JournalTheme.Fonts.streakCount())
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(JournalTheme.Colors.negativeRedDark.opacity(0.12))
+                        )
                 }
             }
             .frame(minHeight: 44)
