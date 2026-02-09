@@ -1,46 +1,221 @@
 import SwiftUI
 import SwiftData
 
-/// Detailed view for a single habit
+/// Redesigned detail view for a single habit — settings-row layout
 struct HabitDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var store: HabitStore
     let habit: Habit
 
-    @State private var showingEditSheet = false
     @State private var showingDeleteConfirmation = false
+    @State private var editingName = false
+    @State private var editedName: String = ""
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                // Header
-                HabitDetailHeader(habit: habit)
+                // MARK: - Header
+                VStack(alignment: .center, spacing: 12) {
+                    // Icon
+                    habitIcon
 
-                // Stats Cards
+                    // Editable name
+                    if editingName {
+                        HStack {
+                            TextField("Habit name", text: $editedName)
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.inkBlack)
+                                .multilineTextAlignment(.center)
+                                .textFieldStyle(.plain)
+
+                            Button("Save") {
+                                habit.name = editedName.trimmingCharacters(in: .whitespaces)
+                                store.updateHabit(habit)
+                                editingName = false
+                            }
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.teal)
+                        }
+                        .padding(.horizontal)
+                    } else {
+                        Text(habit.name)
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+                            .onTapGesture {
+                                editedName = habit.name
+                                editingName = true
+                            }
+                    }
+
+                    // Badges
+                    HStack(spacing: 8) {
+                        Text(habit.tier.displayName.uppercased())
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(habit.tier == .mustDo ? JournalTheme.Colors.amber : JournalTheme.Colors.completedGray)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(habit.tier == .mustDo ? JournalTheme.Colors.amber.opacity(0.12) : JournalTheme.Colors.lineLight.opacity(0.5))
+                            )
+
+                        Text(habit.frequencyDisplayName.uppercased())
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(JournalTheme.Colors.lineLight.opacity(0.5))
+                            )
+
+                        if habit.type == .negative {
+                            Text("QUIT")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(JournalTheme.Colors.coral)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(JournalTheme.Colors.coral.opacity(0.12))
+                                )
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+
+                // MARK: - Stats Cards
                 HabitStatsSection(habit: habit, store: store)
 
-                // Recent Activity
+                // MARK: - Recent Activity
                 RecentActivitySection(habit: habit)
 
-                // Hobby Logs Section (only for hobbies with content)
-                if habit.isHobby {
+                // MARK: - Hobby Logs
+                if habit.isHobby || habit.enableNotesPhotos {
                     HobbyLogsSection(habit: habit)
                 }
 
-                // Actions
-                ActionsSection(
-                    habit: habit,
-                    onEdit: { showingEditSheet = true },
-                    onArchive: {
+                // MARK: - Settings
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("SETTINGS")
+                        .font(JournalTheme.Fonts.sectionHeader())
+                        .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                        .tracking(2)
+
+                    VStack(spacing: 0) {
+                        // Priority
+                        settingsRow(
+                            icon: "star.fill",
+                            iconColor: JournalTheme.Colors.amber,
+                            label: "Priority",
+                            value: habit.tier.displayName
+                        ) {
+                            habit.tier = habit.tier == .mustDo ? .niceToDo : .mustDo
+                            store.updateHabit(habit)
+                        }
+
+                        Divider().padding(.leading, 48)
+
+                        // Frequency
+                        settingsRow(
+                            icon: "repeat",
+                            iconColor: JournalTheme.Colors.teal,
+                            label: "Frequency",
+                            value: habit.frequencyDisplayName
+                        ) {
+                            // Would navigate to frequency editor — for now just cycles
+                        }
+
+                        Divider().padding(.leading, 48)
+
+                        // Reminders
+                        settingsRow(
+                            icon: "bell.fill",
+                            iconColor: JournalTheme.Colors.amber,
+                            label: "Reminders",
+                            value: habit.notificationsEnabled ? "On" : "Off"
+                        ) {
+                            habit.notificationsEnabled.toggle()
+                            store.updateHabit(habit)
+                        }
+
+                        Divider().padding(.leading, 48)
+
+                        // Notes & Photos toggle
+                        HStack(spacing: 12) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(JournalTheme.Colors.teal)
+                                .frame(width: 24)
+
+                            Text("Notes & photos")
+                                .font(JournalTheme.Fonts.habitName())
+                                .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                            Spacer()
+
+                            Toggle("", isOn: Binding(
+                                get: { habit.enableNotesPhotos },
+                                set: { newValue in
+                                    habit.enableNotesPhotos = newValue
+                                    habit.isHobby = newValue
+                                    store.updateHabit(habit)
+                                }
+                            ))
+                            .labelsHidden()
+                            .tint(JournalTheme.Colors.teal)
+                        }
+                        .padding(14)
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.7))
+                            .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+                    )
+                }
+
+                // MARK: - Actions
+                VStack(spacing: 12) {
+                    Button {
                         if habit.isActive {
                             store.archiveHabit(habit)
                         } else {
                             store.unarchiveHabit(habit)
                         }
                         dismiss()
-                    },
-                    onDelete: { showingDeleteConfirmation = true }
-                )
+                    } label: {
+                        HStack {
+                            Image(systemName: habit.isActive ? "archivebox" : "arrow.up.bin")
+                            Text(habit.isActive ? "Archive habit" : "Unarchive habit")
+                        }
+                        .font(JournalTheme.Fonts.habitName())
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(JournalTheme.Colors.completedGray.opacity(0.5), lineWidth: 1.5)
+                        )
+                    }
+
+                    Button {
+                        showingDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Delete habit")
+                        }
+                        .font(JournalTheme.Fonts.habitName())
+                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(JournalTheme.Colors.negativeRedDark.opacity(0.5), lineWidth: 1.5)
+                        )
+                    }
+                }
 
                 Spacer(minLength: 100)
             }
@@ -49,9 +224,6 @@ struct HabitDetailView: View {
         .linedPaperBackground()
         .navigationTitle(habit.name)
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showingEditSheet) {
-            EditHabitView(store: store, habit: habit)
-        }
         .alert("Delete Habit?", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
@@ -62,75 +234,80 @@ struct HabitDetailView: View {
             Text("This will permanently delete '\(habit.name)' and all its history.")
         }
     }
-}
 
-/// Header showing habit name and basic info
-struct HabitDetailHeader: View {
-    let habit: Habit
+    // MARK: - Habit Icon
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Type badge
-            HStack {
-                Text(habit.tier.displayName.uppercased())
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(habit.tier == .mustDo ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.completedGray)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule()
-                            .fill(habit.tier == .mustDo ? JournalTheme.Colors.inkBlue.opacity(0.1) : JournalTheme.Colors.lineLight.opacity(0.5))
-                    )
+    @ViewBuilder
+    private var habitIcon: some View {
+        let iconSize: CGFloat = 72
+        let emoji: String? = {
+            for char in habit.name {
+                if char.isEmoji { return String(char) }
+            }
+            return nil
+        }()
+        let initials: String = {
+            let words = habit.name.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+            if words.count >= 2 {
+                return "\(words[0].prefix(1))\(words[1].prefix(1))".uppercased()
+            }
+            return String(habit.name.prefix(2)).uppercased()
+        }()
+        let bgColor: Color = habit.tier == .mustDo ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.goodDayGreenDark
 
-                Text(habit.type.displayName)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(habit.type == .positive ? JournalTheme.Colors.goodDayGreenDark : JournalTheme.Colors.negativeRedDark)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule()
-                            .fill(habit.type == .positive ? JournalTheme.Colors.goodDayGreen.opacity(0.3) : JournalTheme.Colors.negativeRed.opacity(0.3))
-                    )
+        ZStack {
+            if let data = habit.iconImageData, let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: iconSize, height: iconSize)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+            } else {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(bgColor)
+                    .frame(width: iconSize, height: iconSize)
+                    .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+
+                if let emoji = emoji {
+                    Text(emoji)
+                        .font(.system(size: 36))
+                } else {
+                    Text(initials)
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+    }
+
+    // MARK: - Settings Row
+
+    private func settingsRow(icon: String, iconColor: Color, label: String, value: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 24)
+
+                Text(label)
+                    .font(JournalTheme.Fonts.habitName())
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                 Spacer()
-            }
 
-            // Name and criteria
-            Text(habit.name)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(JournalTheme.Colors.inkBlack)
-
-            if let criteria = habit.successCriteria, !criteria.isEmpty {
-                HStack(spacing: 4) {
-                    Image(systemName: "target")
-                        .font(.system(size: 14))
-                    Text("Target: \(criteria)")
-                        .font(JournalTheme.Fonts.habitName())
-                }
-                .foregroundStyle(JournalTheme.Colors.completedGray)
-            }
-
-            if !habit.habitDescription.isEmpty {
-                Text(habit.habitDescription)
+                Text(value)
                     .font(JournalTheme.Fonts.habitCriteria())
                     .foregroundStyle(JournalTheme.Colors.completedGray)
-            }
 
-            // Frequency
-            HStack(spacing: 4) {
-                Image(systemName: "repeat")
-                    .font(.system(size: 14))
-                Text(habit.frequencyDisplayName)
-                    .font(JournalTheme.Fonts.habitCriteria())
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
             }
-            .foregroundStyle(JournalTheme.Colors.completedGray)
+            .padding(14)
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.7))
-                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
-        )
+        .buttonStyle(.plain)
     }
 }
 
@@ -141,12 +318,12 @@ struct HabitStatsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Statistics")
+            Text("STATISTICS")
                 .font(JournalTheme.Fonts.sectionHeader())
-                .foregroundStyle(JournalTheme.Colors.inkBlue)
+                .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                .tracking(2)
 
             HStack(spacing: 16) {
-                // Current streak
                 StatCard(
                     icon: "flame.fill",
                     iconColor: .orange,
@@ -154,7 +331,6 @@ struct HabitStatsSection: View {
                     label: "Current Streak"
                 )
 
-                // Best streak
                 StatCard(
                     icon: "trophy.fill",
                     iconColor: .yellow,
@@ -164,7 +340,6 @@ struct HabitStatsSection: View {
             }
 
             HStack(spacing: 16) {
-                // Completion rate
                 StatCard(
                     icon: "chart.pie.fill",
                     iconColor: JournalTheme.Colors.inkBlue,
@@ -172,7 +347,6 @@ struct HabitStatsSection: View {
                     label: "30-Day Rate"
                 )
 
-                // Total completions
                 let totalCompletions = habit.dailyLogs.filter { $0.completed }.count
                 StatCard(
                     icon: "checkmark.circle.fill",
@@ -235,9 +409,10 @@ struct RecentActivitySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Last 7 Days")
+            Text("LAST 7 DAYS")
                 .font(JournalTheme.Fonts.sectionHeader())
-                .foregroundStyle(JournalTheme.Colors.inkBlue)
+                .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                .tracking(2)
 
             HStack(spacing: 8) {
                 ForEach(last7Days, id: \.self) { date in
@@ -267,69 +442,6 @@ struct RecentActivitySection: View {
     }
 }
 
-/// Actions section with edit, archive, and delete buttons
-struct ActionsSection: View {
-    let habit: Habit
-    let onEdit: () -> Void
-    let onArchive: () -> Void
-    let onDelete: () -> Void
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Button {
-                onEdit()
-            } label: {
-                HStack {
-                    Image(systemName: "pencil")
-                    Text("Edit Habit")
-                }
-                .font(JournalTheme.Fonts.habitName())
-                .foregroundStyle(JournalTheme.Colors.inkBlue)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(JournalTheme.Colors.inkBlue, lineWidth: 1.5)
-                )
-            }
-
-            Button {
-                onArchive()
-            } label: {
-                HStack {
-                    Image(systemName: habit.isActive ? "archivebox" : "arrow.up.bin")
-                    Text(habit.isActive ? "Archive Habit" : "Unarchive Habit")
-                }
-                .font(JournalTheme.Fonts.habitName())
-                .foregroundStyle(JournalTheme.Colors.completedGray)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(JournalTheme.Colors.completedGray.opacity(0.5), lineWidth: 1.5)
-                )
-            }
-
-            Button {
-                onDelete()
-            } label: {
-                HStack {
-                    Image(systemName: "trash")
-                    Text("Delete Habit")
-                }
-                .font(JournalTheme.Fonts.habitName())
-                .foregroundStyle(JournalTheme.Colors.negativeRedDark)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(JournalTheme.Colors.negativeRedDark.opacity(0.5), lineWidth: 1.5)
-                )
-            }
-        }
-    }
-}
-
 /// Section showing hobby logs with photos and notes
 struct HobbyLogsSection: View {
     let habit: Habit
@@ -350,9 +462,10 @@ struct HobbyLogsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Hobby Logs")
+            Text("HOBBY LOGS")
                 .font(JournalTheme.Fonts.sectionHeader())
-                .foregroundStyle(JournalTheme.Colors.inkBlue)
+                .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                .tracking(2)
 
             if logsWithContent.isEmpty {
                 Text("No photos or notes recorded yet")
@@ -404,7 +517,6 @@ struct HobbyLogRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Thumbnail or placeholder
             if let image = loadedImage {
                 Image(uiImage: image)
                     .resizable()

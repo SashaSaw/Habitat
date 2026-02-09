@@ -11,6 +11,8 @@ struct MyHabitsView: View {
     @State private var groupToDelete: HabitGroup?
     @State private var showDeleteHabitConfirmation = false
     @State private var showDeleteGroupConfirmation = false
+    @AppStorage("hasSeenGroupCallout") private var hasSeenGroupCallout = false
+    @State private var showGroupCallout = false
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -95,9 +97,52 @@ struct MyHabitsView: View {
                         .font(JournalTheme.Fonts.habitCriteria())
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
-                .padding(.leading, JournalTheme.Dimensions.marginLeft + 8)
-                .padding(.trailing, 16)
+                .padding(.horizontal, 24)
                 .padding(.top, 16)
+
+                // First-time group explanatory callout
+                if showGroupCallout && !store.groups.isEmpty {
+                    HStack(alignment: .top, spacing: 12) {
+                        Text("💡")
+                            .font(.system(size: 20))
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Habit groups")
+                                .font(JournalTheme.Fonts.handwritten(size: 15))
+                                .fontWeight(.semibold)
+                                .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                            Text("Some habits have multiple ways to do them. \"Exercise\" might be gym, swimming, or a run. Create a group and add your options as sub-habits. Complete any one to tick off the group for the day.")
+                                .font(JournalTheme.Fonts.habitCriteria())
+                                .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer()
+
+                        Button {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                showGroupCallout = false
+                                hasSeenGroupCallout = true
+                            }
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
+                    }
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(JournalTheme.Colors.amber.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .strokeBorder(JournalTheme.Colors.amber.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+                    .padding(.horizontal, 24)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
 
                 // Live habits section (always show to include Add button)
                 VStack(alignment: .leading, spacing: 12) {
@@ -106,7 +151,7 @@ struct MyHabitsView: View {
                             .font(JournalTheme.Fonts.sectionHeader())
                             .foregroundStyle(JournalTheme.Colors.sectionHeader)
                             .tracking(2)
-                            .padding(.leading, JournalTheme.Dimensions.marginLeft + 8)
+                            .padding(.leading, 24)
                     }
 
                     HabitIconGrid(
@@ -144,6 +189,13 @@ struct MyHabitsView: View {
                 )
 
                 Spacer(minLength: 100)
+            }
+            .onAppear {
+                if !hasSeenGroupCallout && !store.groups.isEmpty {
+                    withAnimation(.easeOut(duration: 0.3).delay(0.5)) {
+                        showGroupCallout = true
+                    }
+                }
             }
         }
     }

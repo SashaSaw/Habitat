@@ -109,39 +109,54 @@ Users need to add things like "Buy butter" or "Call dentist" that are specific t
 
 ---
 
-## 4. Groups → Options (Priority: High)
+## 4. Groups — Improved Day View Behaviour (Priority: High)
 
-### Problem
-The current "groups" concept requires users to understand nested relationships: a group is a must-do that contains nice-to-do sub-items, where completing one sub-item satisfies the group. This is 5 new concepts before adding a single habit. It inverts normal logic (a must-do containing nice-to-dos) which is confusing.
+### What groups are (keeping the existing concept)
+Groups stay as they are: a parent habit (typically must-do) that contains sub-habits (nice-to-dos). The parent represents something like "Exercise" and the sub-habits are the different ways to do it: Gym, Swim, Run. Completing any ONE sub-habit satisfies the parent group for that day.
 
-### New Design: Options
+Groups also support a "hobby" mode where sub-habits can have notes and photos attached — this is valuable for things like creative hobbies where the user might want to journal about what they did (e.g. a "Creative" group with sub-habits "Draw", "Paint", "Write" where each supports photo capture).
 
-Replace the concept of "groups" with "options" — a habit can optionally have multiple ways to do it.
+### Problem with current day view
+Currently, when a group appears on the day view, the relationship between the parent and sub-habits isn't clear enough. It's not obvious that completing one sub-habit satisfies the parent, and the list gets visually cluttered with expanded sub-habits that are no longer relevant once one is done.
 
-**Mental model:** "Exercise" is one habit. Gym, Swim, and Run are *options* — different ways to complete it. When you tick off Exercise, you pick which option you did.
+### New Day View Behaviour for Groups
 
-**Data model changes:**
-- Remove the group/sub-habit nesting structure
-- A habit can have an optional `options` array (list of strings, e.g. ["Gym", "Swim", "Run"])
-- When a habit with options is completed, the chosen option is recorded alongside the completion
-- Each option's completions can be tracked separately for stats
+**Default (uncompleted) state:**
+- The parent group habit shows on the day list in its normal position (e.g. under "★ Must Do" if it's a must-do)
+- Below the parent, the sub-habits are shown indented slightly (left padding/margin to indicate nesting) with their own checkboxes
+- The parent itself does NOT have a checkbox — it's a header for the sub-habits. It shows a small badge indicating how many sub-options exist (e.g. "3 options")
+- Sub-habits are visually lighter/secondary compared to standalone habits — slightly smaller text or muted styling to show they belong to the parent
 
-**On the day view:**
-- A habit with options shows a small badge like "3 options" next to its name
-- When tapped to complete, instead of immediately marking done, it expands an inline picker: "Which one did you do?" with the options as tappable pill buttons, plus a "cancel" link
-- Once an option is selected, the habit marks as done and shows the chosen option in italic after the name (e.g. "Exercise — Gym" with strikethrough)
-- A habit with options that has no option selected is NOT done — you must pick one
+**When a sub-habit is completed (the key interaction):**
+- The completed sub-habit gets the strikethrough/cross-off treatment (same swipe mechanic as other habits)
+- The parent group COLLAPSES — all the other uncompleted sub-habits animate closed/hidden
+- The parent now shows as completed (struck through) with the chosen sub-habit noted in italic after the name: e.g. "Exercise — Gym" with strikethrough
+- The parent's checkbox (which now appears since it's resolved) shows as checked
+- This collapse should be animated — a smooth height transition so the sub-habits fold up into the parent. This is the satisfying moment: you did one thing, and a whole block of your list resolves
 
-**On the My Habits page (habit detail view):**
-- Options appear as a list in the habit's detail/edit page
-- Each option is a simple text entry in a list
-- There's an "Add option" button (dashed border, "+ Add option" text) to add more
-- Options can be reordered or deleted
-- An info callout explains: "When you tick off [Habit Name], you'll be asked which option you did. Stats track each option separately."
-- If a habit has no options, show a prompt: "+ Add options (e.g. Gym, Swim, Run)" — discoverable but not required
+**Uncollapsing / changing your mind:**
+- Tapping a collapsed, completed group should expand it again and un-mark it — letting the user change which sub-habit they did, or undo the completion entirely
+- This follows the same undo pattern as tapping any completed habit to un-complete it
 
-**Migration:**
-- Convert any existing groups into habits with options. The group name becomes the habit name. The sub-habits become options on that habit. Preserve the must-do/nice-to-do priority from the group (not the sub-items — those were always nice-to-do in the old model).
+**Data tracking:**
+- When a sub-habit is completed, record both the parent group completion AND which specific sub-habit was chosen
+- Stats should track each sub-habit's completions separately (e.g. "you did Gym 12 times, Swim 5 times, Run 3 times this month")
+- The parent group's completion counts toward the good-day streak and must-do tracking as normal
+
+### Introducing the concept to new users
+
+Groups are more complex than regular habits, so new users need a gentle introduction. Add an explanatory callout in two places:
+
+**On the My Habits page (near the group tiles or as a first-time tooltip):**
+- A card/callout with a lightbulb icon: "💡 **Habit groups** — Some habits have multiple ways to do them. 'Exercise' might be gym, swimming, or a run. Create a group and add your options as sub-habits. Complete any one to tick off the group for the day."
+- This should show the first time the user visits the My Habits page (or until dismissed). After that, it can be hidden but accessible from a "?" or info icon.
+
+**When creating a group (in the add flow or group creation):**
+- A brief inline explanation: "Add the different ways you can do this habit. Completing any one counts as doing the whole thing."
+- Keep it to one sentence — don't over-explain.
+
+**On the day view (first time a group appears):**
+- A subtle one-time tooltip or hint on the first group the user sees: "Complete any one of these to tick off [Group Name]" — dismissable, shown once.
 
 ---
 
@@ -151,16 +166,31 @@ Replace the concept of "groups" with "options" — a habit can optionally have m
 - The icon grid layout (tiles with emoji/abbreviation, colour, and name)
 - The "Add Habit" tile with dashed border
 - The "Archived" section at the bottom
+- **Group tiles** — groups remain as a concept. The group tile on the grid should continue to show the sub-habit letter badges (e.g. G, S, R stacked in the corner) so users can see at a glance which habits are groups with sub-options
 
 ### Change
-- **Remove group tiles.** Groups no longer exist — they're just habits with options now (see Section 4)
-- **Add options badge to tiles:** Habits that have options should show small stacked letter badges in the corner of their tile (e.g. first letter of each option: G, S, R for Gym, Swim, Run). This lets users see at a glance which habits have variations
-- **Habit detail page:** When tapping a habit tile, show a detail/edit page with:
+- **Improved group tile appearance:** Group tiles should be visually distinguishable from regular habit tiles. Keep the existing stacked letter badges for sub-habits. Consider a subtle visual cue on the tile itself — e.g. a small corner fold, a slightly different border, or the word "group" in tiny text — so users learn to recognise them. Don't overdo this; the letter badges may be enough.
+
+- **Group detail/edit page:** When tapping a group tile, show a detail page with:
+  - Group header: icon, group name, priority badge, frequency badge
+  - **Sub-habits list:** Each sub-habit shown as a row with its name. Each row is tappable to edit the sub-habit's name. Rows can be reordered or deleted.
+  - **"+ Add sub-habit" button** (dashed border style) to add new options to the group
+  - **Explanatory callout:** "Complete any one of these sub-habits to tick off [Group Name] for the day. Stats track each one separately."
+  - **Hobby toggle:** A toggle for "Enable notes & photos" — when on, completing a sub-habit from this group prompts the user to optionally add notes/photos about what they did. This is the hobby mode.
+  - Settings list: Priority, Frequency, Reminders — each as a tappable row showing current value
+  - "Archive this group" action at the bottom
+  - Back button to return to the grid
+
+- **Regular habit detail page:** When tapping a non-group habit tile, show a simpler detail page:
   - Habit header: icon, name, priority badge, frequency badge
-  - Options section (see Section 4 detail above)
   - Settings list: Priority, Frequency, Reminders, Notes & photos — each as a tappable row showing current value
   - "Archive this habit" action at the bottom
   - Back button to return to the grid
+
+- **Creating a new group:** The add flow should support creating groups. This could be:
+  - A toggle or option during habit creation: after entering the habit name, an option like "This has sub-options" or "Add variations" that expands to let you add sub-habit names
+  - OR a separate "Create group" path from the My Habits page (a second add button or a choice when tapping the main add button: "Add habit" vs "Add group")
+  - Either way, the group creation should include the explanatory text: "Add the different ways you can do this habit. Completing any one counts as doing the whole thing."
 
 ---
 
@@ -278,17 +308,17 @@ Add a way to access the block setup from within the app. Options:
 ---
 
 ## Implementation Order
-1. Update the data model to support one-off tasks (frequency: "once"), habit options (optional string array), and blocked apps configuration (app identifiers, schedule, enabled state)
-2. Migrate any existing groups to habits-with-options
-3. Implement the new add flow with progressive disclosure and "Just today" support
-4. Implement the new day view with sections, streak tracker, and options picker
-5. Update the My Habits page to remove groups, add options badges, and add the habit detail page
+1. Update the data model to support one-off tasks (frequency: "once"), sub-habit completion tracking on groups (which sub-habit was chosen + timestamp), and blocked apps configuration (app identifiers, schedule, enabled state)
+2. Implement the new add flow with progressive disclosure and "Just today" support
+3. Implement the new day view with sections, streak tracker, and the group collapsing behaviour (completing a sub-habit collapses the group and marks the parent done)
+4. Update the My Habits page — improved group tiles, group detail/edit page with sub-habit management and hobby toggle, regular habit detail page
+5. Add the "introducing groups" explanatory callouts (My Habits page, group creation, first-time day view tooltip)
 6. Implement the block setup screen (app selection, schedule configuration)
 7. Implement the app intercept screen (blocked app view, habit list, override flow)
 8. Implement focus mode (timer, habit completion from intercept, celebration screen)
 9. Wire up platform-level app blocking (Screen Time API on iOS / UsageStats on Android) to trigger the intercept screen
 10. Ensure intercept screen shares state with day view — completing habits from either location updates both
-11. Test the full flow end-to-end: add a habit with options → see it on day view → block an app → try to open blocked app → see intercept → tap habit → focus timer → complete with option picker → verify streak updates on both intercept and day view → verify 5-min override works → verify stats
+11. Test the full flow end-to-end: add a group with sub-habits → see it on day view with sub-habits expanded → complete a sub-habit → verify group collapses with "Exercise — Gym" strikethrough → verify streak updates → tap collapsed group to uncollapse and undo → block an app → try to open blocked app → see intercept → tap habit → focus timer → complete → verify 5-min override works → verify stats track sub-habit separately
 
 ---
 

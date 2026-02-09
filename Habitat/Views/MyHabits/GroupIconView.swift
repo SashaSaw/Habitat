@@ -17,11 +17,15 @@ struct GroupIconView: View {
         VStack(spacing: 8) {
             // Folder-style icon with mini habit previews
             ZStack {
-                // Background
+                // Background with subtle border to distinguish from regular habits
                 RoundedRectangle(cornerRadius: 16)
                     .fill(JournalTheme.Colors.lineLight)
                     .frame(width: iconSize, height: iconSize)
                     .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(JournalTheme.Colors.completedGray.opacity(0.3), lineWidth: 1)
+                    .frame(width: iconSize, height: iconSize)
 
                 // Mini habit grid (2x2)
                 let previewHabits = Array(groupHabits.prefix(4))
@@ -43,13 +47,19 @@ struct GroupIconView: View {
                 .padding(8)
             }
 
-            // Group name
-            Text(group.name)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(JournalTheme.Colors.inkBlack)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .frame(width: iconSize + 16)
+            // Group name with "group" label
+            VStack(spacing: 2) {
+                Text(group.name)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+
+                Text("group")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+            }
+            .frame(width: iconSize + 16)
         }
         .onTapGesture {
             onTap()
@@ -118,7 +128,7 @@ struct MiniHabitIcon: View {
     }
 }
 
-/// Sheet to view and manage habits within a group
+/// Redesigned group detail/edit sheet with sub-habit management
 struct GroupDetailSheet: View {
     let group: HabitGroup
     @Bindable var store: HabitStore
@@ -127,6 +137,10 @@ struct GroupDetailSheet: View {
     @State private var groupName: String
     @State private var selectedHabit: Habit?
     @State private var showingDeleteConfirmation = false
+    @State private var showingAddSubHabit = false
+    @State private var showingAddHabitSheet = false
+    @State private var editingHabitId: UUID? = nil
+    @State private var editingHabitName: String = ""
 
     init(group: HabitGroup, store: HabitStore, onDismiss: @escaping () -> Void) {
         self.group = group
@@ -139,88 +153,342 @@ struct GroupDetailSheet: View {
         store.allHabits.filter { group.habitIds.contains($0.id) }
     }
 
+    /// Existing habits not in any group that can be added as sub-habits
+    private var availableHabits: [Habit] {
+        let allGroupedIds = Set(store.groups.flatMap { $0.habitIds })
+        return store.liveHabits.filter { !allGroupedIds.contains($0.id) && !$0.isTask }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Group name editor
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("GROUP NAME")
-                            .font(JournalTheme.Fonts.sectionHeader())
-                            .foregroundStyle(JournalTheme.Colors.sectionHeader)
-                            .tracking(2)
+                VStack(alignment: .leading, spacing: 20) {
+                    // MARK: - Group Header
+                    VStack(alignment: .center, spacing: 12) {
+                        // Group icon preview
+                        GroupIconView(
+                            group: group,
+                            habits: store.allHabits,
+                            onTap: {}
+                        )
+                        .allowsHitTesting(false)
 
+                        // Inline name editor
                         TextField("Group name", text: $groupName)
-                            .font(JournalTheme.Fonts.habitName())
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+                            .multilineTextAlignment(.center)
                             .textFieldStyle(.plain)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.7))
-                                    .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
-                            )
                             .onChange(of: groupName) { _, newValue in
                                 group.name = newValue
                                 store.updateGroup(group)
                             }
-                    }
-                    .padding(.horizontal)
 
-                    // Habits in group
+                        // Badges
+                        HStack(spacing: 8) {
+                            Text(group.tier.displayName.uppercased())
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(group.tier == .mustDo ? JournalTheme.Colors.amber : JournalTheme.Colors.completedGray)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(group.tier == .mustDo ? JournalTheme.Colors.amber.opacity(0.12) : JournalTheme.Colors.lineLight.opacity(0.5))
+                                )
+
+                            Text("Complete \(group.requireCount) of \(group.habitIds.count)")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(JournalTheme.Colors.lineLight.opacity(0.5))
+                                )
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+
+                    // MARK: - Sub-habits List
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("HABITS IN GROUP")
+                        Text("SUB-HABITS")
                             .font(JournalTheme.Fonts.sectionHeader())
                             .foregroundStyle(JournalTheme.Colors.sectionHeader)
                             .tracking(2)
                             .padding(.horizontal)
 
-                        if groupHabits.isEmpty {
-                            Text("No habits in this group")
-                                .font(JournalTheme.Fonts.habitCriteria())
-                                .foregroundStyle(JournalTheme.Colors.completedGray)
-                                .padding()
-                        } else {
-                            LazyVGrid(columns: [
-                                SwiftUI.GridItem(.adaptive(minimum: 90, maximum: 100), spacing: 16)
-                            ], spacing: 20) {
-                                ForEach(groupHabits) { habit in
-                                    HabitIconView(
-                                        habit: habit,
-                                        isArchived: false,
-                                        onTap: { selectedHabit = habit }
-                                    )
-                                    .contextMenu {
-                                        Button {
-                                            store.removeHabitFromGroup(habit, group: group)
-                                        } label: {
-                                            Label("Remove from Group", systemImage: "folder.badge.minus")
-                                        }
-                                    }
+                        VStack(spacing: 0) {
+                            ForEach(groupHabits) { habit in
+                                subHabitRow(habit)
+
+                                if habit.id != groupHabits.last?.id {
+                                    Divider()
+                                        .padding(.leading, 48)
                                 }
                             }
+                        }
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.7))
+                                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+                        )
+                        .padding(.horizontal)
+
+                        // + Add sub-habit button / picker
+                        if showingAddSubHabit {
+                            VStack(alignment: .leading, spacing: 0) {
+                                // Existing habits to choose from
+                                if !availableHabits.isEmpty {
+                                    Text("ADD EXISTING HABIT")
+                                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                        .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                                        .tracking(1.5)
+                                        .padding(.horizontal, 14)
+                                        .padding(.top, 12)
+                                        .padding(.bottom, 8)
+
+                                    ForEach(availableHabits) { habit in
+                                        Button {
+                                            store.addHabitToGroup(habit, group: group)
+                                            habit.groupId = group.id
+                                            store.updateHabit(habit)
+                                            withAnimation {
+                                                showingAddSubHabit = false
+                                            }
+                                        } label: {
+                                            HStack(spacing: 12) {
+                                                // Habit icon/letter badge
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(JournalTheme.Colors.inkBlue.opacity(0.12))
+                                                        .frame(width: 28, height: 28)
+
+                                                    Text(String(habit.name.prefix(1)).uppercased())
+                                                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                                                        .foregroundStyle(JournalTheme.Colors.inkBlue)
+                                                }
+
+                                                Text(habit.name)
+                                                    .font(JournalTheme.Fonts.habitName())
+                                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                                                Spacer()
+
+                                                Image(systemName: "plus.circle")
+                                                    .font(.system(size: 16))
+                                                    .foregroundStyle(JournalTheme.Colors.teal)
+                                            }
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 10)
+                                        }
+                                        .buttonStyle(.plain)
+
+                                        if habit.id != availableHabits.last?.id {
+                                            Divider()
+                                                .padding(.leading, 54)
+                                        }
+                                    }
+
+                                    Divider()
+                                        .padding(.vertical, 4)
+                                }
+
+                                // Create new option — opens AddHabitView sheet
+                                Button {
+                                    withAnimation {
+                                        showingAddSubHabit = false
+                                    }
+                                    showingAddHabitSheet = true
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "plus.circle")
+                                            .font(.system(size: 18))
+                                            .foregroundStyle(JournalTheme.Colors.teal)
+
+                                        Text("Create new sub-habit")
+                                            .font(JournalTheme.Fonts.habitName())
+                                            .foregroundStyle(JournalTheme.Colors.teal)
+
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                }
+                                .buttonStyle(.plain)
+
+                                // Cancel button
+                                HStack {
+                                    Spacer()
+                                    Button {
+                                        withAnimation {
+                                            showingAddSubHabit = false
+                                        }
+                                    } label: {
+                                        Text("Cancel")
+                                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .padding(.bottom, 4)
+                                }
+                            }
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(JournalTheme.Colors.paperLight)
+                                    .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+                            )
+                            .padding(.horizontal)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        } else {
+                            Button {
+                                withAnimation {
+                                    showingAddSubHabit = true
+                                }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                                    Text("Add sub-habit...")
+                                        .font(JournalTheme.Fonts.habitCriteria())
+                                        .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                                    Spacer()
+                                }
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .strokeBorder(
+                                            JournalTheme.Colors.completedGray.opacity(0.35),
+                                            style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
                             .padding(.horizontal)
                         }
                     }
 
-                    // Delete group button
-                    Button {
-                        showingDeleteConfirmation = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "trash")
-                            Text("Delete Group")
+                    // MARK: - Explanatory Callout
+                    HStack(spacing: 10) {
+                        Text("Complete any one of these sub-habits to tick off \(group.name) for the day. Stats track each one separately.")
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.6))
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(JournalTheme.Colors.amber.opacity(0.06))
+                            .strokeBorder(JournalTheme.Colors.amber.opacity(0.15), lineWidth: 1)
+                    )
+                    .padding(.horizontal)
+
+                    // MARK: - Settings
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("SETTINGS")
+                            .font(JournalTheme.Fonts.sectionHeader())
+                            .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                            .tracking(2)
+                            .padding(.horizontal)
+
+                        VStack(spacing: 0) {
+                            // Priority
+                            settingsRow(
+                                icon: "star.fill",
+                                iconColor: JournalTheme.Colors.amber,
+                                label: "Priority",
+                                value: group.tier.displayName
+                            ) {
+                                group.tier = group.tier == .mustDo ? .niceToDo : .mustDo
+                                store.updateGroup(group)
+                            }
+
+                            Divider().padding(.leading, 48)
+
+                            // Hobby toggle
+                            HStack(spacing: 12) {
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(JournalTheme.Colors.teal)
+                                    .frame(width: 24)
+
+                                Text("Enable notes & photos")
+                                    .font(JournalTheme.Fonts.habitName())
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                                Spacer()
+
+                                Toggle("", isOn: Binding(
+                                    get: { groupHabits.first?.enableNotesPhotos ?? false },
+                                    set: { newValue in
+                                        for habit in groupHabits {
+                                            habit.enableNotesPhotos = newValue
+                                            habit.isHobby = newValue
+                                            store.updateHabit(habit)
+                                        }
+                                    }
+                                ))
+                                .labelsHidden()
+                                .tint(JournalTheme.Colors.teal)
+                            }
+                            .padding(14)
                         }
-                        .font(JournalTheme.Fonts.habitName())
-                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
-                        .frame(maxWidth: .infinity)
-                        .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(JournalTheme.Colors.negativeRedDark.opacity(0.5), lineWidth: 1.5)
+                                .fill(Color.white.opacity(0.7))
+                                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
                         )
+                        .padding(.horizontal)
+                    }
+
+                    // MARK: - Archive/Delete
+                    VStack(spacing: 12) {
+                        Button {
+                            // Archive all habits in the group
+                            for habit in groupHabits {
+                                store.archiveHabit(habit)
+                            }
+                            store.deleteGroup(group)
+                            onDismiss()
+                        } label: {
+                            HStack {
+                                Image(systemName: "archivebox")
+                                Text("Archive this group")
+                            }
+                            .font(JournalTheme.Fonts.habitName())
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(JournalTheme.Colors.completedGray.opacity(0.5), lineWidth: 1.5)
+                            )
+                        }
+
+                        Button {
+                            showingDeleteConfirmation = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Delete Group")
+                            }
+                            .font(JournalTheme.Fonts.habitName())
+                            .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(JournalTheme.Colors.negativeRedDark.opacity(0.5), lineWidth: 1.5)
+                            )
+                        }
                     }
                     .padding(.horizontal)
-                    .padding(.top, 20)
+                    .padding(.top, 8)
 
                     Spacer(minLength: 100)
                 }
@@ -241,6 +509,9 @@ struct GroupDetailSheet: View {
                     HabitDetailView(store: store, habit: habit)
                 }
             }
+            .sheet(isPresented: $showingAddHabitSheet) {
+                AddHabitView(store: store, addToGroup: group)
+            }
             .alert("Delete Group?", isPresented: $showingDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) {
@@ -251,5 +522,112 @@ struct GroupDetailSheet: View {
                 Text("This will delete the group '\(group.name)'. The habits inside will not be deleted.")
             }
         }
+    }
+
+    // MARK: - Sub-habit Row
+
+    @ViewBuilder
+    private func subHabitRow(_ habit: Habit) -> some View {
+        HStack(spacing: 12) {
+            // Letter badge
+            ZStack {
+                Circle()
+                    .fill(JournalTheme.Colors.inkBlue.opacity(0.12))
+                    .frame(width: 28, height: 28)
+
+                Text(String(habit.name.prefix(1)).uppercased())
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.inkBlue)
+            }
+
+            if editingHabitId == habit.id {
+                // Inline editing
+                TextField("Sub-habit name", text: $editingHabitName)
+                    .font(JournalTheme.Fonts.habitName())
+                    .textFieldStyle(.plain)
+                    .onSubmit {
+                        habit.name = editingHabitName.trimmingCharacters(in: .whitespaces)
+                        store.updateHabit(habit)
+                        editingHabitId = nil
+                    }
+
+                Button {
+                    habit.name = editingHabitName.trimmingCharacters(in: .whitespaces)
+                    store.updateHabit(habit)
+                    editingHabitId = nil
+                } label: {
+                    Text("Save")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.teal)
+                }
+            } else {
+                // Display mode
+                Text(habit.name)
+                    .font(JournalTheme.Fonts.habitName())
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+            }
+        }
+        .padding(14)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editingHabitId = habit.id
+            editingHabitName = habit.name
+        }
+        .contextMenu {
+            Button {
+                editingHabitId = habit.id
+                editingHabitName = habit.name
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+
+            Button(role: .destructive) {
+                store.removeHabitFromGroup(habit, group: group)
+                store.deleteHabit(habit)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+
+            Button {
+                store.removeHabitFromGroup(habit, group: group)
+            } label: {
+                Label("Remove from Group", systemImage: "folder.badge.minus")
+            }
+        }
+    }
+
+    // MARK: - Settings Row
+
+    private func settingsRow(icon: String, iconColor: Color, label: String, value: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 24)
+
+                Text(label)
+                    .font(JournalTheme.Fonts.habitName())
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                Spacer()
+
+                Text(value)
+                    .font(JournalTheme.Fonts.habitCriteria())
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+            }
+            .padding(14)
+        }
+        .buttonStyle(.plain)
     }
 }

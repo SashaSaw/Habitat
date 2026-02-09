@@ -380,6 +380,14 @@ final class HabitStore {
         saveContext()
     }
 
+    /// Records which sub-habit option was selected when completing a group habit
+    func recordSelectedOption(for habit: Habit, option: String, on date: Date) {
+        if let log = habit.log(for: date) {
+            log.selectedOption = option
+            saveContext()
+        }
+    }
+
     /// Saves hobby completion with optional note and photo
     func saveHobbyCompletion(for habit: Habit, on date: Date, note: String?, image: UIImage?) {
         var photoPath: String? = nil

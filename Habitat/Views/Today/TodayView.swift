@@ -37,6 +37,10 @@ struct TodayContentView: View {
     // Quick-add sheet
     @State private var showingAddHabit: Bool = false
 
+    // First-time group tooltip
+    @AppStorage("hasSeenGroupTooltip") private var hasSeenGroupTooltip: Bool = false
+    @State private var showGroupTooltip: Bool = false
+
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let contentPadding: CGFloat = 24
 
@@ -135,7 +139,11 @@ struct TodayContentView: View {
             }
         }
         .sheet(item: $selectedGroup) { group in
-            EditGroupView(store: store, group: group)
+            GroupDetailSheet(
+                group: group,
+                store: store,
+                onDismiss: { selectedGroup = nil }
+            )
         }
         .sheet(isPresented: $showingAddHabit) {
             AddHabitView(store: store)
@@ -155,6 +163,10 @@ struct TodayContentView: View {
         }
         .onAppear {
             wasGoodDay = store.isGoodDay(for: selectedDate)
+            // Show group tooltip if first time seeing a group
+            if !hasSeenGroupTooltip && !store.mustDoGroups.isEmpty {
+                showGroupTooltip = true
+            }
         }
         .onChange(of: store.habits.map { $0.isCompleted(for: selectedDate) }) { _, _ in
             let isNowGoodDay = store.isGoodDay(for: selectedDate)
@@ -296,24 +308,56 @@ struct TodayContentView: View {
 
                 // Must-do groups with their habits
                 ForEach(store.mustDoGroups) { group in
-                    GroupLinedRow(
-                        group: group,
-                        habits: store.habits(for: group),
-                        lineHeight: lineHeight,
-                        store: store,
-                        selectedDate: selectedDate,
-                        onSelectHabit: { selectedHabit = $0 },
-                        onDelete: { store.deleteGroup(group) },
-                        onLastHabitDeleted: {
-                            groupToDeleteAfterHabit = group
-                            showDeleteGroupAlert = true
-                        },
-                        onLongPress: { selectedGroup = group },
-                        onHobbyComplete: { habit in
-                            completingHobby = habit
-                            showHobbyOverlay = true
+                    VStack(spacing: 0) {
+                        GroupLinedRow(
+                            group: group,
+                            habits: store.habits(for: group),
+                            lineHeight: lineHeight,
+                            store: store,
+                            selectedDate: selectedDate,
+                            onSelectHabit: { selectedHabit = $0 },
+                            onDelete: { store.deleteGroup(group) },
+                            onLastHabitDeleted: {
+                                groupToDeleteAfterHabit = group
+                                showDeleteGroupAlert = true
+                            },
+                            onLongPress: { selectedGroup = group },
+                            onHobbyComplete: { habit in
+                                completingHobby = habit
+                                showHobbyOverlay = true
+                            }
+                        )
+
+                        // First-time group tooltip
+                        if showGroupTooltip && group.id == store.mustDoGroups.first?.id {
+                            HStack(spacing: 8) {
+                                Text("Complete any one of these to tick off \(group.name)")
+                                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
+
+                                Button {
+                                    withAnimation {
+                                        showGroupTooltip = false
+                                        hasSeenGroupTooltip = true
+                                    }
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                                }
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(JournalTheme.Colors.amber.opacity(0.08))
+                                    .strokeBorder(JournalTheme.Colors.amber.opacity(0.2), lineWidth: 1)
+                            )
+                            .padding(.horizontal, contentPadding)
+                            .padding(.top, 4)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
                         }
-                    )
+                    }
                 }
             }
         }
@@ -1264,7 +1308,7 @@ struct TaskLinedRow: View {
     }
 }
 
-/// A group row with nested habits and swipe-to-delete
+/// A group row with collapsing sub-habits — completing one collapses the rest
 struct GroupLinedRow: View {
     let group: HabitGroup
     let habits: [Habit]
@@ -1277,166 +1321,440 @@ struct GroupLinedRow: View {
     let onLongPress: () -> Void
     var onHobbyComplete: ((Habit) -> Void)? = nil
 
+    // Collapse state
+    @State private var isCollapsed: Bool = false
+    @State private var groupStrikethroughProgress: CGFloat = 0
+    @State private var groupTextWidth: CGFloat = 0
+
     // Delete gesture state
     @State private var deleteOffset: CGFloat = 0
     @State private var hasPassedDeleteThreshold: Bool = false
+    @State private var isDragging: Bool = false
+    @State private var resetTask: Task<Void, Never>? = nil
 
-    private let deleteThreshold: CGFloat = 0.5
-
+    private let deleteDistanceThreshold: CGFloat = 150
 
     private var isSatisfied: Bool {
         group.isSatisfied(habits: store.habits, for: selectedDate)
     }
 
-    private var completedCount: Int {
-        group.completedCount(habits: store.habits, for: selectedDate)
+    /// The sub-habit that was completed (first one found)
+    private var completedSubHabit: Habit? {
+        habits.first { $0.isCompleted(for: selectedDate) }
     }
 
     private var deleteProgress: CGFloat {
         guard deleteOffset < 0 else { return 0 }
-        return min(1, abs(deleteOffset) / 200)
+        return min(1, abs(deleteOffset) / deleteDistanceThreshold)
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Group header with delete gesture
-            GeometryReader { geometry in
-                let hitboxWidth = geometry.size.width
-
-                ZStack {
-                    // Delete background (red, only shown when swiping left)
-                    if deleteOffset < 0 {
-                        HStack {
-                            Spacer()
-                            ZStack {
-                                JournalTheme.Colors.negativeRedDark
-
-                                Image(systemName: "trash")
-                                    .font(.system(size: 18, weight: .medium))
-                                    .foregroundStyle(.white)
-                                    .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
-                            }
-                            .frame(width: abs(deleteOffset))
+            // Group header row
+            ZStack {
+                // Delete background
+                if deleteOffset < 0 {
+                    HStack {
+                        Spacer()
+                        ZStack {
+                            JournalTheme.Colors.negativeRedDark
+                            Image(systemName: "trash")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(.white)
+                                .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
                         }
+                        .frame(width: abs(deleteOffset))
                     }
+                }
 
-                    // Group header content
-                    HStack(spacing: 12) {
-                        RoundedRectangle(cornerRadius: 6)
-                            .strokeBorder(isSatisfied ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.completedGray, lineWidth: 1.5)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(isSatisfied ? JournalTheme.Colors.inkBlue.opacity(0.1) : Color.clear)
-                            )
-                            .overlay {
-                                if isSatisfied {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 11, weight: .bold))
-                                        .foregroundStyle(JournalTheme.Colors.inkBlue)
-                                }
+                // Group header content
+                HStack(spacing: 12) {
+                    // Checkbox — filled when satisfied, empty when not
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(
+                            isSatisfied
+                                ? JournalTheme.Colors.inkBlue
+                                : JournalTheme.Colors.completedGray,
+                            lineWidth: 1.5
+                        )
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(isSatisfied
+                                    ? JournalTheme.Colors.inkBlue.opacity(0.1)
+                                    : Color.clear)
+                        )
+                        .overlay {
+                            if isSatisfied {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(JournalTheme.Colors.inkBlue)
                             }
-                            .frame(width: 20, height: 20)
+                        }
+                        .frame(width: 20, height: 20)
 
+                    // Group name with chosen sub-habit when collapsed
+                    if isSatisfied, let chosen = completedSubHabit {
+                        HStack(spacing: 6) {
+                            Text(group.name)
+                                .font(JournalTheme.Fonts.habitName())
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                            Text("— \(chosen.name)")
+                                .font(.system(size: 15, weight: .regular, design: .rounded))
+                                .italic()
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear
+                                    .onAppear { groupTextWidth = geo.size.width }
+                                    .onChange(of: geo.size.width) { _, w in groupTextWidth = w }
+                            }
+                        )
+                        .overlay(alignment: .leading) {
+                            StrikethroughLine(
+                                width: groupTextWidth > 0 ? groupTextWidth : 200,
+                                color: JournalTheme.Colors.inkBlue,
+                                progress: $groupStrikethroughProgress
+                            )
+                        }
+                    } else {
                         Text(group.name)
                             .font(JournalTheme.Fonts.habitName())
-                            .foregroundStyle(isSatisfied ? JournalTheme.Colors.completedGray : JournalTheme.Colors.inkBlack)
-
-                        Text("(\(completedCount)/\(group.requireCount))")
-                            .font(JournalTheme.Fonts.habitCriteria())
-                            .foregroundStyle(JournalTheme.Colors.completedGray)
-
-                        Spacer()
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
                     }
-                    .frame(minHeight: 44)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-                    .background(Color.clear)
-                    .offset(x: deleteOffset)
+
+                    Spacer()
+
+                    // Options badge when uncompleted
+                    if !isSatisfied {
+                        Text("\(habits.count) options")
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(
+                                Capsule()
+                                    .fill(JournalTheme.Colors.completedGray.opacity(0.12))
+                            )
+                    }
                 }
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 20, coordinateSpace: .local)
-                        .onChanged { value in
-                            let horizontal = abs(value.translation.width)
-                            let vertical = abs(value.translation.height)
-
-                            // Only process if predominantly horizontal (prevents scroll interference)
-                            guard horizontal > vertical else { return }
-
-                            let translation = value.translation.width
-
-                            if translation < 0 {
-                                // Swiping LEFT - delete gesture
-                                deleteOffset = translation
-
-                                // Check delete threshold for haptic
-                                let progress = abs(translation) / hitboxWidth
-                                let currentlyPastDelete = progress >= deleteThreshold
-                                if currentlyPastDelete != hasPassedDeleteThreshold {
-                                    hasPassedDeleteThreshold = currentlyPastDelete
-                                    HapticFeedback.thresholdCrossed()
-                                }
-                            }
-                        }
-                        .onEnded { value in
-                            let translation = value.translation.width
-
-                            if translation < 0 {
-                                let progress = abs(translation) / hitboxWidth
-
-                                if progress >= deleteThreshold {
-                                    // Delete the group
-                                    HapticFeedback.completionConfirmed()
-                                    deleteOffset = 0
-                                    withAnimation(.easeOut(duration: 0.25)) {
-                                        onDelete()
-                                    }
-                                } else {
-                                    // Snap back
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        deleteOffset = 0
-                                    }
-                                }
-                            }
-                            hasPassedDeleteThreshold = false
-                        }
-                )
-                .simultaneousGesture(
-                    LongPressGesture(minimumDuration: 0.5)
-                        .onEnded { _ in
-                            HapticFeedback.selection()
-                            onLongPress()
-                        }
-                )
+                .frame(minHeight: 44)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .background(Color.clear)
+                .offset(x: deleteOffset)
             }
-            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+            .gesture(deleteGesture())
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.5)
+                    .onEnded { _ in
+                        HapticFeedback.selection()
+                        onLongPress()
+                    }
+            )
+            .onTapGesture {
+                if isSatisfied {
+                    // Tap collapsed group to expand and uncomplete
+                    if let chosen = completedSubHabit {
+                        store.setCompletion(for: chosen, completed: false, on: selectedDate)
+                    }
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                        isCollapsed = false
+                    }
+                    HapticFeedback.selection()
+                }
+            }
 
-            // Child habits (indented)
-            ForEach(habits) { habit in
-                HabitLinedRow(
-                    habit: habit,
-                    isCompleted: habit.isCompleted(for: selectedDate),
-                    lineHeight: lineHeight,
-                    onComplete: {
-                        store.setCompletion(for: habit, completed: true, on: selectedDate)
-                        if habit.isHobby {
-                            onHobbyComplete?(habit)
-                        }
-                    },
-                    onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                    onArchive: {
-                        // Check if this is the last active habit in the group
-                        let isLastHabit = habits.count == 1
-                        store.archiveHabit(habit)
-                        if isLastHabit {
-                            onLastHabitDeleted()
-                        }
-                    },
-                    onLongPress: { onSelectHabit(habit) }
-                )
-                .padding(.leading, 24)
+            // Child sub-habits (shown when NOT collapsed)
+            if !isCollapsed || !isSatisfied {
+                ForEach(habits) { habit in
+                    SubHabitRow(
+                        habit: habit,
+                        isCompleted: habit.isCompleted(for: selectedDate),
+                        lineHeight: lineHeight,
+                        onComplete: {
+                            store.setCompletion(for: habit, completed: true, on: selectedDate)
+                            // Record which sub-habit was chosen
+                            store.recordSelectedOption(for: habit, option: habit.name, on: selectedDate)
+                            // Collapse the group after completion
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                isCollapsed = true
+                            }
+                            if habit.isHobby || habit.enableNotesPhotos {
+                                onHobbyComplete?(habit)
+                            }
+                        },
+                        onUncomplete: {
+                            store.setCompletion(for: habit, completed: false, on: selectedDate)
+                        },
+                        onLongPress: { onSelectHabit(habit) }
+                    )
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .top)),
+                        removal: .opacity.combined(with: .move(edge: .top))
+                    ))
+                }
+                .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSatisfied)
             }
         }
+        .onAppear {
+            // Initialize collapse state based on current completion
+            isCollapsed = isSatisfied
+            groupStrikethroughProgress = isSatisfied ? 1.0 : 0.0
+        }
+        .onChange(of: isSatisfied) { _, newValue in
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                isCollapsed = newValue
+            }
+            withAnimation(JournalTheme.Animations.strikethrough) {
+                groupStrikethroughProgress = newValue ? 1.0 : 0.0
+            }
+        }
+        .onChange(of: isDragging) { _, newValue in
+            if !newValue {
+                resetTask?.cancel()
+                resetTask = Task {
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            if deleteOffset != 0 {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    deleteOffset = 0
+                                    hasPassedDeleteThreshold = false
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                resetTask?.cancel()
+            }
+        }
+    }
+
+    private func deleteGesture() -> some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .local)
+            .onChanged { value in
+                let horizontal = abs(value.translation.width)
+                let vertical = abs(value.translation.height)
+                let translation = value.translation.width
+                guard horizontal > vertical, translation < 0 else { return }
+
+                isDragging = true
+                deleteOffset = translation
+
+                let currentlyPast = abs(translation) >= deleteDistanceThreshold
+                if currentlyPast != hasPassedDeleteThreshold {
+                    hasPassedDeleteThreshold = currentlyPast
+                    HapticFeedback.thresholdCrossed()
+                }
+            }
+            .onEnded { value in
+                isDragging = false
+                let translation = value.translation.width
+                guard translation < 0 else { return }
+
+                if abs(translation) >= deleteDistanceThreshold {
+                    HapticFeedback.completionConfirmed()
+                    deleteOffset = 0
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        onDelete()
+                    }
+                } else {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        deleteOffset = 0
+                    }
+                }
+                hasPassedDeleteThreshold = false
+            }
+    }
+}
+
+/// A sub-habit row within a group — indented, slightly muted, with swipe-to-complete
+struct SubHabitRow: View {
+    let habit: Habit
+    let isCompleted: Bool
+    let lineHeight: CGFloat
+    let onComplete: () -> Void
+    let onUncomplete: () -> Void
+    let onLongPress: () -> Void
+
+    @State private var strikethroughProgress: CGFloat
+    @State private var isDragging: Bool = false
+    @State private var hasPassedThreshold: Bool = false
+    @State private var textWidth: CGFloat = 0
+    @State private var resetTask: Task<Void, Never>? = nil
+
+    private let completionThreshold: CGFloat = 0.3
+
+    init(habit: Habit, isCompleted: Bool, lineHeight: CGFloat,
+         onComplete: @escaping () -> Void,
+         onUncomplete: @escaping () -> Void,
+         onLongPress: @escaping () -> Void) {
+        self.habit = habit
+        self.isCompleted = isCompleted
+        self.lineHeight = lineHeight
+        self.onComplete = onComplete
+        self.onUncomplete = onUncomplete
+        self.onLongPress = onLongPress
+        self._strikethroughProgress = State(initialValue: isCompleted ? 1.0 : 0.0)
+        self._hasPassedThreshold = State(initialValue: isCompleted)
+    }
+
+    private var isVisuallyCompleted: Bool {
+        strikethroughProgress >= completionThreshold
+    }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            // Sub-habit checkbox (smaller, muted)
+            RoundedRectangle(cornerRadius: 5)
+                .strokeBorder(
+                    isVisuallyCompleted
+                        ? JournalTheme.Colors.inkBlue.opacity(0.6)
+                        : JournalTheme.Colors.completedGray.opacity(0.5),
+                    lineWidth: 1.2
+                )
+                .background(
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(isVisuallyCompleted
+                            ? JournalTheme.Colors.inkBlue.opacity(0.08)
+                            : Color.clear)
+                )
+                .overlay {
+                    if isVisuallyCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(JournalTheme.Colors.inkBlue.opacity(0.7))
+                    }
+                }
+                .frame(width: 17, height: 17)
+
+            // Sub-habit text (slightly smaller, muted)
+            HStack(spacing: 4) {
+                Text(habit.name)
+                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .foregroundStyle(
+                        isVisuallyCompleted
+                            ? JournalTheme.Colors.completedGray
+                            : JournalTheme.Colors.inkBlack.opacity(0.75)
+                    )
+            }
+            .background(
+                GeometryReader { textGeometry in
+                    Color.clear
+                        .onAppear { textWidth = textGeometry.size.width }
+                        .onChange(of: textGeometry.size.width) { _, newWidth in
+                            textWidth = newWidth
+                        }
+                }
+            )
+            .overlay(alignment: .leading) {
+                StrikethroughLine(
+                    width: textWidth > 0 ? textWidth : 150,
+                    color: JournalTheme.Colors.inkBlue.opacity(0.6),
+                    progress: $strikethroughProgress
+                )
+            }
+            .contentShape(Rectangle())
+            .gesture(completionGesture(hitboxWidth: textWidth > 0 ? textWidth : 150))
+
+            Spacer()
+        }
+        .frame(minHeight: 38)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 48)
+        .padding(.trailing, 24)
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onEnded { _ in
+                    HapticFeedback.selection()
+                    onLongPress()
+                }
+        )
+        .onTapGesture {
+            if isCompleted {
+                withAnimation(JournalTheme.Animations.strikethrough) {
+                    strikethroughProgress = 0.0
+                    hasPassedThreshold = false
+                }
+                HapticFeedback.selection()
+                onUncomplete()
+            }
+        }
+        .onChange(of: isCompleted) { _, newValue in
+            if !isDragging {
+                withAnimation(JournalTheme.Animations.strikethrough) {
+                    strikethroughProgress = newValue ? 1.0 : 0.0
+                    hasPassedThreshold = newValue
+                }
+            }
+        }
+        .onChange(of: isDragging) { _, newValue in
+            if !newValue {
+                resetTask?.cancel()
+                resetTask = Task {
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            if !isCompleted && strikethroughProgress > 0 && strikethroughProgress < 1 {
+                                withAnimation(JournalTheme.Animations.strikethrough) {
+                                    strikethroughProgress = 0
+                                    hasPassedThreshold = false
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                resetTask?.cancel()
+            }
+        }
+    }
+
+    private func completionGesture(hitboxWidth: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .local)
+            .onChanged { value in
+                let horizontal = abs(value.translation.width)
+                let vertical = abs(value.translation.height)
+                let translation = value.translation.width
+                guard horizontal > vertical, translation > 0 else { return }
+
+                isDragging = true
+                if isCompleted { return }
+
+                let forwardProgress = translation / hitboxWidth
+                strikethroughProgress = max(0, min(1, forwardProgress))
+
+                let currentlyPastThreshold = strikethroughProgress >= completionThreshold
+                if currentlyPastThreshold != hasPassedThreshold {
+                    hasPassedThreshold = currentlyPastThreshold
+                    HapticFeedback.thresholdCrossed()
+                }
+            }
+            .onEnded { value in
+                isDragging = false
+                let translation = value.translation.width
+                guard translation > 0 else { return }
+
+                if !isCompleted {
+                    if strikethroughProgress >= completionThreshold {
+                        withAnimation(JournalTheme.Animations.strikethrough) {
+                            strikethroughProgress = 1.0
+                        }
+                        HapticFeedback.completionConfirmed()
+                        onComplete()
+                        hasPassedThreshold = true
+                    } else {
+                        withAnimation(JournalTheme.Animations.strikethrough) {
+                            strikethroughProgress = 0
+                        }
+                        hasPassedThreshold = false
+                    }
+                }
+            }
     }
 }
 

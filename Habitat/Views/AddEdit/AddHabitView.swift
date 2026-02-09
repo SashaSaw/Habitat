@@ -1017,6 +1017,8 @@ struct FrequencyDetailSection: View {
 struct AddHabitView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var store: HabitStore
+    /// Optional group to auto-add the new habit into
+    var addToGroup: HabitGroup? = nil
 
     @State private var name = ""
     @State private var frequencyType: FrequencyType = .daily
@@ -1079,13 +1081,20 @@ struct AddHabitView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("New habit")
+            Text(addToGroup != nil ? "New sub-habit" : "New habit")
                 .font(JournalTheme.Fonts.title())
                 .foregroundStyle(JournalTheme.Colors.navy)
-            Text("What do you want to start doing?")
-                .font(JournalTheme.Fonts.habitCriteria())
-                .foregroundStyle(JournalTheme.Colors.completedGray)
-                .italic()
+            if let group = addToGroup {
+                Text("Adding to \(group.name)")
+                    .font(JournalTheme.Fonts.habitCriteria())
+                    .foregroundStyle(JournalTheme.Colors.teal)
+                    .italic()
+            } else {
+                Text("What do you want to start doing?")
+                    .font(JournalTheme.Fonts.habitCriteria())
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+                    .italic()
+            }
         }
     }
 
@@ -1231,11 +1240,20 @@ struct AddHabitView: View {
             type: type,
             frequencyType: frequencyType,
             frequencyTarget: target,
+            groupId: addToGroup?.id,
             isHobby: enableNotesPhotos,
             notificationsEnabled: enableReminders,
             weeklyNotificationDays: Array(selectedWeekDays),
             enableNotesPhotos: enableNotesPhotos
         )
+
+        // If adding to a group, also add the new habit to the group's habitIds
+        if let group = addToGroup,
+           let newHabit = store.habits.first(where: {
+               $0.name == name.trimmingCharacters(in: .whitespaces) && $0.groupId == group.id
+           }) {
+            store.addHabitToGroup(newHabit, group: group)
+        }
 
         withAnimation(.easeInOut(duration: 0.3)) {
             showConfirmation = true
