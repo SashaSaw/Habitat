@@ -1,0 +1,396 @@
+import SwiftUI
+import FamilyControls
+
+/// Configure-once screen for setting up app blocking via Screen Time APIs
+struct BlockSetupView: View {
+    @State private var blockSettings = BlockSettings.shared
+    @State private var screenTimeManager = ScreenTimeManager.shared
+    @State private var showingStartPicker = false
+    @State private var showingEndPicker = false
+    @State private var showingAppPicker = false
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                // Paper background
+                LinedPaperBackground(lineSpacing: JournalTheme.Dimensions.lineSpacing)
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Header
+                        headerSection
+
+                        // Authorization prompt (if not yet authorized)
+                        if !screenTimeManager.isAuthorized {
+                            authorizationCard
+                        } else {
+                            // Master toggle
+                            masterToggle
+
+                            // Block schedule card
+                            scheduleCard
+
+                            // App selection
+                            appSelectionSection
+
+                            // Info callout
+                            infoCallout
+                        }
+
+                        Spacer(minLength: 100)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 16)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.inkBlue)
+                }
+            }
+            .onChange(of: blockSettings.isEnabled) { _, isEnabled in
+                if isEnabled {
+                    screenTimeManager.enableBlocking()
+                } else {
+                    screenTimeManager.disableBlocking()
+                }
+            }
+            .onChange(of: blockSettings.scheduleStartMinutes) { _, _ in
+                screenTimeManager.updateBlocking()
+            }
+            .onChange(of: blockSettings.scheduleEndMinutes) { _, _ in
+                screenTimeManager.updateBlocking()
+            }
+        }
+    }
+
+    // MARK: - Header
+
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Block Apps")
+                .font(JournalTheme.Fonts.title())
+                .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+            Text("Choose apps to block during focus hours")
+                .font(JournalTheme.Fonts.habitCriteria())
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+        }
+    }
+
+    // MARK: - Authorization Card
+
+    private var authorizationCard: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "lock.shield")
+                .font(.system(size: 36))
+                .foregroundStyle(JournalTheme.Colors.amber)
+
+            Text("Screen Time Access Required")
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+            Text("Habitat needs Screen Time permission to block distracting apps and show your habits instead.")
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                Task {
+                    await screenTimeManager.requestAuthorization()
+                }
+            } label: {
+                Text("Grant Access")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(JournalTheme.Colors.amber)
+                    )
+            }
+        }
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(JournalTheme.Colors.paperLight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(JournalTheme.Colors.lineMedium, lineWidth: 1)
+                )
+        )
+    }
+
+    // MARK: - Master Toggle
+
+    private var masterToggle: some View {
+        let selectedCount = screenTimeManager.activitySelection.applicationTokens.count
+            + screenTimeManager.activitySelection.categoryTokens.count
+
+        return HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("App Blocking")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                Text(blockSettings.isEnabled ? "Active · \(selectedCount) selected" : "Disabled")
+                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .foregroundStyle(blockSettings.isEnabled ? JournalTheme.Colors.successGreen : JournalTheme.Colors.completedGray)
+            }
+
+            Spacer()
+
+            Toggle("", isOn: $blockSettings.isEnabled)
+                .tint(JournalTheme.Colors.successGreen)
+                .labelsHidden()
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(JournalTheme.Colors.paperLight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(JournalTheme.Colors.lineMedium, lineWidth: 1)
+                )
+        )
+    }
+
+    // MARK: - Schedule Card
+
+    private var scheduleCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            scheduleCardHeader
+            scheduleTimeRange
+            scheduleTimePickers
+            scheduleDaySelector
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(JournalTheme.Colors.paperLight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(JournalTheme.Colors.lineMedium, lineWidth: 1)
+                )
+        )
+    }
+
+    private var scheduleCardHeader: some View {
+        HStack {
+            Image(systemName: "clock")
+                .font(.system(size: 15))
+                .foregroundStyle(JournalTheme.Colors.amber)
+
+            Text("Block Schedule")
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundStyle(JournalTheme.Colors.inkBlack)
+        }
+    }
+
+    private var scheduleTimeRange: some View {
+        HStack(spacing: 12) {
+            timeButton(
+                label: "From",
+                time: blockSettings.startTimeString,
+                isActive: showingStartPicker
+            ) {
+                showingStartPicker.toggle()
+                showingEndPicker = false
+            }
+
+            Image(systemName: "arrow.right")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+
+            timeButton(
+                label: "Until",
+                time: blockSettings.endTimeString,
+                isActive: showingEndPicker
+            ) {
+                showingEndPicker.toggle()
+                showingStartPicker = false
+            }
+
+            Spacer()
+        }
+    }
+
+    private func timeButton(label: String, time: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        let fillColor: Color = isActive ? JournalTheme.Colors.amber.opacity(0.1) : JournalTheme.Colors.paperLight
+        let borderColor: Color = isActive ? JournalTheme.Colors.amber : JournalTheme.Colors.lineMedium
+
+        return Button(action: action) {
+            VStack(spacing: 2) {
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+                Text(time)
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(fillColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(borderColor, lineWidth: 1)
+                    )
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var scheduleTimePickers: some View {
+        if showingStartPicker {
+            DatePicker("Start time", selection: $blockSettings.startTime, displayedComponents: .hourAndMinute)
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .frame(maxHeight: 120)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+        }
+
+        if showingEndPicker {
+            DatePicker("End time", selection: $blockSettings.endTime, displayedComponents: .hourAndMinute)
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .frame(maxHeight: 120)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+        }
+    }
+
+    private var scheduleDaySelector: some View {
+        let days: [(String, Int)] = [("S", 1), ("M", 2), ("T", 3), ("W", 4), ("T", 5), ("F", 6), ("S", 7)]
+
+        return HStack(spacing: 6) {
+            ForEach(days, id: \.1) { label, day in
+                let isActive = blockSettings.activeDays.contains(day)
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        if isActive {
+                            blockSettings.activeDays.remove(day)
+                        } else {
+                            blockSettings.activeDays.insert(day)
+                        }
+                    }
+                } label: {
+                    Text(label)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundStyle(isActive ? .white : JournalTheme.Colors.completedGray)
+                        .frame(width: 36, height: 36)
+                        .background(
+                            Circle()
+                                .fill(isActive ? JournalTheme.Colors.amber : JournalTheme.Colors.paper)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(isActive ? Color.clear : JournalTheme.Colors.lineMedium, lineWidth: 1)
+                                )
+                        )
+                }
+            }
+        }
+    }
+
+    // MARK: - App Selection (FamilyActivityPicker)
+
+    private var appSelectionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("APPS TO BLOCK")
+                .font(JournalTheme.Fonts.sectionHeader())
+                .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                .tracking(2)
+
+            // Button to open the system FamilyActivityPicker
+            Button {
+                showingAppPicker = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "apps.iphone")
+                        .font(.system(size: 20))
+                        .foregroundStyle(JournalTheme.Colors.coral)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Choose Apps & Categories")
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                        let appCount = screenTimeManager.activitySelection.applicationTokens.count
+                        let catCount = screenTimeManager.activitySelection.categoryTokens.count
+                        if appCount > 0 || catCount > 0 {
+                            Text(selectionSummary(apps: appCount, categories: catCount))
+                                .font(.system(size: 12, weight: .regular, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        } else {
+                            Text("No apps selected yet")
+                                .font(.system(size: 12, weight: .regular, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(JournalTheme.Colors.paperLight)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(JournalTheme.Colors.lineMedium, lineWidth: 1)
+                        )
+                )
+            }
+            .familyActivityPicker(
+                isPresented: $showingAppPicker,
+                selection: $screenTimeManager.activitySelection
+            )
+        }
+    }
+
+    private func selectionSummary(apps: Int, categories: Int) -> String {
+        var parts: [String] = []
+        if apps > 0 { parts.append("\(apps) app\(apps == 1 ? "" : "s")") }
+        if categories > 0 { parts.append("\(categories) categor\(categories == 1 ? "y" : "ies")") }
+        return parts.joined(separator: ", ") + " selected"
+    }
+
+    // MARK: - Info Callout
+
+    private var infoCallout: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("💡")
+                .font(.system(size: 20))
+
+            Text("When you try to open a blocked app, you'll see a shield. Open Habitat to see your habits for today instead.")
+                .font(JournalTheme.Fonts.habitCriteria())
+                .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(JournalTheme.Colors.amber.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(JournalTheme.Colors.amber.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+}
+
+#Preview {
+    BlockSetupView()
+}

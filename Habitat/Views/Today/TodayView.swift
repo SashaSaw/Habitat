@@ -41,6 +41,10 @@ struct TodayContentView: View {
     @AppStorage("hasSeenGroupTooltip") private var hasSeenGroupTooltip: Bool = false
     @State private var showGroupTooltip: Bool = false
 
+    // Block setup sheet
+    @State private var showingBlockSetup: Bool = false
+    @State private var blockSettings = BlockSettings.shared
+
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let contentPadding: CGFloat = 24
 
@@ -70,6 +74,9 @@ struct TodayContentView: View {
 
                     // Streak tracker bar
                     streakTrackerBar
+
+                    // Block status indicator
+                    blockStatusBanner
 
                     // Sections
                     VStack(spacing: 24) {
@@ -147,6 +154,9 @@ struct TodayContentView: View {
         }
         .sheet(isPresented: $showingAddHabit) {
             AddHabitView(store: store)
+        }
+        .sheet(isPresented: $showingBlockSetup) {
+            BlockSetupView()
         }
         .alert("Delete Empty Group?", isPresented: $showDeleteGroupAlert) {
             Button("Keep Group") {
@@ -252,6 +262,51 @@ struct TodayContentView: View {
                 .animation(.easeInOut(duration: 0.3), value: isGoodDay)
                 .animation(.easeInOut(duration: 0.3), value: completed)
             }
+        }
+    }
+
+    // MARK: - Block Status Banner
+
+    @ViewBuilder
+    private var blockStatusBanner: some View {
+        let count = blockSettings.selectedCount
+        if blockSettings.isEnabled && count > 0 {
+            Button {
+                showingBlockSetup = true
+            } label: {
+                HStack(spacing: 8) {
+                    Text("🔒")
+                        .font(.system(size: 14))
+
+                    Text("\(count) app\(count == 1 ? "" : "s") blocked")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
+
+                    if blockSettings.isCurrentlyActive {
+                        Text("· until \(blockSettings.endTimeString)")
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(JournalTheme.Colors.paperLight)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .strokeBorder(JournalTheme.Colors.lineMedium.opacity(0.5), lineWidth: 1)
+                        )
+                )
+            }
+            .padding(.horizontal, contentPadding)
+            .padding(.top, 6)
         }
     }
 

@@ -13,6 +13,7 @@ struct MyHabitsView: View {
     @State private var showDeleteGroupConfirmation = false
     @AppStorage("hasSeenGroupCallout") private var hasSeenGroupCallout = false
     @State private var showGroupCallout = false
+    @State private var showingBlockSetup = false
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -40,6 +41,9 @@ struct MyHabitsView: View {
             .navigationBarHidden(true)
             .sheet(isPresented: $showingAddHabit) {
                 AddHabitView(store: store)
+            }
+            .sheet(isPresented: $showingBlockSetup) {
+                BlockSetupView()
             }
             .sheet(item: $selectedHabit) { habit in
                 NavigationStack {
@@ -87,15 +91,28 @@ struct MyHabitsView: View {
     private var portraitLayout: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                // Title section
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("My Habits")
-                        .font(JournalTheme.Fonts.title())
-                        .foregroundStyle(JournalTheme.Colors.inkBlack)
+                // Title section with settings button
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("My Habits")
+                            .font(JournalTheme.Fonts.title())
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
 
-                    Text("\(store.liveHabits.count) active habits")
-                        .font(JournalTheme.Fonts.habitCriteria())
-                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                        Text("\(store.liveHabits.count) active habits")
+                            .font(JournalTheme.Fonts.habitCriteria())
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        showingBlockSetup = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 20, weight: .regular))
+                            .foregroundStyle(JournalTheme.Colors.inkBlue)
+                            .padding(8)
+                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 16)

@@ -256,6 +256,7 @@
 				DEVELOPMENT_TEAM = 4RX7NWPQKM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of your hobby activities";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Add photos from your library to hobby entries";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -291,6 +292,7 @@
 				DEVELOPMENT_TEAM = 4RX7NWPQKM;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of your hobby activities";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Add photos from your library to hobby entries";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
