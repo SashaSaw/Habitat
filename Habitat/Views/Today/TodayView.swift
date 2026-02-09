@@ -34,258 +34,99 @@ struct TodayContentView: View {
     @State private var showHobbyOverlay: Bool = false
     @State private var completingHobby: Habit? = nil
 
+    // Quick-add sheet
+    @State private var showingAddHabit: Bool = false
+
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
-    private let marginLeft = JournalTheme.Dimensions.marginLeft
+    private let contentPadding: CGFloat = 24
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .topLeading) {
-                // Paper background that extends infinitely
-                LinedPaperBackground(lineSpacing: lineHeight)
+        ZStack {
+            // Paper background
+            LinedPaperBackground(lineSpacing: lineHeight)
+                .ignoresSafeArea()
 
-                // Scrollable content
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Title "Today" - takes 2 lines
-                        LinedRow(height: lineHeight * 2) {
-                            HStack(spacing: 8) {
-                                Text("Today")
-                                    .font(JournalTheme.Fonts.title())
-                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+            // Scrollable content
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Header — left aligned
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Today")
+                            .font(JournalTheme.Fonts.title())
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
 
-                                if store.isGoodDay(for: selectedDate) {
-                                    Text("✓ Must-dos complete!")
-                                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                        .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
-                                }
-                            }
-                        }
+                        Text(formattedDate)
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, contentPadding)
+                    .padding(.top, lineHeight * 2)
+                    .padding(.bottom, 8)
 
-                        // Date header - takes 1 line
-                        LinedRow(height: lineHeight) {
-                            Text(formattedDate)
-                                .font(JournalTheme.Fonts.dateHeader())
-                                .foregroundStyle(JournalTheme.Colors.inkBlack)
-                        }
+                    // Streak tracker bar
+                    streakTrackerBar
 
-                        // Empty line
-                        LinedRow(height: lineHeight) {
-                            EmptyView()
-                        }
+                    // Sections
+                    VStack(spacing: 24) {
+                        // ★ MUST DO Section
+                        mustDoSection
 
-                        // Must-Do Section
-                        if !store.standalonePositiveMustDoHabits.isEmpty || !store.mustDoGroups.isEmpty {
-                            LinedRow(height: lineHeight) {
-                                Text("MUST DO")
-                                    .font(JournalTheme.Fonts.sectionHeader())
-                                    .foregroundStyle(JournalTheme.Colors.sectionHeader)
-                                    .tracking(2)
-                            }
+                        // NICE TO DO Section (uncompleted only)
+                        niceToDoSection
 
-                            // Standalone must-do habits (positive only)
-                            ForEach(store.standalonePositiveMustDoHabits) { habit in
-                                HabitLinedRow(
-                                    habit: habit,
-                                    isCompleted: habit.isCompleted(for: selectedDate),
-                                    lineHeight: lineHeight,
-                                    onComplete: {
-                                        store.setCompletion(for: habit, completed: true, on: selectedDate)
-                                        if habit.isHobby {
-                                            completingHobby = habit
-                                            showHobbyOverlay = true
-                                        }
-                                    },
-                                    onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                                    onArchive: { store.archiveHabit(habit) },
-                                    onLongPress: { selectedHabit = habit }
-                                )
-                            }
-                            .animation(.easeInOut(duration: 0.25), value: store.standalonePositiveMustDoHabits.count)
-
-                            // Must-do groups with their habits
-                            ForEach(store.mustDoGroups) { group in
-                                GroupLinedRow(
-                                    group: group,
-                                    habits: store.habits(for: group),
-                                    lineHeight: lineHeight,
-                                    store: store,
-                                    selectedDate: selectedDate,
-                                    onSelectHabit: { selectedHabit = $0 },
-                                    onDelete: { store.deleteGroup(group) },
-                                    onLastHabitDeleted: {
-                                        groupToDeleteAfterHabit = group
-                                        showDeleteGroupAlert = true
-                                    },
-                                    onLongPress: { selectedGroup = group },
-                                    onHobbyComplete: { habit in
-                                        completingHobby = habit
-                                        showHobbyOverlay = true
-                                    }
-                                )
-                            }
-                        }
-
-                        // Empty line between sections
-                        LinedRow(height: lineHeight) {
-                            EmptyView()
-                        }
-
-                        // Nice-To-Do Section (positive only)
-                        if !store.positiveNiceToDoHabits.isEmpty {
-                            LinedRow(height: lineHeight) {
-                                Text("NICE TO DO")
-                                    .font(JournalTheme.Fonts.sectionHeader())
-                                    .foregroundStyle(JournalTheme.Colors.sectionHeader)
-                                    .tracking(2)
-                            }
-
-                            ForEach(store.positiveNiceToDoHabits) { habit in
-                                HabitLinedRow(
-                                    habit: habit,
-                                    isCompleted: habit.isCompleted(for: selectedDate),
-                                    lineHeight: lineHeight,
-                                    onComplete: {
-                                        store.setCompletion(for: habit, completed: true, on: selectedDate)
-                                        if habit.isHobby {
-                                            completingHobby = habit
-                                            showHobbyOverlay = true
-                                        }
-                                    },
-                                    onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                                    onArchive: { store.archiveHabit(habit) },
-                                    onLongPress: { selectedHabit = habit }
-                                )
-                            }
-                            .animation(.easeInOut(duration: 0.25), value: store.positiveNiceToDoHabits.count)
-                        }
-
-                        // TODAY ONLY Section (one-off tasks)
-                        if !store.todayVisibleTasks.isEmpty || !store.todayCompletedTasks.isEmpty {
-                            LinedRow(height: lineHeight) {
-                                EmptyView()
-                            }
-
-                            LinedRow(height: lineHeight) {
-                                HStack(spacing: 8) {
-                                    Text("◇ TODAY ONLY")
-                                        .font(JournalTheme.Fonts.sectionHeader())
-                                        .foregroundStyle(JournalTheme.Colors.teal)
-                                        .tracking(2)
-
-                                    // Count badge
-                                    let uncompletedCount = store.todayVisibleTasks.count
-                                    if uncompletedCount > 0 {
-                                        Text("\(uncompletedCount)")
-                                            .font(.system(size: 10, weight: .bold, design: .rounded))
-                                            .foregroundStyle(.white)
-                                            .frame(width: 18, height: 18)
-                                            .background(Circle().fill(JournalTheme.Colors.teal))
-                                    }
-                                }
-                            }
-
-                            // Uncompleted tasks
-                            ForEach(store.todayVisibleTasks) { task in
-                                TaskLinedRow(
-                                    habit: task,
-                                    isCompleted: false,
-                                    lineHeight: lineHeight,
-                                    onComplete: {
-                                        store.setCompletion(for: task, completed: true, on: selectedDate)
-                                    },
-                                    onUncomplete: { },
-                                    onDelete: { store.deleteHabit(task) }
-                                )
-                            }
-                            .animation(.easeInOut(duration: 0.25), value: store.todayVisibleTasks.count)
-
-                            // Completed tasks
-                            ForEach(store.todayCompletedTasks) { task in
-                                TaskLinedRow(
-                                    habit: task,
-                                    isCompleted: true,
-                                    lineHeight: lineHeight,
-                                    onComplete: { },
-                                    onUncomplete: {
-                                        store.setCompletion(for: task, completed: false, on: selectedDate)
-                                    },
-                                    onDelete: { store.deleteHabit(task) }
-                                )
-                            }
-                            .animation(.easeInOut(duration: 0.25), value: store.todayCompletedTasks.count)
-                        }
+                        // ◇ TODAY ONLY Section (uncompleted tasks only)
+                        todayOnlySection
 
                         // DON'T DO Section (negative habits)
-                        if !store.negativeHabits.isEmpty {
-                            LinedRow(height: lineHeight) {
-                                EmptyView()
-                            }
+                        dontDoSection
 
-                            LinedRow(height: lineHeight) {
-                                Text("DON'T DO")
-                                    .font(JournalTheme.Fonts.sectionHeader())
-                                    .foregroundStyle(JournalTheme.Colors.negativeRedDark)
-                                    .tracking(2)
-                            }
-
-                            ForEach(store.negativeHabits) { habit in
-                                NegativeHabitLinedRow(
-                                    habit: habit,
-                                    isCompleted: habit.isCompleted(for: selectedDate),
-                                    daysSince: store.calculateDaysSinceLastDone(for: habit),
-                                    lineHeight: lineHeight,
-                                    onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
-                                    onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                                    onArchive: { store.archiveHabit(habit) },
-                                    onLongPress: { selectedHabit = habit }
-                                )
-                            }
-                            .animation(.easeInOut(duration: 0.25), value: store.negativeHabits.count)
-                        }
-
-                        // Empty state
-                        if store.habits.isEmpty {
-                            LinedRow(height: lineHeight * 3) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("No habits yet")
-                                        .font(JournalTheme.Fonts.habitName())
-                                        .foregroundStyle(JournalTheme.Colors.completedGray)
-                                    Text("Go to My Habits tab to add habits")
-                                        .font(JournalTheme.Fonts.habitCriteria())
-                                        .foregroundStyle(JournalTheme.Colors.completedGray)
-                                }
-                            }
-                        }
-
-                        // Extra empty lines to fill screen
-                        ForEach(0..<20, id: \.self) { _ in
-                            LinedRow(height: lineHeight) {
-                                EmptyView()
-                            }
-                        }
+                        // DONE ✓ Section (completed nice-to-do + completed tasks)
+                        doneSection
                     }
-                }
+                    .padding(.top, 16)
 
-                // Celebration overlay
-                if showCelebration {
-                    CelebrationOverlay(isShowing: $showCelebration)
-                }
-
-                // Hobby completion overlay
-                if showHobbyOverlay, let hobby = completingHobby {
-                    HobbyCompletionOverlay(
-                        habit: hobby,
-                        onSave: { note, image in
-                            store.saveHobbyCompletion(for: hobby, on: selectedDate, note: note, image: image)
-                            showHobbyOverlay = false
-                            completingHobby = nil
-                        },
-                        onDismiss: {
-                            showHobbyOverlay = false
-                            completingHobby = nil
+                    // Empty state
+                    if store.habits.isEmpty {
+                        VStack(spacing: 8) {
+                            Text("No habits yet")
+                                .font(JournalTheme.Fonts.habitName())
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                            Text("Tap below to add your first habit")
+                                .font(JournalTheme.Fonts.habitCriteria())
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
-                    )
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
+                    }
+
+                    // Quick add bar
+                    quickAddBar
+                        .padding(.top, 16)
+
+                    Spacer(minLength: 120)
                 }
+            }
+
+            // Celebration overlay
+            if showCelebration {
+                CelebrationOverlay(isShowing: $showCelebration)
+            }
+
+            // Hobby completion overlay
+            if showHobbyOverlay, let hobby = completingHobby {
+                HobbyCompletionOverlay(
+                    habit: hobby,
+                    onSave: { note, image in
+                        store.saveHobbyCompletion(for: hobby, on: selectedDate, note: note, image: image)
+                        showHobbyOverlay = false
+                        completingHobby = nil
+                    },
+                    onDismiss: {
+                        showHobbyOverlay = false
+                        completingHobby = nil
+                    }
+                )
             }
         }
         .sheet(item: $selectedHabit) { habit in
@@ -295,6 +136,9 @@ struct TodayContentView: View {
         }
         .sheet(item: $selectedGroup) { group in
             EditGroupView(store: store, group: group)
+        }
+        .sheet(isPresented: $showingAddHabit) {
+            AddHabitView(store: store)
         }
         .alert("Delete Empty Group?", isPresented: $showDeleteGroupAlert) {
             Button("Keep Group") {
@@ -348,6 +192,287 @@ struct TodayContentView: View {
         formatter.dateFormat = "EEEE, MMMM d"
         return formatter.string(from: selectedDate)
     }
+
+    // MARK: - Streak Tracker Bar
+
+    private var streakTrackerBar: some View {
+        let total = store.mustDoTotalCount(for: selectedDate)
+        let completed = store.mustDoCompletedCount(for: selectedDate)
+        let isGoodDay = store.isGoodDay(for: selectedDate)
+        let streak = store.currentGoodDayStreak()
+
+        return Group {
+            if total > 0 {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if isGoodDay {
+                            Text("All must-dos done!")
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.successGreen)
+                        } else {
+                            Text("\(completed)/\(total) must-dos complete")
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.amber)
+                        }
+
+                        if streak > 0 {
+                            Text("\(streak) day streak · keep it going!")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
+                    }
+
+                    Spacer()
+
+                    Text("🔥")
+                        .font(.system(size: 28))
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isGoodDay
+                            ? JournalTheme.Colors.successGreen.opacity(0.12)
+                            : JournalTheme.Colors.amber.opacity(0.12))
+                )
+                .padding(.horizontal, contentPadding)
+                .padding(.top, 8)
+                .animation(.easeInOut(duration: 0.3), value: isGoodDay)
+                .animation(.easeInOut(duration: 0.3), value: completed)
+            }
+        }
+    }
+
+    // MARK: - Section Header Helper
+
+    private func sectionHeader(_ title: String, color: Color, badge: Int? = nil) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(JournalTheme.Fonts.sectionHeader())
+                .foregroundStyle(color)
+                .tracking(2)
+
+            if let badge = badge, badge > 0 {
+                Text("\(badge)")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .frame(width: 18, height: 18)
+                    .background(Circle().fill(color))
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, contentPadding)
+        .padding(.bottom, 4)
+    }
+
+    // MARK: - Must Do Section
+
+    @ViewBuilder
+    private var mustDoSection: some View {
+        if !store.standalonePositiveMustDoHabits.isEmpty || !store.mustDoGroups.isEmpty {
+            VStack(spacing: 0) {
+                sectionHeader("★ MUST DO", color: JournalTheme.Colors.amber)
+
+                // Standalone must-do habits (positive only) — completed stay inline
+                ForEach(store.standalonePositiveMustDoHabits) { habit in
+                    HabitLinedRow(
+                        habit: habit,
+                        isCompleted: habit.isCompleted(for: selectedDate),
+                        lineHeight: lineHeight,
+                        onComplete: {
+                            store.setCompletion(for: habit, completed: true, on: selectedDate)
+                            if habit.isHobby {
+                                completingHobby = habit
+                                showHobbyOverlay = true
+                            }
+                        },
+                        onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
+                        onArchive: { store.archiveHabit(habit) },
+                        onLongPress: { selectedHabit = habit }
+                    )
+                }
+                .animation(.easeInOut(duration: 0.25), value: store.standalonePositiveMustDoHabits.count)
+
+                // Must-do groups with their habits
+                ForEach(store.mustDoGroups) { group in
+                    GroupLinedRow(
+                        group: group,
+                        habits: store.habits(for: group),
+                        lineHeight: lineHeight,
+                        store: store,
+                        selectedDate: selectedDate,
+                        onSelectHabit: { selectedHabit = $0 },
+                        onDelete: { store.deleteGroup(group) },
+                        onLastHabitDeleted: {
+                            groupToDeleteAfterHabit = group
+                            showDeleteGroupAlert = true
+                        },
+                        onLongPress: { selectedGroup = group },
+                        onHobbyComplete: { habit in
+                            completingHobby = habit
+                            showHobbyOverlay = true
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    // MARK: - Nice To Do Section (uncompleted only)
+
+    @ViewBuilder
+    private var niceToDoSection: some View {
+        let uncompleted = store.uncompletedNiceToDoHabits(for: selectedDate)
+        if !uncompleted.isEmpty {
+            VStack(spacing: 0) {
+                sectionHeader("NICE TO DO", color: JournalTheme.Colors.sectionHeader)
+
+                ForEach(uncompleted) { habit in
+                    HabitLinedRow(
+                        habit: habit,
+                        isCompleted: false,
+                        lineHeight: lineHeight,
+                        onComplete: {
+                            store.setCompletion(for: habit, completed: true, on: selectedDate)
+                            if habit.isHobby {
+                                completingHobby = habit
+                                showHobbyOverlay = true
+                            }
+                        },
+                        onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
+                        onArchive: { store.archiveHabit(habit) },
+                        onLongPress: { selectedHabit = habit }
+                    )
+                }
+                .animation(.easeInOut(duration: 0.25), value: uncompleted.count)
+            }
+        }
+    }
+
+    // MARK: - Today Only Section (uncompleted tasks only)
+
+    @ViewBuilder
+    private var todayOnlySection: some View {
+        if !store.todayVisibleTasks.isEmpty {
+            VStack(spacing: 0) {
+                sectionHeader("◇ TODAY ONLY", color: JournalTheme.Colors.teal, badge: store.todayVisibleTasks.count)
+
+                ForEach(store.todayVisibleTasks) { task in
+                    TaskLinedRow(
+                        habit: task,
+                        isCompleted: false,
+                        lineHeight: lineHeight,
+                        onComplete: {
+                            store.setCompletion(for: task, completed: true, on: selectedDate)
+                        },
+                        onUncomplete: { },
+                        onDelete: { store.deleteHabit(task) }
+                    )
+                }
+                .animation(.easeInOut(duration: 0.25), value: store.todayVisibleTasks.count)
+            }
+        }
+    }
+
+    // MARK: - Don't Do Section
+
+    @ViewBuilder
+    private var dontDoSection: some View {
+        if !store.negativeHabits.isEmpty {
+            VStack(spacing: 0) {
+                sectionHeader("DON'T DO", color: JournalTheme.Colors.negativeRedDark)
+
+                ForEach(store.negativeHabits) { habit in
+                    NegativeHabitLinedRow(
+                        habit: habit,
+                        isCompleted: habit.isCompleted(for: selectedDate),
+                        daysSince: store.calculateDaysSinceLastDone(for: habit),
+                        lineHeight: lineHeight,
+                        onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
+                        onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
+                        onArchive: { store.archiveHabit(habit) },
+                        onLongPress: { selectedHabit = habit }
+                    )
+                }
+                .animation(.easeInOut(duration: 0.25), value: store.negativeHabits.count)
+            }
+        }
+    }
+
+    // MARK: - Done Section (completed nice-to-do + completed tasks)
+
+    @ViewBuilder
+    private var doneSection: some View {
+        let completedNiceToDo = store.completedNiceToDoHabits(for: selectedDate)
+        let completedTasks = store.todayCompletedTasks
+
+        if !completedNiceToDo.isEmpty || !completedTasks.isEmpty {
+            VStack(spacing: 0) {
+                sectionHeader("DONE ✓", color: JournalTheme.Colors.completedGray)
+
+                // Completed nice-to-do habits
+                ForEach(completedNiceToDo) { habit in
+                    HabitLinedRow(
+                        habit: habit,
+                        isCompleted: true,
+                        lineHeight: lineHeight,
+                        onComplete: { },
+                        onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
+                        onArchive: { store.archiveHabit(habit) },
+                        onLongPress: { selectedHabit = habit }
+                    )
+                    .opacity(0.6)
+                }
+
+                // Completed tasks
+                ForEach(completedTasks) { task in
+                    TaskLinedRow(
+                        habit: task,
+                        isCompleted: true,
+                        lineHeight: lineHeight,
+                        onComplete: { },
+                        onUncomplete: {
+                            store.setCompletion(for: task, completed: false, on: selectedDate)
+                        },
+                        onDelete: { store.deleteHabit(task) }
+                    )
+                    .opacity(0.6)
+                }
+            }
+        }
+    }
+
+    // MARK: - Quick Add Bar
+
+    private var quickAddBar: some View {
+        Button {
+            showingAddHabit = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                Text("Add a habit or task...")
+                    .font(JournalTheme.Fonts.habitCriteria())
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                Spacer()
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(
+                        JournalTheme.Colors.completedGray.opacity(0.35),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, contentPadding)
+    }
 }
 
 /// A row that aligns to the paper lines
@@ -355,7 +480,7 @@ struct LinedRow<Content: View>: View {
     let height: CGFloat
     @ViewBuilder let content: () -> Content
 
-    private let marginLeft = JournalTheme.Dimensions.marginLeft
+
 
     var body: some View {
         HStack(spacing: 0) {
@@ -363,8 +488,7 @@ struct LinedRow<Content: View>: View {
         }
         .frame(height: height, alignment: .bottomLeading)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, marginLeft + 8)
-        .padding(.trailing, 16)
+        .padding(.horizontal, 24)
     }
 }
 
@@ -394,7 +518,7 @@ struct HabitLinedRow: View {
     // Constants
     private let completionThreshold: CGFloat = 0.3
     private let archiveDistanceThreshold: CGFloat = 150 // Fixed pixel distance for archive
-    private let marginLeft = JournalTheme.Dimensions.marginLeft
+
 
     init(habit: Habit, isCompleted: Bool, lineHeight: CGFloat,
          onComplete: @escaping () -> Void,
@@ -444,8 +568,8 @@ struct HabitLinedRow: View {
 
             // Main content
             HStack(spacing: 12) {
-                // Checkbox indicator - fills based on progress
-                Circle()
+                // Rounded square checkbox — fills with tick when completed
+                RoundedRectangle(cornerRadius: 6)
                     .strokeBorder(
                         isVisuallyCompleted
                             ? JournalTheme.Colors.inkBlue
@@ -453,11 +577,18 @@ struct HabitLinedRow: View {
                         lineWidth: 1.5
                     )
                     .background(
-                        Circle()
+                        RoundedRectangle(cornerRadius: 6)
                             .fill(isVisuallyCompleted
                                 ? JournalTheme.Colors.inkBlue.opacity(0.1)
                                 : Color.clear)
                     )
+                    .overlay {
+                        if isVisuallyCompleted {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(JournalTheme.Colors.inkBlue)
+                        }
+                    }
                     .frame(width: 20, height: 20)
 
                 // Habit text with strikethrough overlay
@@ -501,14 +632,13 @@ struct HabitLinedRow: View {
 
                 Spacer()
             }
-            .frame(height: lineHeight, alignment: .bottom)
+            .frame(minHeight: 44)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, marginLeft + 8)
-            .padding(.trailing, 16)
+            .padding(.horizontal, 24)
             .background(Color.clear)
             .offset(x: archiveOffset)
         }
-        .frame(height: lineHeight)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
         // Archive gesture on full row (left swipes only)
         .gesture(archiveGesture())
@@ -694,7 +824,7 @@ struct NegativeHabitLinedRow: View {
     @State private var resetTask: Task<Void, Never>? = nil
 
     private let archiveDistanceThreshold: CGFloat = 150
-    private let marginLeft = JournalTheme.Dimensions.marginLeft
+
 
     private var archiveProgress: CGFloat {
         guard archiveOffset < 0 else { return 0 }
@@ -760,14 +890,13 @@ struct NegativeHabitLinedRow: View {
                         .foregroundStyle(JournalTheme.Colors.negativeRedDark)
                 }
             }
-            .frame(height: lineHeight, alignment: .bottom)
+            .frame(minHeight: 44)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, marginLeft + 8)
-            .padding(.trailing, 16)
+            .padding(.horizontal, 24)
             .background(Color.clear)
             .offset(x: archiveOffset)
         }
-        .frame(height: lineHeight)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
         .gesture(archiveGesture())
         .simultaneousGesture(
@@ -875,7 +1004,7 @@ struct TaskLinedRow: View {
     // Constants
     private let completionThreshold: CGFloat = 0.3
     private let deleteDistanceThreshold: CGFloat = 150
-    private let marginLeft = JournalTheme.Dimensions.marginLeft
+
 
     init(habit: Habit, isCompleted: Bool, lineHeight: CGFloat,
          onComplete: @escaping () -> Void,
@@ -984,14 +1113,13 @@ struct TaskLinedRow: View {
                         )
                 }
             }
-            .frame(height: lineHeight, alignment: .bottom)
+            .frame(minHeight: 44)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, marginLeft + 8)
-            .padding(.trailing, 16)
+            .padding(.horizontal, 24)
             .background(Color.clear)
             .offset(x: deleteOffset)
         }
-        .frame(height: lineHeight)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
         // Delete gesture on full row (left swipes only)
         .gesture(deleteGesture())
@@ -1154,7 +1282,7 @@ struct GroupLinedRow: View {
     @State private var hasPassedDeleteThreshold: Bool = false
 
     private let deleteThreshold: CGFloat = 0.5
-    private let marginLeft = JournalTheme.Dimensions.marginLeft
+
 
     private var isSatisfied: Bool {
         group.isSatisfied(habits: store.habits, for: selectedDate)
@@ -1194,12 +1322,19 @@ struct GroupLinedRow: View {
 
                     // Group header content
                     HStack(spacing: 12) {
-                        Circle()
+                        RoundedRectangle(cornerRadius: 6)
                             .strokeBorder(isSatisfied ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.completedGray, lineWidth: 1.5)
                             .background(
-                                Circle()
+                                RoundedRectangle(cornerRadius: 6)
                                     .fill(isSatisfied ? JournalTheme.Colors.inkBlue.opacity(0.1) : Color.clear)
                             )
+                            .overlay {
+                                if isSatisfied {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(JournalTheme.Colors.inkBlue)
+                                }
+                            }
                             .frame(width: 20, height: 20)
 
                         Text(group.name)
@@ -1212,10 +1347,9 @@ struct GroupLinedRow: View {
 
                         Spacer()
                     }
-                    .frame(height: lineHeight, alignment: .bottom)
+                    .frame(minHeight: 44)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, marginLeft + 8)
-                    .padding(.trailing, 16)
+                    .padding(.horizontal, 24)
                     .background(Color.clear)
                     .offset(x: deleteOffset)
                 }
@@ -1275,7 +1409,7 @@ struct GroupLinedRow: View {
                         }
                 )
             }
-            .frame(height: lineHeight)
+            .frame(minHeight: 44)
 
             // Child habits (indented)
             ForEach(habits) { habit in

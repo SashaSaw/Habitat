@@ -450,6 +450,55 @@ final class HabitStore {
         return goodDays
     }
 
+    // MARK: - Must-Do Progress (for streak tracker bar)
+
+    /// Total number of must-do items for today (standalone habits + groups)
+    func mustDoTotalCount(for date: Date) -> Int {
+        let standaloneMustDos = mustDoHabits.filter { $0.groupId == nil && $0.type == .positive }
+        return standaloneMustDos.count + mustDoGroups.count
+    }
+
+    /// Number of completed must-do items for today
+    func mustDoCompletedCount(for date: Date) -> Int {
+        let standaloneMustDos = mustDoHabits.filter { $0.groupId == nil && $0.type == .positive }
+        let completedStandalone = standaloneMustDos.filter { $0.isCompleted(for: date) }.count
+        let completedGroups = mustDoGroups.filter { $0.isSatisfied(habits: habits, for: date) }.count
+        return completedStandalone + completedGroups
+    }
+
+    /// Current good-day streak (consecutive days where all must-dos were completed)
+    func currentGoodDayStreak() -> Int {
+        var streak = 0
+        let calendar = Calendar.current
+        var date = calendar.startOfDay(for: Date())
+
+        if isGoodDay(for: date) {
+            streak = 1
+            date = calendar.date(byAdding: .day, value: -1, to: date)!
+        } else {
+            date = calendar.date(byAdding: .day, value: -1, to: date)!
+        }
+
+        var daysChecked = 0
+        while isGoodDay(for: date) && daysChecked < 365 {
+            streak += 1
+            date = calendar.date(byAdding: .day, value: -1, to: date)!
+            daysChecked += 1
+        }
+
+        return streak
+    }
+
+    /// Completed nice-to-do habits for a given date (for the Done section)
+    func completedNiceToDoHabits(for date: Date) -> [Habit] {
+        positiveNiceToDoHabits.filter { $0.isCompleted(for: date) }
+    }
+
+    /// Uncompleted nice-to-do habits for a given date
+    func uncompletedNiceToDoHabits(for date: Date) -> [Habit] {
+        positiveNiceToDoHabits.filter { !$0.isCompleted(for: date) }
+    }
+
     // MARK: - Streak Calculation
 
     func updateStreak(for habit: Habit) {
