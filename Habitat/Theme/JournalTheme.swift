@@ -18,6 +18,14 @@ enum JournalTheme {
         static let negativeRedDark = Color(hex: "FC8181")
         static let completedGray = Color(hex: "A0AEC0")
         static let sectionHeader = Color(hex: "4A5568")
+
+        // New color system from redesign
+        static let amber = Color(hex: "D4A028")           // Must-do labels, streak bar incomplete
+        static let teal = Color(hex: "4A9B8E")            // Today-only tasks, badges, task checkboxes
+        static let successGreen = Color(hex: "5B9A5F")    // Streak bar complete, success states
+        static let navy = Color(hex: "1E2A4A")            // Core UI, checkmarks, primary text
+        static let coral = Color(hex: "D4836A")           // Blocked apps, quit habit, archive
+        static let paperLight = Color(hex: "FAF6EC")       // Card backgrounds, input backgrounds
     }
 
     // MARK: - Fonts

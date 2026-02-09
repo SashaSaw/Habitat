@@ -20,6 +20,12 @@ final class Habit {
     var isHobby: Bool = false
     @Attribute(.externalStorage) var iconImageData: Data? = nil
 
+    // Options: different ways to complete this habit (e.g. ["Gym", "Swim", "Run"] for "Exercise")
+    var options: [String] = []
+
+    // Whether notes & photos are enabled for this habit (replaces isHobby concept)
+    var enableNotesPhotos: Bool = false
+
     // Notification scheduling
     var notificationsEnabled: Bool = false
     var dailyNotificationMinutes: [Int] = []      // Minutes from midnight (0-1440), up to 5
@@ -77,9 +83,21 @@ final class Habit {
         groupId != nil
     }
 
+    /// Whether this is a one-off task (not a recurring habit)
+    var isTask: Bool {
+        frequencyType == .once
+    }
+
+    /// Whether this habit has options (multiple ways to complete)
+    var hasOptions: Bool {
+        !options.isEmpty
+    }
+
     /// Returns the frequency display name
     var frequencyDisplayName: String {
         switch frequencyType {
+        case .once:
+            return "Today only"
         case .daily:
             return "Daily"
         case .weekly:

@@ -9,6 +9,7 @@ final class DailyLog {
     var value: Double?
     var note: String?
     var photoPath: String?
+    var selectedOption: String?
 
     // Relationship to habit
     var habit: Habit?
@@ -20,6 +21,7 @@ final class DailyLog {
         value: Double? = nil,
         note: String? = nil,
         photoPath: String? = nil,
+        selectedOption: String? = nil,
         habit: Habit? = nil
     ) {
         self.id = id
@@ -28,6 +30,7 @@ final class DailyLog {
         self.value = value
         self.note = note
         self.photoPath = photoPath
+        self.selectedOption = selectedOption
         self.habit = habit
     }
 }

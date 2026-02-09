@@ -19,6 +19,9 @@ struct NotificationScheduleSection: View {
                     .padding(.vertical, 8)
 
                 switch frequencyType {
+                case .once:
+                    EmptyView()
+
                 case .daily:
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Tap timeline to add reminders")
@@ -55,6 +58,8 @@ struct NotificationScheduleSection: View {
             return "Get reminded to complete this habit"
         }
         switch frequencyType {
+        case .once:
+            return ""
         case .daily:
             return "Drag points to adjust times, tap to remove"
         case .weekly:

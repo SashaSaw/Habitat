@@ -94,16 +94,21 @@ final class HabitStore {
     // MARK: - Filtered Habits
 
     var mustDoHabits: [Habit] {
-        habits.filter { $0.tier == .mustDo }
+        habits.filter { $0.tier == .mustDo && !$0.isTask }
     }
 
     var niceToDoHabits: [Habit] {
-        habits.filter { $0.tier == .niceToDo }
+        habits.filter { $0.tier == .niceToDo && !$0.isTask }
     }
 
     /// All negative habits (things to avoid)
     var negativeHabits: [Habit] {
-        habits.filter { $0.type == .negative }.sorted { $0.sortOrder < $1.sortOrder }
+        habits.filter { $0.type == .negative && !$0.isTask }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    /// One-off tasks (frequency == .once) that are active
+    var todayTasks: [Habit] {
+        habits.filter { $0.isTask }
     }
 
     /// Positive must-do habits not in any group (excludes negative)
@@ -153,14 +158,21 @@ final class HabitStore {
         iconImageData: Data? = nil,
         notificationsEnabled: Bool = false,
         dailyNotificationMinutes: [Int] = [],
-        weeklyNotificationDays: [Int] = []
+        weeklyNotificationDays: [Int] = [],
+        options: [String] = [],
+        enableNotesPhotos: Bool = false
     ) {
         let maxSortOrder = habits.map { $0.sortOrder }.max() ?? 0
+
+        // Tasks are always nice-to-do and positive
+        let effectiveTier: HabitTier = frequencyType == .once ? .niceToDo : tier
+        let effectiveType: HabitType = frequencyType == .once ? .positive : type
+
         let habit = Habit(
             name: name,
             habitDescription: description,
-            tier: tier,
-            type: type,
+            tier: effectiveTier,
+            type: effectiveType,
             frequencyType: frequencyType,
             frequencyTarget: frequencyTarget,
             successCriteria: successCriteria,
@@ -172,6 +184,8 @@ final class HabitStore {
         habit.notificationsEnabled = notificationsEnabled
         habit.dailyNotificationMinutes = dailyNotificationMinutes
         habit.weeklyNotificationDays = weeklyNotificationDays
+        habit.options = options
+        habit.enableNotesPhotos = enableNotesPhotos
 
         modelContext.insert(habit)
         saveContext()
@@ -453,10 +467,15 @@ final class HabitStore {
     }
 
     func calculateCurrentStreak(for habit: Habit) -> Int {
+        // Tasks don't have streaks
+        if habit.isTask { return 0 }
+
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
         switch habit.frequencyType {
+        case .once:
+            return 0
         case .daily:
             return calculateDailyStreak(for: habit, from: today)
         case .weekly:

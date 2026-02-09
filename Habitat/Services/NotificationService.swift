@@ -40,6 +40,9 @@ final class NotificationService {
         guard habit.notificationsEnabled else { return }
 
         switch habit.frequencyType {
+        case .once:
+            // Tasks don't have notifications
+            break
         case .daily:
             await scheduleDailyNotifications(for: habit)
         case .weekly:
