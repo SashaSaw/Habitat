@@ -228,6 +228,9 @@ final class HabitStore {
             }
         }
 
+        // Refresh smart reminders since habit list changed
+        refreshSmartReminders()
+
         return habit
     }
 
@@ -370,6 +373,7 @@ final class HabitStore {
         updateStreak(for: habit)
 
         saveContext()
+        refreshSmartReminders()
     }
 
     func setCompletion(for habit: Habit, completed: Bool, value: Double? = nil, on date: Date = Date()) {
@@ -385,6 +389,19 @@ final class HabitStore {
         updateStreak(for: habit)
 
         saveContext()
+        refreshSmartReminders()
+    }
+
+    /// Reschedules smart reminders based on current habit state
+    /// Called after completion changes so reminder content stays accurate
+    func refreshSmartReminders() {
+        guard UserSchedule.shared.smartRemindersEnabled else { return }
+        Task {
+            await SmartReminderService.shared.rescheduleAllReminders(
+                habits: self.habits,
+                groups: self.groups
+            )
+        }
     }
 
     /// Records which sub-habit option was selected when completing a group habit

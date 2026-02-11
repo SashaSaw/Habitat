@@ -65,6 +65,10 @@ struct ContentView: View {
                             .tag(3)
                     }
                     .tint(JournalTheme.Colors.inkBlue)
+                    .onAppear {
+                        // Refresh smart reminders on app launch with current habit state
+                        store.refreshSmartReminders()
+                    }
                 } else {
                     OnboardingView(store: store, onComplete: {
                         withAnimation(.easeInOut(duration: 0.5)) {

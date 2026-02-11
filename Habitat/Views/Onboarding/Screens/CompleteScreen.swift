@@ -243,23 +243,18 @@ struct CompleteScreen: View {
             }
         }
 
-        // Save wake/bed times to UserDefaults for use by notifications later
-        saveScheduleSettings()
+        // Save wake/bed times via UserSchedule singleton
+        UserSchedule.shared.updateFromOnboarding(wakeTime: data.wakeUpTime, bedTime: data.bedTime)
+
+        // Schedule smart reminders if enabled
+        Task {
+            await SmartReminderService.shared.rescheduleAllReminders(
+                habits: store.habits,
+                groups: store.groups
+            )
+        }
 
         habitsCreated = true
-    }
-
-    /// Persist the user's schedule settings for later use by reminders
-    private func saveScheduleSettings() {
-        let calendar = Calendar.current
-        let wakeComponents = calendar.dateComponents([.hour, .minute], from: data.wakeUpTime)
-        let bedComponents = calendar.dateComponents([.hour, .minute], from: data.bedTime)
-
-        let wakeMinutes = (wakeComponents.hour ?? 7) * 60 + (wakeComponents.minute ?? 0)
-        let bedMinutes = (bedComponents.hour ?? 23) * 60 + (bedComponents.minute ?? 0)
-
-        UserDefaults.standard.set(wakeMinutes, forKey: "userWakeTimeMinutes")
-        UserDefaults.standard.set(bedMinutes, forKey: "userBedTimeMinutes")
     }
 
     // MARK: - Animation Sequence

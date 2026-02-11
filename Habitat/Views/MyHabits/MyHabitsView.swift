@@ -13,7 +13,7 @@ struct MyHabitsView: View {
     @State private var showDeleteGroupConfirmation = false
     @AppStorage("hasSeenGroupCallout") private var hasSeenGroupCallout = false
     @State private var showGroupCallout = false
-    @State private var showingBlockSetup = false
+    @State private var showingSettings = false
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -42,8 +42,8 @@ struct MyHabitsView: View {
             .sheet(isPresented: $showingAddHabit) {
                 AddHabitView(store: store)
             }
-            .sheet(isPresented: $showingBlockSetup) {
-                BlockSetupView()
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
             }
             .sheet(item: $selectedHabit) { habit in
                 NavigationStack {
@@ -106,7 +106,7 @@ struct MyHabitsView: View {
                     Spacer()
 
                     Button {
-                        showingBlockSetup = true
+                        showingSettings = true
                     } label: {
                         Image(systemName: "gearshape")
                             .font(.system(size: 20, weight: .regular))

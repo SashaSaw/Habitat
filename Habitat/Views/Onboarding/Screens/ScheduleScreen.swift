@@ -44,6 +44,11 @@ struct ScheduleScreen: View {
                 .opacity(appeared ? 1 : 0)
                 .offset(y: appeared ? 0 : 15)
 
+                // Smart reminders card
+                SmartReminderSettingsCard()
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 15)
+
                 Spacer(minLength: 100)
             }
             .padding(.horizontal, 28)
@@ -79,6 +84,12 @@ struct ScheduleScreen: View {
             withAnimation(.easeOut(duration: 0.5).delay(0.15)) {
                 appeared = true
             }
+        }
+        .onChange(of: data.wakeUpTime) { _, newValue in
+            UserSchedule.shared.updateFromOnboarding(wakeTime: newValue, bedTime: data.bedTime)
+        }
+        .onChange(of: data.bedTime) { _, newValue in
+            UserSchedule.shared.updateFromOnboarding(wakeTime: data.wakeUpTime, bedTime: newValue)
         }
     }
 
