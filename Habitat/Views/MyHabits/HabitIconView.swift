@@ -91,18 +91,24 @@ struct HabitIconView: View {
                 }
             }
 
-            // Habit name
-            Text(habit.name.replacingOccurrences(of: emoji ?? "", with: "").trimmingCharacters(in: .whitespaces))
+            // Habit name — fixed height so icons stay aligned across the grid
+            Text(displayName)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(isArchived ? JournalTheme.Colors.completedGray : JournalTheme.Colors.inkBlack)
                 .lineLimit(2)
+                .truncationMode(.tail)
                 .multilineTextAlignment(.center)
-                .frame(width: iconSize + 16)
+                .frame(width: iconSize + 16, height: 32, alignment: .top)
         }
         .opacity(isArchived ? 0.6 : 1.0)
         .onTapGesture {
             onTap()
         }
+    }
+
+    /// Display name with emoji stripped (emoji is shown in the icon)
+    private var displayName: String {
+        habit.name.replacingOccurrences(of: emoji ?? "", with: "").trimmingCharacters(in: .whitespaces)
     }
 }
 
@@ -139,13 +145,13 @@ struct AddHabitIconView: View {
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
 
-            // Label
+            // Label — same fixed height as HabitIconView for alignment
             Text("Add Habit")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .frame(width: iconSize + 16)
+                .frame(width: iconSize + 16, height: 32, alignment: .top)
         }
         .onTapGesture {
             onTap()

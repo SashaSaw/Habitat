@@ -26,6 +26,14 @@ final class Habit {
     // Whether notes & photos are enabled for this habit (replaces isHobby concept)
     var enableNotesPhotos: Bool = false
 
+    // Motivational micro-habit prompt for nice-to-do hobbies
+    // e.g. "Put on your trainers and step outside" for Run
+    var habitPrompt: String = ""
+
+    // Schedule time slots this habit belongs to
+    // Stored as raw values: "After Wake", "Morning", "During the Day", "Evening", "Before Bed"
+    var scheduleTimes: [String] = []
+
     // Notification scheduling
     var notificationsEnabled: Bool = false
     var dailyNotificationMinutes: [Int] = []      // Minutes from midnight (0-1440), up to 5

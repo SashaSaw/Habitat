@@ -12,6 +12,7 @@ import UIKit
 /// Main app view with tab navigation
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab = 0
     @State private var habitStore: HabitStore?
 
@@ -37,32 +38,40 @@ struct ContentView: View {
     var body: some View {
         Group {
             if let store = habitStore {
-                TabView(selection: $selectedTab) {
-                    TodayView(store: store)
-                        .tabItem {
-                            Label("Today", systemImage: "checkmark.circle")
-                        }
-                        .tag(0)
+                if hasCompletedOnboarding {
+                    TabView(selection: $selectedTab) {
+                        TodayView(store: store)
+                            .tabItem {
+                                Label("Today", systemImage: "checkmark.circle")
+                            }
+                            .tag(0)
 
-                    MyHabitsView(store: store)
-                        .tabItem {
-                            Label("My Habits", systemImage: "square.grid.2x2")
-                        }
-                        .tag(1)
+                        MyHabitsView(store: store)
+                            .tabItem {
+                                Label("My Habits", systemImage: "square.grid.2x2")
+                            }
+                            .tag(1)
 
-                    MonthGridView(store: store)
-                        .tabItem {
-                            Label("Month", systemImage: "calendar")
-                        }
-                        .tag(2)
+                        MonthGridView(store: store)
+                            .tabItem {
+                                Label("Month", systemImage: "calendar")
+                            }
+                            .tag(2)
 
-                    StatsView(store: store)
-                        .tabItem {
-                            Label("Stats", systemImage: "chart.bar")
+                        StatsView(store: store)
+                            .tabItem {
+                                Label("Stats", systemImage: "chart.bar")
+                            }
+                            .tag(3)
+                    }
+                    .tint(JournalTheme.Colors.inkBlue)
+                } else {
+                    OnboardingView(store: store, onComplete: {
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            hasCompletedOnboarding = true
                         }
-                        .tag(3)
+                    })
                 }
-                .tint(JournalTheme.Colors.inkBlue)
             } else {
                 ProgressView()
                     .onAppear {

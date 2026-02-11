@@ -47,19 +47,20 @@ struct GroupIconView: View {
                 .padding(8)
             }
 
-            // Group name with "group" label
+            // Group name with "group" label — same fixed height as HabitIconView
             VStack(spacing: 2) {
                 Text(group.name)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
-                    .lineLimit(2)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                     .multilineTextAlignment(.center)
 
                 Text("group")
                     .font(.system(size: 9, weight: .medium))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
-            .frame(width: iconSize + 16)
+            .frame(width: iconSize + 16, height: 32, alignment: .top)
         }
         .onTapGesture {
             onTap()

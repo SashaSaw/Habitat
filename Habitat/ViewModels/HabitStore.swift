@@ -170,6 +170,7 @@ final class HabitStore {
 
     // MARK: - Habit CRUD Operations
 
+    @discardableResult
     func addHabit(
         name: String,
         description: String = "",
@@ -185,8 +186,10 @@ final class HabitStore {
         dailyNotificationMinutes: [Int] = [],
         weeklyNotificationDays: [Int] = [],
         options: [String] = [],
-        enableNotesPhotos: Bool = false
-    ) {
+        enableNotesPhotos: Bool = false,
+        habitPrompt: String = "",
+        scheduleTimes: [String] = []
+    ) -> Habit {
         let maxSortOrder = habits.map { $0.sortOrder }.max() ?? 0
 
         // Tasks are always nice-to-do and positive
@@ -211,6 +214,8 @@ final class HabitStore {
         habit.weeklyNotificationDays = weeklyNotificationDays
         habit.options = options
         habit.enableNotesPhotos = enableNotesPhotos
+        habit.habitPrompt = habitPrompt
+        habit.scheduleTimes = scheduleTimes
 
         modelContext.insert(habit)
         saveContext()
@@ -222,6 +227,8 @@ final class HabitStore {
                 await NotificationService.shared.scheduleNotifications(for: habit)
             }
         }
+
+        return habit
     }
 
     func updateHabit(_ habit: Habit) {

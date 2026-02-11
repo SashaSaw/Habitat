@@ -6,11 +6,115 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		584CC1AA2F3CCB830002B104 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 584CC1A92F3CCB820002B104 /* DeviceActivity.framework */; };
+		584CC1B22F3CCB830002B104 /* HabitMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 584CC1A72F3CCB820002B104 /* HabitMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		584CC1BE2F3CCDD90002B104 /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 584CC1BD2F3CCDD90002B104 /* ManagedSettings.framework */; };
+		584CC1C02F3CCDD90002B104 /* ManagedSettingsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 584CC1BF2F3CCDD90002B104 /* ManagedSettingsUI.framework */; };
+		584CC1C82F3CCDD90002B104 /* HabitShieldConfig.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 584CC1BC2F3CCDD90002B104 /* HabitShieldConfig.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		584CC1D22F3CCEC70002B104 /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 584CC1BD2F3CCDD90002B104 /* ManagedSettings.framework */; };
+		584CC1DA2F3CCEC70002B104 /* HabitShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 584CC1D12F3CCEC70002B104 /* HabitShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		584CC1B02F3CCB830002B104 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585BCAB92F3143C900EF7350 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 584CC1A62F3CCB820002B104;
+			remoteInfo = HabitMonitor;
+		};
+		584CC1C62F3CCDD90002B104 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585BCAB92F3143C900EF7350 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 584CC1BB2F3CCDD90002B104;
+			remoteInfo = HabitShieldConfig;
+		};
+		584CC1D82F3CCEC70002B104 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 585BCAB92F3143C900EF7350 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 584CC1D02F3CCEC70002B104;
+			remoteInfo = HabitShieldAction;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		584CC1B72F3CCB830002B104 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				584CC1C82F3CCDD90002B104 /* HabitShieldConfig.appex in Embed Foundation Extensions */,
+				584CC1DA2F3CCEC70002B104 /* HabitShieldAction.appex in Embed Foundation Extensions */,
+				584CC1B22F3CCB830002B104 /* HabitMonitor.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		584CC1A72F3CCB820002B104 /* HabitMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HabitMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		584CC1A92F3CCB820002B104 /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
+		584CC1BC2F3CCDD90002B104 /* HabitShieldConfig.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HabitShieldConfig.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		584CC1BD2F3CCDD90002B104 /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
+		584CC1BF2F3CCDD90002B104 /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = System/Library/Frameworks/ManagedSettingsUI.framework; sourceTree = SDKROOT; };
+		584CC1D12F3CCEC70002B104 /* HabitShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HabitShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		585BCAC12F3143C900EF7350 /* Habitat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Habitat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		584CC1B32F3CCB830002B104 /* Exceptions for "HabitMonitor" folder in "HabitMonitor" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 584CC1A62F3CCB820002B104 /* HabitMonitor */;
+		};
+		584CC1C92F3CCDD90002B104 /* Exceptions for "HabitShieldConfig" folder in "HabitShieldConfig" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 584CC1BB2F3CCDD90002B104 /* HabitShieldConfig */;
+		};
+		584CC1DB2F3CCEC70002B104 /* Exceptions for "HabitShieldAction" folder in "HabitShieldAction" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 584CC1D02F3CCEC70002B104 /* HabitShieldAction */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		584CC1AB2F3CCB830002B104 /* HabitMonitor */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				584CC1B32F3CCB830002B104 /* Exceptions for "HabitMonitor" folder in "HabitMonitor" target */,
+			);
+			path = HabitMonitor;
+			sourceTree = "<group>";
+		};
+		584CC1C12F3CCDD90002B104 /* HabitShieldConfig */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				584CC1C92F3CCDD90002B104 /* Exceptions for "HabitShieldConfig" folder in "HabitShieldConfig" target */,
+			);
+			path = HabitShieldConfig;
+			sourceTree = "<group>";
+		};
+		584CC1D32F3CCEC70002B104 /* HabitShieldAction */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				584CC1DB2F3CCEC70002B104 /* Exceptions for "HabitShieldAction" folder in "HabitShieldAction" target */,
+			);
+			path = HabitShieldAction;
+			sourceTree = "<group>";
+		};
 		585BCAC32F3143C900EF7350 /* Habitat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Habitat;
@@ -19,6 +123,31 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		584CC1A42F3CCB820002B104 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				584CC1AA2F3CCB830002B104 /* DeviceActivity.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		584CC1B92F3CCDD90002B104 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				584CC1BE2F3CCDD90002B104 /* ManagedSettings.framework in Frameworks */,
+				584CC1C02F3CCDD90002B104 /* ManagedSettingsUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		584CC1CE2F3CCEC70002B104 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				584CC1D22F3CCEC70002B104 /* ManagedSettings.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		585BCABE2F3143C900EF7350 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -29,10 +158,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		584CC1A82F3CCB820002B104 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				584CC1A92F3CCB820002B104 /* DeviceActivity.framework */,
+				584CC1BD2F3CCDD90002B104 /* ManagedSettings.framework */,
+				584CC1BF2F3CCDD90002B104 /* ManagedSettingsUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		585BCAB82F3143C900EF7350 = {
 			isa = PBXGroup;
 			children = (
 				585BCAC32F3143C900EF7350 /* Habitat */,
+				584CC1AB2F3CCB830002B104 /* HabitMonitor */,
+				584CC1C12F3CCDD90002B104 /* HabitShieldConfig */,
+				584CC1D32F3CCEC70002B104 /* HabitShieldAction */,
+				584CC1A82F3CCB820002B104 /* Frameworks */,
 				585BCAC22F3143C900EF7350 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +184,9 @@
 			isa = PBXGroup;
 			children = (
 				585BCAC12F3143C900EF7350 /* Habitat.app */,
+				584CC1A72F3CCB820002B104 /* HabitMonitor.appex */,
+				584CC1BC2F3CCDD90002B104 /* HabitShieldConfig.appex */,
+				584CC1D12F3CCEC70002B104 /* HabitShieldAction.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +194,72 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		584CC1A62F3CCB820002B104 /* HabitMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 584CC1B42F3CCB830002B104 /* Build configuration list for PBXNativeTarget "HabitMonitor" */;
+			buildPhases = (
+				584CC1A32F3CCB820002B104 /* Sources */,
+				584CC1A42F3CCB820002B104 /* Frameworks */,
+				584CC1A52F3CCB820002B104 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				584CC1AB2F3CCB830002B104 /* HabitMonitor */,
+			);
+			name = HabitMonitor;
+			packageProductDependencies = (
+			);
+			productName = HabitMonitor;
+			productReference = 584CC1A72F3CCB820002B104 /* HabitMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		584CC1BB2F3CCDD90002B104 /* HabitShieldConfig */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 584CC1CA2F3CCDD90002B104 /* Build configuration list for PBXNativeTarget "HabitShieldConfig" */;
+			buildPhases = (
+				584CC1B82F3CCDD90002B104 /* Sources */,
+				584CC1B92F3CCDD90002B104 /* Frameworks */,
+				584CC1BA2F3CCDD90002B104 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				584CC1C12F3CCDD90002B104 /* HabitShieldConfig */,
+			);
+			name = HabitShieldConfig;
+			packageProductDependencies = (
+			);
+			productName = HabitShieldConfig;
+			productReference = 584CC1BC2F3CCDD90002B104 /* HabitShieldConfig.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		584CC1D02F3CCEC70002B104 /* HabitShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 584CC1DC2F3CCEC70002B104 /* Build configuration list for PBXNativeTarget "HabitShieldAction" */;
+			buildPhases = (
+				584CC1CD2F3CCEC70002B104 /* Sources */,
+				584CC1CE2F3CCEC70002B104 /* Frameworks */,
+				584CC1CF2F3CCEC70002B104 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				584CC1D32F3CCEC70002B104 /* HabitShieldAction */,
+			);
+			name = HabitShieldAction;
+			packageProductDependencies = (
+			);
+			productName = HabitShieldAction;
+			productReference = 584CC1D12F3CCEC70002B104 /* HabitShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		585BCAC02F3143C900EF7350 /* Habitat */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 585BCACC2F3143C900EF7350 /* Build configuration list for PBXNativeTarget "Habitat" */;
@@ -55,10 +267,14 @@
 				585BCABD2F3143C900EF7350 /* Sources */,
 				585BCABE2F3143C900EF7350 /* Frameworks */,
 				585BCABF2F3143C900EF7350 /* Resources */,
+				584CC1B72F3CCB830002B104 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				584CC1B12F3CCB830002B104 /* PBXTargetDependency */,
+				584CC1C72F3CCDD90002B104 /* PBXTargetDependency */,
+				584CC1D92F3CCEC70002B104 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				585BCAC32F3143C900EF7350 /* Habitat */,
@@ -80,6 +296,15 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					584CC1A62F3CCB820002B104 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					584CC1BB2F3CCDD90002B104 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					584CC1D02F3CCEC70002B104 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					585BCAC02F3143C900EF7350 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -100,11 +325,35 @@
 			projectRoot = "";
 			targets = (
 				585BCAC02F3143C900EF7350 /* Habitat */,
+				584CC1A62F3CCB820002B104 /* HabitMonitor */,
+				584CC1BB2F3CCDD90002B104 /* HabitShieldConfig */,
+				584CC1D02F3CCEC70002B104 /* HabitShieldAction */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		584CC1A52F3CCB820002B104 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		584CC1BA2F3CCDD90002B104 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		584CC1CF2F3CCEC70002B104 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		585BCABF2F3143C900EF7350 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +364,27 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		584CC1A32F3CCB820002B104 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		584CC1B82F3CCDD90002B104 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		584CC1CD2F3CCEC70002B104 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		585BCABD2F3143C900EF7350 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +394,205 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		584CC1B12F3CCB830002B104 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 584CC1A62F3CCB820002B104 /* HabitMonitor */;
+			targetProxy = 584CC1B02F3CCB830002B104 /* PBXContainerItemProxy */;
+		};
+		584CC1C72F3CCDD90002B104 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 584CC1BB2F3CCDD90002B104 /* HabitShieldConfig */;
+			targetProxy = 584CC1C62F3CCDD90002B104 /* PBXContainerItemProxy */;
+		};
+		584CC1D92F3CCEC70002B104 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 584CC1D02F3CCEC70002B104 /* HabitShieldAction */;
+			targetProxy = 584CC1D82F3CCEC70002B104 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		584CC1B52F3CCB830002B104 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HabitMonitor/HabitMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3365FP92M9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HabitMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HabitMonitor;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.incept5.Habitat.HabitMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		584CC1B62F3CCB830002B104 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HabitMonitor/HabitMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3365FP92M9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HabitMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HabitMonitor;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.incept5.Habitat.HabitMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		584CC1CB2F3CCDD90002B104 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HabitShieldConfig/HabitShieldConfig.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3365FP92M9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HabitShieldConfig/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HabitShieldConfig;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.incept5.Habitat.HabitShieldConfig;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		584CC1CC2F3CCDD90002B104 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HabitShieldConfig/HabitShieldConfig.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3365FP92M9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HabitShieldConfig/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HabitShieldConfig;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.incept5.Habitat.HabitShieldConfig;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		584CC1DD2F3CCEC70002B104 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HabitShieldAction/HabitShieldAction.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3365FP92M9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HabitShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HabitShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.incept5.Habitat.HabitShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		584CC1DE2F3CCEC70002B104 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = HabitShieldAction/HabitShieldAction.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3365FP92M9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = HabitShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = HabitShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.incept5.Habitat.HabitShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		585BCACA2F3143C900EF7350 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -251,9 +719,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Habitat/Habitat.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4RX7NWPQKM;
+				DEVELOPMENT_TEAM = 3365FP92M9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -287,9 +756,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Habitat/Habitat.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4RX7NWPQKM;
+				DEVELOPMENT_TEAM = 3365FP92M9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -321,6 +791,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		584CC1B42F3CCB830002B104 /* Build configuration list for PBXNativeTarget "HabitMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				584CC1B52F3CCB830002B104 /* Debug */,
+				584CC1B62F3CCB830002B104 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		584CC1CA2F3CCDD90002B104 /* Build configuration list for PBXNativeTarget "HabitShieldConfig" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				584CC1CB2F3CCDD90002B104 /* Debug */,
+				584CC1CC2F3CCDD90002B104 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		584CC1DC2F3CCEC70002B104 /* Build configuration list for PBXNativeTarget "HabitShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				584CC1DD2F3CCEC70002B104 /* Debug */,
+				584CC1DE2F3CCEC70002B104 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		585BCABC2F3143C900EF7350 /* Build configuration list for PBXProject "Habitat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
