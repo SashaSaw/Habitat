@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Main settings sheet — accessed from gear icon in MyHabitsView
 struct SettingsView: View {
+    @Bindable var store: HabitStore
     @State private var schedule = UserSchedule.shared
     @State private var showingBlockSetup = false
 
@@ -64,6 +65,17 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showingBlockSetup) {
                 BlockSetupView()
+            }
+            .onChange(of: schedule.wakeTimeMinutes) { _, _ in
+                store.refreshSmartReminders()
+            }
+            .onChange(of: schedule.bedTimeMinutes) { _, _ in
+                store.refreshSmartReminders()
+            }
+            .onChange(of: schedule.smartRemindersEnabled) { _, newValue in
+                if newValue {
+                    store.refreshSmartReminders()
+                }
             }
         }
     }

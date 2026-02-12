@@ -33,11 +33,21 @@ final class SmartReminderService {
         // Cancel all existing smart reminders first
         await cancelAllSmartReminders()
 
-        guard schedule.smartRemindersEnabled else { return }
+        guard schedule.smartRemindersEnabled else {
+            print("[SmartReminder] Smart reminders disabled — skipping")
+            return
+        }
 
         // Check permission
         let status = await NotificationService.shared.checkPermissionStatus()
-        guard status == .authorized else { return }
+        guard status == .authorized else {
+            print("[SmartReminder] Notification permission not authorized (status: \(status.rawValue)) — skipping")
+            return
+        }
+
+        let activeHabits = habits.filter { $0.isActive && !$0.isTask }
+        print("[SmartReminder] Scheduling reminders for \(activeHabits.count) active habits, \(groups.count) groups")
+        print("[SmartReminder] Wake: \(schedule.wakeTimeString), Bed: \(schedule.bedTimeString)")
 
         let today = Date()
 
@@ -167,20 +177,31 @@ final class SmartReminderService {
     private func scheduleNotification(index: Int, minutes: Int, title: String, body: String) async {
         let identifier = "\(identifierPrefix)\(index)"
 
-        var dateComponents = DateComponents()
-        dateComponents.hour = minutes / 60
-        dateComponents.minute = minutes % 60
-
-        let trigger = UNCalendarNotificationTrigger(
-            dateMatching: dateComponents,
-            repeats: true
-        )
-
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
         content.sound = .default
         content.categoryIdentifier = "SMART_REMINDER"
+
+        // Calculate if the target time is still in the future today
+        let calendar = Calendar.current
+        let now = Date()
+        let currentMinutes = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+
+        let trigger: UNNotificationTrigger
+        if minutes > currentMinutes {
+            // Time is still ahead today — use a time interval for reliable same-day delivery
+            let secondsUntil = Double((minutes - currentMinutes) * 60)
+            trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(secondsUntil, 5), repeats: false)
+            print("[SmartReminder] Scheduling reminder \(index) in \(Int(secondsUntil/60)) minutes (today)")
+        } else {
+            // Time has passed today — schedule as daily repeating for tomorrow onwards
+            var dateComponents = DateComponents()
+            dateComponents.hour = minutes / 60
+            dateComponents.minute = minutes % 60
+            trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+            print("[SmartReminder] Scheduling reminder \(index) as daily repeating at \(minutes/60):\(String(format: "%02d", minutes%60))")
+        }
 
         let request = UNNotificationRequest(
             identifier: identifier,
@@ -190,8 +211,9 @@ final class SmartReminderService {
 
         do {
             try await notificationCenter.add(request)
+            print("[SmartReminder] ✅ Reminder \(index) scheduled successfully: \(title)")
         } catch {
-            print("Failed to schedule smart reminder \(index): \(error)")
+            print("[SmartReminder] ❌ Failed to schedule reminder \(index): \(error)")
         }
     }
 
@@ -206,15 +228,16 @@ final class SmartReminderService {
     // MARK: - Helpers
 
     /// Get habits for a specific time slot that are must-dos or standalone nice-to-dos (not group members)
-    /// Reminders only show must-dos and standalone nice-to-dos
+    /// If a habit has no scheduleTimes at all, it's treated as belonging to ALL slots (backwards compatible)
     private func habitsForTimeSlot(_ slotRawValue: String, from habits: [Habit], groups: [HabitGroup], on date: Date) -> [Habit] {
         let groupedHabitIds = Set(groups.filter { $0.tier == .mustDo }.flatMap { $0.habitIds })
 
         return habits.filter { habit in
             guard habit.isActive && !habit.isTask else { return false }
 
-            // Check if this habit belongs to the requested time slot
-            let matchesSlot = habit.scheduleTimes.contains(slotRawValue)
+            // If habit has no schedule times set, include it in all slots (backwards compatible)
+            // Otherwise check if it belongs to the requested slot
+            let matchesSlot = habit.scheduleTimes.isEmpty || habit.scheduleTimes.contains(slotRawValue)
             guard matchesSlot else { return false }
 
             // Include must-dos (standalone only) and standalone nice-to-dos

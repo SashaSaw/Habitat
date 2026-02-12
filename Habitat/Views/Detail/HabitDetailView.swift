@@ -10,6 +10,10 @@ struct HabitDetailView: View {
     @State private var showingDeleteConfirmation = false
     @State private var editingName = false
     @State private var editedName: String = ""
+    @State private var editingCriteria = false
+    @State private var editedCriteria: String = ""
+    @State private var showTimeSlots = false
+    @State private var showFrequencyEditor = false
 
     var body: some View {
         ScrollView {
@@ -113,6 +117,7 @@ struct HabitDetailView: View {
                         ) {
                             habit.tier = habit.tier == .mustDo ? .niceToDo : .mustDo
                             store.updateHabit(habit)
+                            HapticFeedback.selection()
                         }
 
                         Divider().padding(.leading, 48)
@@ -124,7 +129,55 @@ struct HabitDetailView: View {
                             label: "Frequency",
                             value: habit.frequencyDisplayName
                         ) {
-                            // Would navigate to frequency editor — for now just cycles
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showFrequencyEditor.toggle()
+                            }
+                        }
+
+                        // Inline frequency editor
+                        if showFrequencyEditor && habit.frequencyType != .once {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Picker("Frequency", selection: Binding(
+                                    get: { habit.frequencyType },
+                                    set: { newValue in
+                                        habit.frequencyType = newValue
+                                        if newValue == .daily { habit.frequencyTarget = 1 }
+                                        store.updateHabit(habit)
+                                    }
+                                )) {
+                                    ForEach(FrequencyType.recurringCases, id: \.self) { freq in
+                                        Text(freq.displayName).tag(freq)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+
+                                if habit.frequencyType == .weekly {
+                                    Stepper(
+                                        "Target: \(habit.frequencyTarget)x per week",
+                                        value: Binding(
+                                            get: { habit.frequencyTarget },
+                                            set: { habit.frequencyTarget = $0; store.updateHabit(habit) }
+                                        ),
+                                        in: 1...7
+                                    )
+                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+                                } else if habit.frequencyType == .monthly {
+                                    Stepper(
+                                        "Target: \(habit.frequencyTarget)x per month",
+                                        value: Binding(
+                                            get: { habit.frequencyTarget },
+                                            set: { habit.frequencyTarget = $0; store.updateHabit(habit) }
+                                        ),
+                                        in: 1...31
+                                    )
+                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+                                }
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 14)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
                         }
 
                         Divider().padding(.leading, 48)
@@ -138,6 +191,7 @@ struct HabitDetailView: View {
                         ) {
                             habit.notificationsEnabled.toggle()
                             store.updateHabit(habit)
+                            HapticFeedback.selection()
                         }
 
                         Divider().padding(.leading, 48)
@@ -167,6 +221,70 @@ struct HabitDetailView: View {
                             .tint(JournalTheme.Colors.teal)
                         }
                         .padding(14)
+
+                        Divider().padding(.leading, 48)
+
+                        // Success Criteria — inline editable
+                        if editingCriteria {
+                            HStack(spacing: 12) {
+                                Image(systemName: "target")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(JournalTheme.Colors.successGreen)
+                                    .frame(width: 24)
+
+                                TextField("e.g. 3L, 30 mins, 5000 steps", text: $editedCriteria)
+                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+                                    .textFieldStyle(.plain)
+
+                                Button("Save") {
+                                    habit.successCriteria = editedCriteria.trimmingCharacters(in: .whitespaces).isEmpty
+                                        ? nil : editedCriteria.trimmingCharacters(in: .whitespaces)
+                                    store.updateHabit(habit)
+                                    editingCriteria = false
+                                }
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.teal)
+                            }
+                            .padding(14)
+                        } else {
+                            settingsRow(
+                                icon: "target",
+                                iconColor: JournalTheme.Colors.successGreen,
+                                label: "Success criteria",
+                                value: habit.successCriteria ?? "None"
+                            ) {
+                                editedCriteria = habit.successCriteria ?? ""
+                                editingCriteria = true
+                            }
+                        }
+
+                        Divider().padding(.leading, 48)
+
+                        // Time of Day — expandable
+                        settingsRow(
+                            icon: "clock.fill",
+                            iconColor: JournalTheme.Colors.navy,
+                            label: "Time of day",
+                            value: timeSlotSummary
+                        ) {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                showTimeSlots.toggle()
+                            }
+                        }
+
+                        if showTimeSlots {
+                            TimeSlotPicker(selectedSlots: Binding(
+                                get: { Set(habit.scheduleTimes) },
+                                set: { newSlots in
+                                    habit.scheduleTimes = Array(newSlots)
+                                    store.updateHabit(habit)
+                                }
+                            ))
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 14)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
@@ -233,6 +351,24 @@ struct HabitDetailView: View {
         } message: {
             Text("This will permanently delete '\(habit.name)' and all its history.")
         }
+    }
+
+    // MARK: - Time Slot Summary
+
+    private var timeSlotSummary: String {
+        guard !habit.scheduleTimes.isEmpty else { return "Not set" }
+        // Map raw values to shorter labels
+        let shortLabels: [String: String] = [
+            "After Wake": "Wake",
+            "Morning": "Morning",
+            "During the Day": "Daytime",
+            "Evening": "Evening",
+            "Before Bed": "Bed",
+        ]
+        let labels = habit.scheduleTimes.compactMap { shortLabels[$0] }
+        if labels.isEmpty { return "Not set" }
+        if labels.count <= 2 { return labels.joined(separator: ", ") }
+        return "\(labels.count) slots"
     }
 
     // MARK: - Habit Icon

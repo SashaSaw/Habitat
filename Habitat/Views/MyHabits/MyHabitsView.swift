@@ -43,7 +43,7 @@ struct MyHabitsView: View {
                 AddHabitView(store: store)
             }
             .sheet(isPresented: $showingSettings) {
-                SettingsView()
+                SettingsView(store: store)
             }
             .sheet(item: $selectedHabit) { habit in
                 NavigationStack {
