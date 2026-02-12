@@ -204,7 +204,8 @@ struct CompleteScreen: View {
                 isHobby: draft.isHobby,
                 enableNotesPhotos: draft.enableNotesPhotos,
                 habitPrompt: draft.habitPrompt,
-                scheduleTimes: [draft.timeOfDay.rawValue]
+                scheduleTimes: [draft.timeOfDay.rawValue],
+                triggersAppBlockSlip: draft.triggersAppBlockSlip
             )
             draftToHabit[draft.id] = habit
         }

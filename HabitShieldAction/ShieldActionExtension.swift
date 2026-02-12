@@ -1,35 +1,76 @@
-//
-//  ShieldActionExtension.swift
-//  HabitShieldAction
-//
-//  Created by Alexander Saw on 11/02/2026.
-//
-
 import ManagedSettings
+import UserNotifications
 
-// Override the functions below to customize the shield actions used in various situations.
-// The system provides a default response for any functions that your subclass doesn't override.
-// Make sure that your class name matches the NSExtensionPrincipalClass in your Info.plist.
+/// Handles button taps on the shield screen
+/// NOTE: Class name must match NSExtensionPrincipalClass in Info.plist
 class ShieldActionExtension: ShieldActionDelegate {
+
+    private static let appGroupID = "group.com.incept5.Habitat"
+
     override func handle(action: ShieldAction, for application: ApplicationToken, completionHandler: @escaping (ShieldActionResponse) -> Void) {
-        // Handle the action as needed.
         switch action {
         case .primaryButtonPressed:
+            // "Open Habitat" — fire a notification to open the app, then close shield
+            sendOpenHabitatNotification()
+            completionHandler(.close)
+        case .secondaryButtonPressed:
+            // "Close" — defer to keep the shield in place
+            completionHandler(.defer)
+        @unknown default:
+            completionHandler(.close)
+        }
+    }
+
+    override func handle(action: ShieldAction, for webDomain: WebDomainToken, completionHandler: @escaping (ShieldActionResponse) -> Void) {
+        switch action {
+        case .primaryButtonPressed:
+            sendOpenHabitatNotification()
             completionHandler(.close)
         case .secondaryButtonPressed:
             completionHandler(.defer)
         @unknown default:
-            fatalError()
+            completionHandler(.close)
         }
     }
-    
-    override func handle(action: ShieldAction, for webDomain: WebDomainToken, completionHandler: @escaping (ShieldActionResponse) -> Void) {
-        // Handle the action as needed.
-        completionHandler(.close)
-    }
-    
+
     override func handle(action: ShieldAction, for category: ActivityCategoryToken, completionHandler: @escaping (ShieldActionResponse) -> Void) {
-        // Handle the action as needed.
-        completionHandler(.close)
+        switch action {
+        case .primaryButtonPressed:
+            sendOpenHabitatNotification()
+            completionHandler(.close)
+        case .secondaryButtonPressed:
+            completionHandler(.defer)
+        @unknown default:
+            completionHandler(.close)
+        }
+    }
+
+    // MARK: - Open Habitat via Local Notification
+
+    /// Sends an immediate local notification that, when tapped, opens Habitat
+    private func sendOpenHabitatNotification() {
+        // Also write a flag so the app knows to show InterceptView
+        let defaults = UserDefaults(suiteName: Self.appGroupID)
+        defaults?.set(Date().timeIntervalSince1970, forKey: "interceptRequested")
+
+        let content = UNMutableNotificationContent()
+        content.title = "Open Habitat"
+        content.body = "Tap to choose the person you want to be."
+        content.sound = nil
+        content.categoryIdentifier = "OPEN_HABITAT"
+
+        // Fire immediately (1 second delay — minimum for a trigger)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "habitat.open.\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("[ShieldAction] Failed to send notification: \(error)")
+            }
+        }
     }
 }

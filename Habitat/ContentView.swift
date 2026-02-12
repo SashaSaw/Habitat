@@ -12,9 +12,11 @@ import UIKit
 /// Main app view with tab navigation
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab = 0
     @State private var habitStore: HabitStore?
+    @State private var showingInterceptView = false
 
     init() {
         // Make tab bar fully transparent
@@ -68,6 +70,28 @@ struct ContentView: View {
                     .onAppear {
                         // Refresh smart reminders on app launch with current habit state
                         store.refreshSmartReminders()
+                        // Check if launched from shield
+                        checkAndShowIntercept()
+                    }
+                    .onChange(of: scenePhase) { _, newPhase in
+                        if newPhase == .active {
+                            // Check if returning from a shield tap
+                            checkAndShowIntercept()
+                        }
+                    }
+                    .onOpenURL { url in
+                        // Handle habitat://intercept deep link
+                        if url.scheme == "habitat" && url.host == "intercept" {
+                            showingInterceptView = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $showingInterceptView) {
+                        InterceptView(
+                            store: store,
+                            blockedAppName: "App",
+                            blockedAppEmoji: "📱",
+                            blockedAppColor: .gray
+                        )
                     }
                 } else {
                     OnboardingView(store: store, onComplete: {
@@ -81,6 +105,28 @@ struct ContentView: View {
                     .onAppear {
                         habitStore = HabitStore(modelContext: modelContext)
                     }
+            }
+        }
+    }
+
+    /// Check if the shield action sent us an intercept request via App Group
+    private func checkAndShowIntercept() {
+        guard !showingInterceptView else { return }
+
+        let defaults = UserDefaults(suiteName: "group.com.incept5.Habitat")
+        if let requestTime = defaults?.double(forKey: "interceptRequested"), requestTime > 0 {
+            // Only honour requests from the last 30 seconds (avoid stale flags)
+            let age = Date().timeIntervalSince1970 - requestTime
+            if age < 30 {
+                // Clear the flag so it doesn't re-trigger
+                defaults?.removeObject(forKey: "interceptRequested")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showingInterceptView = true
+                }
+                return
+            } else {
+                // Stale flag — clean it up
+                defaults?.removeObject(forKey: "interceptRequested")
             }
         }
     }

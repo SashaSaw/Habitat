@@ -600,13 +600,15 @@ struct QuickPickSuggestion: Identifiable {
     let emoji: String
     let name: String
     let frequency: FrequencyType
+    var type: HabitType = .positive
+    var triggersAppBlockSlip: Bool = false
 
     static let defaults: [QuickPickSuggestion] = [
         QuickPickSuggestion(emoji: "📖", name: "Read", frequency: .daily),
         QuickPickSuggestion(emoji: "💪", name: "Exercise", frequency: .daily),
         QuickPickSuggestion(emoji: "🧘", name: "Meditate", frequency: .daily),
         QuickPickSuggestion(emoji: "✏️", name: "Journal", frequency: .daily),
-        QuickPickSuggestion(emoji: "📵", name: "No scrolling", frequency: .daily),
+        QuickPickSuggestion(emoji: "📵", name: "No scrolling", frequency: .daily, type: .negative, triggersAppBlockSlip: true),
         QuickPickSuggestion(emoji: "💧", name: "Drink water", frequency: .daily),
         QuickPickSuggestion(emoji: "🍳", name: "Cook a meal", frequency: .daily),
         QuickPickSuggestion(emoji: "📞", name: "Call family", frequency: .weekly),
@@ -1031,6 +1033,7 @@ struct AddHabitView: View {
     @State private var enableNotesPhotos: Bool = false
     @State private var showConfirmation = false
     @State private var addedHabitName = ""
+    @State private var triggersAppBlockSlip: Bool = false
 
     @FocusState private var nameFieldFocused: Bool
 
@@ -1124,6 +1127,8 @@ struct AddHabitView: View {
                         withAnimation(.easeInOut(duration: 0.25)) {
                             name = suggestion.emoji + " " + suggestion.name
                             frequencyType = suggestion.frequency
+                            type = suggestion.type
+                            triggersAppBlockSlip = suggestion.triggersAppBlockSlip
                         }
                         HapticFeedback.selection()
                     } label: {
@@ -1244,7 +1249,8 @@ struct AddHabitView: View {
             isHobby: enableNotesPhotos,
             notificationsEnabled: enableReminders,
             weeklyNotificationDays: Array(selectedWeekDays),
-            enableNotesPhotos: enableNotesPhotos
+            enableNotesPhotos: enableNotesPhotos,
+            triggersAppBlockSlip: triggersAppBlockSlip
         )
 
         // If adding to a group, also add the new habit to the group's habitIds

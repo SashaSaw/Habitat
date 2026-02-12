@@ -104,7 +104,8 @@ struct HabitGenerator {
             enableNotesPhotos: template.enableNotesPhotos,
             timeOfDay: template.timeOfDay,
             source: source,
-            habitPrompt: template.habitPrompt
+            habitPrompt: template.habitPrompt,
+            triggersAppBlockSlip: template.triggersAppBlockSlip
         )
     }
 

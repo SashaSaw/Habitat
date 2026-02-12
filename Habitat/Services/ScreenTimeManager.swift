@@ -154,6 +154,22 @@ final class ScreenTimeManager {
         startMonitoring()
     }
 
+    // MARK: - Temporary Unlock
+
+    /// Temporarily remove all shields for 5 minutes, then re-apply them.
+    /// The Screen Time API uses opaque tokens — we cannot identify individual apps,
+    /// so we remove ALL shields and restore them after the timeout.
+    func grantTemporaryUnlock(minutes: Double = 5) {
+        // Remove all shields immediately
+        removeShields()
+
+        // Re-apply after the timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + minutes * 60) { [weak self] in
+            guard let self, BlockSettings.shared.isEnabled else { return }
+            self.applyShields()
+        }
+    }
+
     // MARK: - Persistence
 
     private func saveSelection() {

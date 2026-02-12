@@ -34,6 +34,10 @@ final class Habit {
     // Stored as raw values: "After Wake", "Morning", "During the Day", "Evening", "Before Bed"
     var scheduleTimes: [String] = []
 
+    // Whether this negative habit should auto-slip when the user unlocks a blocked app
+    // e.g. "No scrolling" — opening a blocked app means you've scrolled
+    var triggersAppBlockSlip: Bool = false
+
     // Notification scheduling
     var notificationsEnabled: Bool = false
     var dailyNotificationMinutes: [Int] = []      // Minutes from midnight (0-1440), up to 5

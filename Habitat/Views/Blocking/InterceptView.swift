@@ -2,7 +2,10 @@ import SwiftUI
 import SwiftData
 
 /// The screen shown when a user tries to open a blocked app
-/// This is THE key screen — a gentle nudge showing today's habits
+/// Identity-based two-screen flow:
+///   Screen 1: "How will you cast your vote?" — two choices
+///   Screen 2a (controlled): Type a shame sentence to unlock
+///   Screen 2b (promised): Show habits to complete
 struct InterceptView: View {
     @Bindable var store: HabitStore
     let blockedAppName: String
@@ -10,9 +13,8 @@ struct InterceptView: View {
     let blockedAppColor: Color
     @State private var blockSettings = BlockSettings.shared
 
-    @State private var overrideTapCount = 0
-    @State private var overrideTimer: Timer? = nil
-    @State private var showingFocusMode: Habit? = nil
+    /// Which screen we're on
+    @State private var screen: InterceptScreen = .vote
 
     @Environment(\.dismiss) private var dismiss
 
@@ -20,36 +22,28 @@ struct InterceptView: View {
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let contentPadding: CGFloat = 24
 
+    enum InterceptScreen {
+        case vote
+        case controlled   // shame typing
+        case countdown    // 10s countdown before unlock
+        case habits       // show habits to do
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 LinedPaperBackground(lineSpacing: lineHeight)
                     .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Blocked app indicator
-                        blockedAppHeader
-
-                        // Motivation banner
-                        motivationBanner
-
-                        // Must Do section
-                        mustDoSection
-
-                        // Today's tasks section
-                        tasksSection
-
-                        // Done section
-                        doneSection
-
-                        // Override button (de-emphasised)
-                        overrideButton
-                            .padding(.top, 20)
-
-                        Spacer(minLength: 80)
-                    }
-                    .padding(.top, 16)
+                switch screen {
+                case .vote:
+                    voteScreen
+                case .controlled:
+                    controlledScreen
+                case .countdown:
+                    countdownScreen
+                case .habits:
+                    habitsScreen
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -63,50 +57,411 @@ struct InterceptView: View {
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     }
                 }
-            }
-            .sheet(item: $showingFocusMode) { habit in
-                FocusModeView(store: store, habit: habit)
+
+                if screen != .vote {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                if screen == .countdown {
+                                    countdownTimer?.invalidate()
+                                    countdownTimer = nil
+                                    screen = .controlled
+                                } else {
+                                    screen = .vote
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 13, weight: .semibold))
+                                Text("Back")
+                                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                            }
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
+                    }
+                }
             }
         }
     }
 
-    // MARK: - Blocked App Header
+    // MARK: - Screen 1: Vote
 
-    private var blockedAppHeader: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(blockedAppColor.opacity(0.15))
-                    .frame(width: 48, height: 48)
+    private var voteScreen: some View {
+        VStack(spacing: 0) {
+            Spacer()
 
-                Text(blockedAppEmoji)
-                    .font(.system(size: 24))
-            }
+            // Blocked app badge
+            blockedAppBadge
+                .padding(.bottom, 24)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(blockedAppName) is blocked")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
-                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+            // Message
+            Text("Every moment of weakness is a chance to choose the right path.")
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+                .padding(.horizontal, contentPadding + 8)
+                .padding(.bottom, 16)
 
-                if let timeRemaining = blockSettings.timeRemainingString {
-                    Text("Until \(blockSettings.endTimeString) · \(timeRemaining)")
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundStyle(JournalTheme.Colors.completedGray)
+            // Question
+            Text("Choose wisely.")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(JournalTheme.Colors.inkBlack)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+                .padding(.bottom, 40)
+
+            // Choice 1: Controlled by phone
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    screen = .controlled
                 }
+                HapticFeedback.selection()
+            } label: {
+                VStack(spacing: 6) {
+                    Text("I am the kind of person who")
+                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
+                    Text("is controlled by their phone")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(JournalTheme.Colors.negativeRedDark.opacity(0.06))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .strokeBorder(JournalTheme.Colors.negativeRedDark.opacity(0.2), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, contentPadding)
+
+            // Divider
+            HStack(spacing: 12) {
+                Rectangle()
+                    .fill(JournalTheme.Colors.lineLight)
+                    .frame(height: 1)
+                Text("or")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+                Rectangle()
+                    .fill(JournalTheme.Colors.lineLight)
+                    .frame(height: 1)
+            }
+            .padding(.horizontal, contentPadding + 20)
+            .padding(.vertical, 16)
+
+            // Choice 2: The person I promised
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    screen = .habits
+                }
+                HapticFeedback.selection()
+            } label: {
+                VStack(spacing: 6) {
+                    Text("I am the kind of person who")
+                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
+                    Text("I promised myself I would be")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.successGreen)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(JournalTheme.Colors.successGreen.opacity(0.06))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .strokeBorder(JournalTheme.Colors.successGreen.opacity(0.2), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, contentPadding)
+
+            Spacer()
+            Spacer()
+        }
+    }
+
+    // MARK: - Screen 2a: Controlled (Shame Sentence)
+
+    @State private var typedSentence: String = ""
+    private let shameSentence = "I know this will not make me feel better but I am choosing it anyway"
+
+    private var sentenceMatches: Bool {
+        typedSentence.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            == shameSentence.lowercased()
+    }
+
+    private var controlledScreen: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Header
+                    Text("Be honest with yourself first:")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack)
+                        .padding(.top, 20)
+
+                    // The sentence to copy
+                    Text("\u{201C}\(shameSentence)\u{201D}")
+                        .font(.system(size: 16, weight: .medium, design: .serif))
+                        .foregroundStyle(JournalTheme.Colors.negativeRedDark.opacity(0.8))
+                        .italic()
+                        .lineSpacing(6)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(JournalTheme.Colors.negativeRedDark.opacity(0.04))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(JournalTheme.Colors.negativeRedDark.opacity(0.15), lineWidth: 1)
+                                )
+                        )
+
+                    // Text editor
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Type it here:")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                        TextEditor(text: $typedSentence)
+                            .font(.system(size: 16, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 100)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white.opacity(0.7))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .strokeBorder(sentenceMatches
+                                                ? JournalTheme.Colors.successGreen.opacity(0.4)
+                                                : JournalTheme.Colors.lineLight,
+                                                lineWidth: 1)
+                                    )
+                            )
+                    }
+
+                    // Unlock button (only when sentence matches)
+                    if sentenceMatches {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                screen = .countdown
+                            }
+                            HapticFeedback.selection()
+                        } label: {
+                            Text("Continue to \(blockedAppName) (5 min)")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(JournalTheme.Colors.completedGray)
+                                )
+                        }
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    }
+
+                    // Right path escape hatch
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            screen = .habits
+                        }
+                        HapticFeedback.selection()
+                    } label: {
+                        Text("You can still choose the right path")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.successGreen)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                    }
+
+                    Spacer(minLength: 100)
+                }
+                .padding(.horizontal, contentPadding)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: sentenceMatches)
+    }
+
+    // MARK: - Screen 2a.2: Countdown
+
+    @State private var countdownSeconds: Int = 10
+    @State private var countdownTimer: Timer? = nil
+
+    private var countdownScreen: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            // Countdown circle
+            ZStack {
+                Circle()
+                    .stroke(JournalTheme.Colors.lineLight, lineWidth: 4)
+                    .frame(width: 120, height: 120)
+
+                Circle()
+                    .trim(from: 0, to: CGFloat(countdownSeconds) / 10.0)
+                    .stroke(JournalTheme.Colors.completedGray, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .frame(width: 120, height: 120)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 1), value: countdownSeconds)
+
+                Text("\(countdownSeconds)")
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+                    .contentTransition(.numericText())
+            }
+            .padding(.bottom, 32)
+
+            Text("Are you sure?")
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundStyle(JournalTheme.Colors.inkBlack)
+                .padding(.bottom, 8)
+
+            Text("You still have time to change your mind.")
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, contentPadding)
+                .padding(.bottom, 40)
+
+            // Right path button (always visible)
+            Button {
+                countdownTimer?.invalidate()
+                countdownTimer = nil
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    screen = .habits
+                }
+                HapticFeedback.selection()
+            } label: {
+                Text("I want to choose the right path")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(JournalTheme.Colors.successGreen)
+                    )
+            }
+            .padding(.horizontal, contentPadding)
+            .padding(.bottom, 12)
+
+            // Unlock button (appears when countdown finishes)
+            if countdownSeconds <= 0 {
+                Button {
+                    countdownTimer?.invalidate()
+                    countdownTimer = nil
+                    // Mark all negative habits as slipped (completed = failed for negative habits)
+                    markNegativeHabitsAsSlipped()
+                    ScreenTimeManager.shared.grantTemporaryUnlock(minutes: 5)
+                    HapticFeedback.selection()
+                    dismiss()
+                } label: {
+                    Text("Continue to \(blockedAppName) (5 min)")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(JournalTheme.Colors.completedGray)
+                        )
+                }
+                .padding(.horizontal, contentPadding)
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
 
             Spacer()
+            Spacer()
         }
-        .padding(16)
+        .animation(.easeInOut(duration: 0.2), value: countdownSeconds)
+        .onAppear {
+            countdownSeconds = 10
+            countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
+                if countdownSeconds > 0 {
+                    countdownSeconds -= 1
+                } else {
+                    timer.invalidate()
+                }
+            }
+        }
+        .onDisappear {
+            countdownTimer?.invalidate()
+            countdownTimer = nil
+        }
+    }
+
+    // MARK: - Screen 2b: Habits
+
+    @State private var showingFocusMode: Habit? = nil
+
+    private var habitsScreen: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Motivation banner
+                motivationBanner
+
+                // Must Do section
+                mustDoSection
+
+                // Nice-to-do / hobby section with prompts
+                hobbySection
+
+                // Today's tasks section
+                tasksSection
+
+                // Done section
+                doneSection
+
+                Spacer(minLength: 80)
+            }
+            .padding(.top, 16)
+        }
+        .sheet(item: $showingFocusMode) { habit in
+            FocusModeView(store: store, habit: habit)
+        }
+    }
+
+    // MARK: - Blocked App Badge
+
+    private var blockedAppBadge: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(blockedAppColor.opacity(0.12))
+                    .frame(width: 36, height: 36)
+
+                Text(blockedAppEmoji)
+                    .font(.system(size: 18))
+            }
+
+            Text("\(blockedAppName) is blocked")
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            Capsule()
                 .fill(JournalTheme.Colors.paperLight)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(JournalTheme.Colors.lineMedium, lineWidth: 1)
+                    Capsule()
+                        .strokeBorder(JournalTheme.Colors.lineLight, lineWidth: 1)
                 )
         )
-        .padding(.horizontal, contentPadding)
     }
 
     // MARK: - Motivation Banner
@@ -126,20 +481,22 @@ struct InterceptView: View {
                 }
             } else {
                 HStack {
-                    Text("You've got \(undoneCount) thing\(undoneCount == 1 ? "" : "s") left today")
+                    Text("You chose to be the person you promised.")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(JournalTheme.Colors.amber)
+                        .foregroundStyle(JournalTheme.Colors.successGreen)
                     Spacer()
                 }
 
+                if undoneCount > 0 {
+                    Text("You have \(undoneCount) thing\(undoneCount == 1 ? "" : "s") to do — let's go.")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
+                }
+
                 if streak > 0 {
-                    Text("Complete your must-dos to keep your \(streak)-day streak 🔥")
+                    Text("Keep your \(streak)-day streak alive 🔥")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
-                } else {
-                    Text("Complete your must-dos to start a streak 🔥")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.5))
                 }
             }
         }
@@ -148,13 +505,10 @@ struct InterceptView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(allDone
                     ? JournalTheme.Colors.successGreen.opacity(0.12)
-                    : JournalTheme.Colors.amber.opacity(0.12))
+                    : JournalTheme.Colors.successGreen.opacity(0.06))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(allDone
-                            ? JournalTheme.Colors.successGreen.opacity(0.25)
-                            : JournalTheme.Colors.amber.opacity(0.25),
-                            lineWidth: 1)
+                        .strokeBorder(JournalTheme.Colors.successGreen.opacity(0.2), lineWidth: 1)
                 )
         )
         .padding(.horizontal, contentPadding)
@@ -191,6 +545,29 @@ struct InterceptView: View {
                             onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) }
                         )
                     }
+                }
+            }
+        }
+    }
+
+    // MARK: - Hobby / Nice-to-do Section (with prompts)
+
+    @ViewBuilder
+    private var hobbySection: some View {
+        let niceHabits = store.niceToDoHabits.filter { $0.isActive && !$0.isTask && !$0.isCompleted(for: selectedDate) }
+
+        if !niceHabits.isEmpty {
+            VStack(spacing: 0) {
+                sectionHeader("◇ NICE TO DO", color: JournalTheme.Colors.teal)
+
+                ForEach(niceHabits) { habit in
+                    InterceptHabitRow(
+                        habit: habit,
+                        lineHeight: lineHeight,
+                        showPrompt: true,
+                        onTap: { showingFocusMode = habit },
+                        onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) }
+                    )
                 }
             }
         }
@@ -265,28 +642,6 @@ struct InterceptView: View {
         }
     }
 
-    // MARK: - Override Button
-
-    private var overrideButton: some View {
-        VStack(spacing: 8) {
-            Button {
-                handleOverrideTap()
-            } label: {
-                if overrideTapCount == 0 {
-                    Text("Use \(blockedAppName) anyway →")
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundStyle(JournalTheme.Colors.completedGray.opacity(0.6))
-                } else {
-                    Text("Are you sure? Tap again to use for 5 min.")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(JournalTheme.Colors.coral.opacity(0.7))
-                }
-            }
-        }
-        .padding(.horizontal, contentPadding)
-        .padding(.bottom, 40)
-    }
-
     // MARK: - Helpers
 
     private func sectionHeader(_ title: String, color: Color) -> some View {
@@ -307,31 +662,32 @@ struct InterceptView: View {
         return undoneStandalone + undoneGroups
     }
 
-    private func handleOverrideTap() {
-        overrideTimer?.invalidate()
+    /// Mark scroll-related negative habits as slipped for today (completed = true means they failed).
+    /// Only targets habits with triggersAppBlockSlip = true (e.g. "No scrolling").
+    /// This loses their good day and cannot be undone until the next day.
+    private func markNegativeHabitsAsSlipped() {
+        let scrollHabits = store.negativeHabits.filter { $0.triggersAppBlockSlip }
+        guard !scrollHabits.isEmpty else { return }
 
-        if overrideTapCount == 0 {
-            overrideTapCount = 1
-            // Reset after 5 seconds if no second tap
-            overrideTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
-                withAnimation { overrideTapCount = 0 }
+        for habit in scrollHabits {
+            if !habit.isCompleted(for: selectedDate) {
+                store.setCompletion(for: habit, completed: true, on: selectedDate)
             }
-        } else {
-            // Second tap — grant temporary unlock
-            blockSettings.grantTemporaryUnlock(for: blockedAppName.lowercased())
-            HapticFeedback.selection()
-            dismiss()
         }
+        // Lock these habits so they can't be toggled back today
+        BlockSettings.shared.negativeHabitsAutoSlippedDate = Date()
     }
 }
 
 // MARK: - Intercept Habit Row
 
-/// A tappable habit row for the intercept screen (navigates to focus mode)
+/// A tappable habit row for the intercept screen
+/// Shows habitPrompt as subtitle for nice-to-do hobbies when showPrompt is true
 struct InterceptHabitRow: View {
     let habit: Habit
     let lineHeight: CGFloat
     var groupName: String? = nil
+    var showPrompt: Bool = false
     let onTap: () -> Void
     let onComplete: () -> Void
 
@@ -348,24 +704,44 @@ struct InterceptHabitRow: View {
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                 } else {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(JournalTheme.Colors.amber.opacity(0.12))
+                        .fill(habit.tier == .mustDo
+                            ? JournalTheme.Colors.amber.opacity(0.12)
+                            : JournalTheme.Colors.teal.opacity(0.12))
                         .frame(width: 28, height: 28)
                         .overlay(
                             Text(String(habit.name.prefix(1)))
                                 .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundStyle(JournalTheme.Colors.amber)
+                                .foregroundStyle(habit.tier == .mustDo
+                                    ? JournalTheme.Colors.amber
+                                    : JournalTheme.Colors.teal)
                         )
                 }
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(habit.name)
-                        .font(JournalTheme.Fonts.habitName())
-                        .foregroundStyle(JournalTheme.Colors.inkBlack)
+                VStack(alignment: .leading, spacing: 2) {
+                    // Show habit prompt as primary text for hobbies, with name smaller
+                    if showPrompt && !habit.habitPrompt.isEmpty {
+                        Text(habit.habitPrompt)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+                            .lineLimit(2)
 
-                    if let group = groupName {
-                        Text(group)
+                        Text(habit.name)
                             .font(.system(size: 11, weight: .regular, design: .rounded))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
+                    } else {
+                        Text(habit.name)
+                            .font(JournalTheme.Fonts.habitName())
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                        if let group = groupName {
+                            Text(group)
+                                .font(.system(size: 11, weight: .regular, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        } else if let criteria = habit.successCriteria, !criteria.isEmpty {
+                            Text(criteria)
+                                .font(.system(size: 11, weight: .regular, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
                     }
                 }
 

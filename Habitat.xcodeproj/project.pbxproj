@@ -88,6 +88,13 @@
 			);
 			target = 584CC1D02F3CCEC70002B104 /* HabitShieldAction */;
 		};
+		585BCAD02F3143CA00EF7350 /* Exceptions for "Habitat" folder in "Habitat" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 585BCAC02F3143C900EF7350 /* Habitat */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -117,6 +124,9 @@
 		};
 		585BCAC32F3143C900EF7350 /* Habitat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				585BCAD02F3143CA00EF7350 /* Exceptions for "Habitat" folder in "Habitat" target */,
+			);
 			path = Habitat;
 			sourceTree = "<group>";
 		};
@@ -725,6 +735,7 @@
 				DEVELOPMENT_TEAM = 3365FP92M9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Habitat/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of your hobby activities";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Add photos from your library to hobby entries";
@@ -762,6 +773,7 @@
 				DEVELOPMENT_TEAM = 3365FP92M9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Habitat/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of your hobby activities";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Add photos from your library to hobby entries";

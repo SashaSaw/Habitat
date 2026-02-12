@@ -491,7 +491,8 @@ struct TodayContentView: View {
                         onComplete: { store.setCompletion(for: habit, completed: true, on: selectedDate) },
                         onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
                         onArchive: { store.archiveHabit(habit) },
-                        onLongPress: { selectedHabit = habit }
+                        onLongPress: { selectedHabit = habit },
+                        isLocked: habit.triggersAppBlockSlip && blockSettings.areNegativeHabitsLockedToday && habit.isCompleted(for: selectedDate)
                     )
                 }
                 .animation(.easeInOut(duration: 0.25), value: store.negativeHabits.count)
@@ -915,6 +916,7 @@ struct NegativeHabitLinedRow: View {
     let onUncomplete: () -> Void // Undo slip
     let onArchive: () -> Void
     let onLongPress: () -> Void
+    var isLocked: Bool = false // When true, slip cannot be undone (auto-slipped via app blocker)
 
     // Archive gesture state
     @State private var archiveOffset: CGFloat = 0
@@ -1002,15 +1004,22 @@ struct NegativeHabitLinedRow: View {
                                 .fill(JournalTheme.Colors.goodDayGreenDark.opacity(0.12))
                         )
                 } else {
-                    Text("Slipped")
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
-                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(JournalTheme.Colors.negativeRedDark.opacity(0.12))
-                        )
+                    HStack(spacing: 4) {
+                        if isLocked {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                        }
+                        Text("Slipped")
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(JournalTheme.Colors.negativeRedDark.opacity(0.12))
+                    )
                 }
             }
             .frame(minHeight: 44)
@@ -1031,6 +1040,8 @@ struct NegativeHabitLinedRow: View {
         )
         .onTapGesture {
             if isCompleted {
+                // If locked (auto-slipped via blocker), prevent undo
+                guard !isLocked else { return }
                 // Tap to undo slip
                 HapticFeedback.selection()
                 onUncomplete()

@@ -32,6 +32,12 @@ final class BlockSettings {
         didSet { save() }
     }
 
+    /// Date when negative habits were auto-slipped via the intercept unlock flow.
+    /// When set to today's date, negative habits cannot be toggled back.
+    var negativeHabitsAutoSlippedDate: Date? {
+        didSet { save() }
+    }
+
     // MARK: - Computed Properties
 
     /// Number of selected apps + categories from Screen Time selection
@@ -122,6 +128,12 @@ final class BlockSettings {
         }
     }
 
+    /// Whether negative habits were auto-slipped today (and cannot be toggled back)
+    var areNegativeHabitsLockedToday: Bool {
+        guard let slippedDate = negativeHabitsAutoSlippedDate else { return false }
+        return Calendar.current.isDateInToday(slippedDate)
+    }
+
     /// Check if a specific app is temporarily unlocked
     func isTemporarilyUnlocked(_ appName: String) -> Bool {
         guard let expiry = temporaryUnlocks[appName] else { return false }
@@ -146,6 +158,7 @@ final class BlockSettings {
             self.scheduleEndMinutes = saved.scheduleEndMinutes
             self.activeDays = Set(saved.activeDays)
             self.temporaryUnlocks = saved.temporaryUnlocks
+            self.negativeHabitsAutoSlippedDate = saved.negativeHabitsAutoSlippedDate
         } else {
             // Defaults
             self.isEnabled = false
@@ -153,6 +166,7 @@ final class BlockSettings {
             self.scheduleEndMinutes = 21 * 60 // 9:00 PM
             self.activeDays = Set(1...7) // Every day
             self.temporaryUnlocks = [:]
+            self.negativeHabitsAutoSlippedDate = nil
         }
     }
 
@@ -162,7 +176,8 @@ final class BlockSettings {
             scheduleStartMinutes: scheduleStartMinutes,
             scheduleEndMinutes: scheduleEndMinutes,
             activeDays: Array(activeDays),
-            temporaryUnlocks: temporaryUnlocks
+            temporaryUnlocks: temporaryUnlocks,
+            negativeHabitsAutoSlippedDate: negativeHabitsAutoSlippedDate
         )
         if let data = try? JSONEncoder().encode(saved) {
             UserDefaults.standard.set(data, forKey: Self.settingsKey)
@@ -185,4 +200,5 @@ private struct SavedBlockSettings: Codable {
     let scheduleEndMinutes: Int
     let activeDays: [Int]
     let temporaryUnlocks: [String: Date]
+    var negativeHabitsAutoSlippedDate: Date? = nil
 }

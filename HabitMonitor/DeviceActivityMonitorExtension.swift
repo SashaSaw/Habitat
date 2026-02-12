@@ -4,7 +4,8 @@ import FamilyControls
 import Foundation
 
 /// DeviceActivityMonitor extension that applies/removes shields when the blocking schedule begins/ends
-class HabitatMonitor: DeviceActivityMonitor {
+/// NOTE: Class name must match NSExtensionPrincipalClass in Info.plist
+class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     private let store = ManagedSettingsStore()
     private static let selectionKey = "screenTimeSelection"

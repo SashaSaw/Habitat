@@ -188,7 +188,8 @@ final class HabitStore {
         options: [String] = [],
         enableNotesPhotos: Bool = false,
         habitPrompt: String = "",
-        scheduleTimes: [String] = []
+        scheduleTimes: [String] = [],
+        triggersAppBlockSlip: Bool = false
     ) -> Habit {
         let maxSortOrder = habits.map { $0.sortOrder }.max() ?? 0
 
@@ -216,6 +217,7 @@ final class HabitStore {
         habit.enableNotesPhotos = enableNotesPhotos
         habit.habitPrompt = habitPrompt
         habit.scheduleTimes = scheduleTimes
+        habit.triggersAppBlockSlip = triggersAppBlockSlip
 
         modelContext.insert(habit)
         saveContext()

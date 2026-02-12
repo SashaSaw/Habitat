@@ -7,9 +7,12 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main
 struct HabitatApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Habit.self,
@@ -40,5 +43,49 @@ struct HabitatApp: App {
             ContentView()
         }
         .modelContainer(sharedModelContainer)
+    }
+}
+
+// MARK: - App Delegate for Notification Handling
+
+/// Handles notification delegate so tapping "Open Habitat" notification opens the app
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+
+    /// Called when a notification is tapped — the app is already opening, so just make sure
+    /// the intercept flag is set so ContentView picks it up
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        if response.notification.request.content.categoryIdentifier == "OPEN_HABITAT" {
+            // Write the flag so ContentView shows InterceptView
+            let defaults = UserDefaults(suiteName: "group.com.incept5.Habitat")
+            defaults?.set(Date().timeIntervalSince1970, forKey: "interceptRequested")
+        }
+        completionHandler()
+    }
+
+    /// Show notifications even when the app is in the foreground
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        // If it's our "open habitat" notification and the app is already open, suppress it
+        // and just show the intercept view directly
+        if notification.request.content.categoryIdentifier == "OPEN_HABITAT" {
+            completionHandler([]) // suppress — the app is already open
+        } else {
+            completionHandler([.banner, .sound])
+        }
     }
 }

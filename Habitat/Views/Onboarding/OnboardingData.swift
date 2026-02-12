@@ -56,6 +56,7 @@ struct DraftHabit: Identifiable {
     var timeOfDay: TimeOfDay
     var source: HabitSource
     var habitPrompt: String = ""
+    var triggersAppBlockSlip: Bool = false
 
     enum TimeOfDay: String, CaseIterable {
         case afterWake = "After Wake"
@@ -141,6 +142,7 @@ struct HabitSuggestion {
     let enableNotesPhotos: Bool
     let timeOfDay: DraftHabit.TimeOfDay
     let habitPrompt: String
+    let triggersAppBlockSlip: Bool
 
     init(
         emoji: String,
@@ -153,7 +155,8 @@ struct HabitSuggestion {
         isHobby: Bool = false,
         enableNotesPhotos: Bool = false,
         timeOfDay: DraftHabit.TimeOfDay = .duringTheDay,
-        habitPrompt: String = ""
+        habitPrompt: String = "",
+        triggersAppBlockSlip: Bool = false
     ) {
         self.emoji = emoji
         self.name = name
@@ -166,6 +169,7 @@ struct HabitSuggestion {
         self.enableNotesPhotos = enableNotesPhotos
         self.timeOfDay = timeOfDay
         self.habitPrompt = habitPrompt
+        self.triggersAppBlockSlip = triggersAppBlockSlip
     }
 }
 
@@ -185,7 +189,7 @@ extension HabitSuggestion {
     static let responsibilities: [HabitSuggestion] = [
         HabitSuggestion(emoji: "🛏️", name: "Make bed", timeOfDay: .afterWake),
         HabitSuggestion(emoji: "🧹", name: "Tidy up", defaultCriteria: "15 min", timeOfDay: .evening),
-        HabitSuggestion(emoji: "📵", name: "No scrolling", type: .negative, timeOfDay: .duringTheDay),
+        HabitSuggestion(emoji: "📵", name: "No scrolling", type: .negative, timeOfDay: .duringTheDay, triggersAppBlockSlip: true),
         HabitSuggestion(emoji: "📞", name: "Call family", frequencyType: .weekly, timeOfDay: .evening),
         HabitSuggestion(emoji: "🦷", name: "Brush & floss", timeOfDay: .afterWake),
         HabitSuggestion(emoji: "🐕", name: "Walk the dog", timeOfDay: .afterWake),

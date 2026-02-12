@@ -8,6 +8,7 @@ struct BlockSetupView: View {
     @State private var showingStartPicker = false
     @State private var showingEndPicker = false
     @State private var showingAppPicker = false
+    @State private var showingEnableWarning = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -31,9 +32,13 @@ struct BlockSetupView: View {
 
                             // Block schedule card
                             scheduleCard
+                                .disabled(blockSettings.isEnabled && blockSettings.isCurrentlyActive)
+                                .opacity(blockSettings.isEnabled && blockSettings.isCurrentlyActive ? 0.6 : 1.0)
 
                             // App selection
                             appSelectionSection
+                                .disabled(blockSettings.isEnabled && blockSettings.isCurrentlyActive)
+                                .opacity(blockSettings.isEnabled && blockSettings.isCurrentlyActive ? 0.6 : 1.0)
 
                             // Info callout
                             infoCallout
@@ -135,23 +140,64 @@ struct BlockSetupView: View {
     private var masterToggle: some View {
         let selectedCount = screenTimeManager.activitySelection.applicationTokens.count
             + screenTimeManager.activitySelection.categoryTokens.count
+        let isLocked = blockSettings.isEnabled && blockSettings.isCurrentlyActive
 
-        return HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("App Blocking")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+        return VStack(spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("App Blocking")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack)
 
-                Text(blockSettings.isEnabled ? "Active · \(selectedCount) selected" : "Disabled")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundStyle(blockSettings.isEnabled ? JournalTheme.Colors.successGreen : JournalTheme.Colors.completedGray)
+                    if isLocked, let remaining = blockSettings.timeRemainingString {
+                        Text("Locked · \(remaining)")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                    } else {
+                        Text(blockSettings.isEnabled ? "Active · \(selectedCount) selected" : "Disabled")
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundStyle(blockSettings.isEnabled ? JournalTheme.Colors.successGreen : JournalTheme.Colors.completedGray)
+                    }
+                }
+
+                Spacer()
+
+                if isLocked {
+                    // Show a locked icon instead of a toggle
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                        .frame(width: 44, height: 30)
+                } else {
+                    Toggle("", isOn: Binding(
+                        get: { blockSettings.isEnabled },
+                        set: { newValue in
+                            if newValue {
+                                // Show warning before enabling
+                                showingEnableWarning = true
+                            } else {
+                                blockSettings.isEnabled = false
+                            }
+                        }
+                    ))
+                    .tint(JournalTheme.Colors.successGreen)
+                    .labelsHidden()
+                }
             }
 
-            Spacer()
-
-            Toggle("", isOn: $blockSettings.isEnabled)
-                .tint(JournalTheme.Colors.successGreen)
-                .labelsHidden()
+            // Locked message
+            if isLocked {
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(JournalTheme.Colors.negativeRedDark.opacity(0.6))
+                    Text("App blocking cannot be turned off until the schedule ends.")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.negativeRedDark.opacity(0.7))
+                    Spacer()
+                }
+                .padding(.top, 12)
+            }
         }
         .padding(16)
         .background(
@@ -159,9 +205,17 @@ struct BlockSetupView: View {
                 .fill(JournalTheme.Colors.paperLight)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(JournalTheme.Colors.lineMedium, lineWidth: 1)
+                        .strokeBorder(isLocked ? JournalTheme.Colors.negativeRedDark.opacity(0.3) : JournalTheme.Colors.lineMedium, lineWidth: 1)
                 )
         )
+        .alert("Are you sure?", isPresented: $showingEnableWarning) {
+            Button("Enable Blocking") {
+                blockSettings.isEnabled = true
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Once app blocking is turned on, you will not be able to turn it off until the scheduled time is over. Make sure your schedule and app selections are set correctly first.")
+        }
     }
 
     // MARK: - Schedule Card
