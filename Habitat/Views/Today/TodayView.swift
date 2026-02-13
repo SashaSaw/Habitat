@@ -39,6 +39,8 @@ struct TodayContentView: View {
     @State private var showingAddHabit: Bool = false
     @State private var showingAddMustDo: Bool = false
     @State private var showingAddNiceToDo: Bool = false
+    @State private var showingAddTodayTask: Bool = false
+    @State private var showingAddDontDo: Bool = false
 
     // First-time group tooltip
     @AppStorage("hasSeenGroupTooltip") private var hasSeenGroupTooltip: Bool = false
@@ -53,6 +55,21 @@ struct TodayContentView: View {
 
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let contentPadding: CGFloat = 24
+
+    /// Whether the done section has any content (completed nice-to-do or completed tasks)
+    private var hasDoneContent: Bool {
+        !store.completedNiceToDoHabits(for: selectedDate).isEmpty || !store.todayCompletedTasks.isEmpty
+    }
+
+    /// Whether the today-only section has any content (uncompleted tasks)
+    private var hasTodayOnlyContent: Bool {
+        !store.todayVisibleTasks.isEmpty
+    }
+
+    /// Whether the "New today task" button should appear in a section (vs toolbar)
+    private var showTodayTaskButtonInSection: Bool {
+        hasDoneContent || hasTodayOnlyContent
+    }
 
     var body: some View {
         ZStack {
@@ -182,6 +199,12 @@ struct TodayContentView: View {
         .sheet(isPresented: $showingAddNiceToDo) {
             AddNiceToDoView(store: store)
         }
+        .sheet(isPresented: $showingAddTodayTask) {
+            AddTodayTaskView(store: store)
+        }
+        .sheet(isPresented: $showingAddDontDo) {
+            AddDontDoView(store: store)
+        }
         .sheet(isPresented: $showingReflection) {
             EndOfDayNoteView(
                 store: store,
@@ -191,6 +214,20 @@ struct TodayContentView: View {
         }
         .sheet(isPresented: $showingBlockSetup) {
             BlockSetupView()
+        }
+        .toolbar {
+            // Show "+" button in top right when neither today-only nor done section exists
+            if !showTodayTaskButtonInSection {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingAddHabit = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(JournalTheme.Colors.inkBlue)
+                    }
+                }
+            }
         }
         .alert("Delete Empty Group?", isPresented: $showDeleteGroupAlert) {
             Button("Keep Group") {
@@ -561,6 +598,37 @@ struct TodayContentView: View {
         .padding(.top, 8)
     }
 
+    /// Dashed "New today task" button — shown at bottom of done or today-only section
+    private var newTodayTaskButton: some View {
+        Button {
+            showingAddTodayTask = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.teal)
+
+                Text("New today task")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.teal)
+
+                Spacer()
+            }
+            .padding(.vertical, 11)
+            .padding(.horizontal, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(
+                        JournalTheme.Colors.teal.opacity(0.4),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, contentPadding)
+        .padding(.top, 8)
+    }
+
     // MARK: - Today Only Section (uncompleted tasks only)
 
     @ViewBuilder
@@ -582,6 +650,11 @@ struct TodayContentView: View {
                     )
                 }
                 .animation(.easeInOut(duration: 0.25), value: store.todayVisibleTasks.count)
+
+                // Show "New today task" button here if today-only section exists but done section doesn't
+                if !hasDoneContent {
+                    newTodayTaskButton
+                }
             }
         }
     }
@@ -590,8 +663,8 @@ struct TodayContentView: View {
 
     @ViewBuilder
     private var dontDoSection: some View {
-        if !store.negativeHabits.isEmpty {
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
+            if !store.negativeHabits.isEmpty {
                 sectionHeader("DON'T-DOS:", color: JournalTheme.Colors.negativeRedDark)
 
                 ForEach(store.negativeHabits) { habit in
@@ -609,7 +682,41 @@ struct TodayContentView: View {
                 }
                 .animation(.easeInOut(duration: 0.25), value: store.negativeHabits.count)
             }
+
+            // "+ New don't-do" button at the end of the section
+            newDontDoButton
         }
+    }
+
+    /// Dashed "New don't-do" button at the end of the don't-do section
+    private var newDontDoButton: some View {
+        Button {
+            showingAddDontDo = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+
+                Text("New don't-do")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+
+                Spacer()
+            }
+            .padding(.vertical, 11)
+            .padding(.horizontal, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(
+                        JournalTheme.Colors.negativeRedDark.opacity(0.3),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, contentPadding)
+        .padding(.top, 8)
     }
 
     // MARK: - Done Section (completed nice-to-do + completed tasks)
@@ -651,6 +758,9 @@ struct TodayContentView: View {
                     )
                     .opacity(0.6)
                 }
+
+                // "New today task" button at bottom of done section
+                newTodayTaskButton
             }
         }
     }
