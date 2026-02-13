@@ -53,6 +53,12 @@ struct TodayContentView: View {
     @State private var showingReflection: Bool = false
     @State private var blockSettings = BlockSettings.shared
 
+    // Group selection mode
+    @State private var isSelectingForGroup: Bool = false
+    @State private var selectedHabitIdsForGroup: Set<UUID> = []
+    @State private var showingAddGroup: Bool = false
+
+
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let contentPadding: CGFloat = 24
 
@@ -177,6 +183,31 @@ struct TodayContentView: View {
                     }
                 )
             }
+
+            // Floating "Create Group" button during selection mode
+            if isSelectingForGroup && selectedHabitIdsForGroup.count >= 2 {
+                VStack {
+                    Spacer()
+
+                    Button {
+                        showingAddGroup = true
+                    } label: {
+                        Text("Create Group")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(JournalTheme.Colors.inkBlue)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, contentPadding)
+                    .padding(.bottom, 16)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
         }
         .sheet(item: $selectedHabit) { habit in
             NavigationStack {
@@ -214,6 +245,15 @@ struct TodayContentView: View {
         }
         .sheet(isPresented: $showingBlockSetup) {
             BlockSetupView()
+        }
+        .sheet(isPresented: $showingAddGroup) {
+            AddGroupView(store: store, selectedHabitIds: selectedHabitIdsForGroup) {
+                // On completion, exit selection mode
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    isSelectingForGroup = false
+                    selectedHabitIdsForGroup.removeAll()
+                }
+            }
         }
         .toolbar {
             // Show "+" button in top right when neither today-only nor done section exists
@@ -265,6 +305,13 @@ struct TodayContentView: View {
                 }
             }
             wasGoodDay = isNowGoodDay
+        }
+        .onChange(of: selectedHabitIdsForGroup) { _, newValue in
+            if newValue.isEmpty && isSelectingForGroup {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    isSelectingForGroup = false
+                }
+            }
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
@@ -423,21 +470,46 @@ struct TodayContentView: View {
 
                 // Standalone must-do habits (positive only) — completed stay inline
                 ForEach(store.standalonePositiveMustDoHabits) { habit in
-                    HabitLinedRow(
-                        habit: habit,
-                        isCompleted: habit.isCompleted(for: selectedDate),
-                        lineHeight: lineHeight,
-                        onComplete: {
-                            store.setCompletion(for: habit, completed: true, on: selectedDate)
-                            if habit.isHobby {
-                                completingHobby = habit
-                                showHobbyOverlay = true
+                    if isSelectingForGroup {
+                        SelectableHabitRow(
+                            habit: habit,
+                            isSelected: selectedHabitIdsForGroup.contains(habit.id),
+                            lineHeight: lineHeight
+                        ) {
+                            toggleGroupSelection(habit)
+                        }
+                    } else {
+                        HabitLinedRow(
+                            habit: habit,
+                            isCompleted: habit.isCompleted(for: selectedDate),
+                            lineHeight: lineHeight,
+                            onComplete: {
+                                store.setCompletion(for: habit, completed: true, on: selectedDate)
+                                if habit.isHobby {
+                                    completingHobby = habit
+                                    showHobbyOverlay = true
+                                }
+                            },
+                            onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
+                            onArchive: { store.archiveHabit(habit) },
+                            onLongPress: { }
+                        )
+                        .contextMenu {
+                            Button {
+                                selectedHabit = habit
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
                             }
-                        },
-                        onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                        onArchive: { store.archiveHabit(habit) },
-                        onLongPress: { selectedHabit = habit }
-                    )
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    isSelectingForGroup = true
+                                    selectedHabitIdsForGroup = [habit.id]
+                                }
+                            } label: {
+                                Label("Create Group", systemImage: "folder.badge.plus")
+                            }
+                        }
+                    }
                 }
                 .animation(.easeInOut(duration: 0.25), value: store.standalonePositiveMustDoHabits.count)
 
@@ -543,21 +615,46 @@ struct TodayContentView: View {
                 sectionHeader("NICE-TO-DOS:", color: JournalTheme.Colors.sectionHeader)
 
                 ForEach(uncompleted) { habit in
-                    HabitLinedRow(
-                        habit: habit,
-                        isCompleted: false,
-                        lineHeight: lineHeight,
-                        onComplete: {
-                            store.setCompletion(for: habit, completed: true, on: selectedDate)
-                            if habit.isHobby {
-                                completingHobby = habit
-                                showHobbyOverlay = true
+                    if isSelectingForGroup {
+                        SelectableHabitRow(
+                            habit: habit,
+                            isSelected: selectedHabitIdsForGroup.contains(habit.id),
+                            lineHeight: lineHeight
+                        ) {
+                            toggleGroupSelection(habit)
+                        }
+                    } else {
+                        HabitLinedRow(
+                            habit: habit,
+                            isCompleted: false,
+                            lineHeight: lineHeight,
+                            onComplete: {
+                                store.setCompletion(for: habit, completed: true, on: selectedDate)
+                                if habit.isHobby {
+                                    completingHobby = habit
+                                    showHobbyOverlay = true
+                                }
+                            },
+                            onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
+                            onArchive: { store.archiveHabit(habit) },
+                            onLongPress: { }
+                        )
+                        .contextMenu {
+                            Button {
+                                selectedHabit = habit
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
                             }
-                        },
-                        onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
-                        onArchive: { store.archiveHabit(habit) },
-                        onLongPress: { selectedHabit = habit }
-                    )
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    isSelectingForGroup = true
+                                    selectedHabitIdsForGroup = [habit.id]
+                                }
+                            } label: {
+                                Label("Create Group", systemImage: "folder.badge.plus")
+                            }
+                        }
+                    }
                 }
                 .animation(.easeInOut(duration: 0.25), value: uncompleted.count)
             }
@@ -813,6 +910,86 @@ struct TodayContentView: View {
         .padding(.horizontal, contentPadding)
     }
 
+    // MARK: - Group Selection Helpers
+
+    private func toggleGroupSelection(_ habit: Habit) {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            if selectedHabitIdsForGroup.contains(habit.id) {
+                selectedHabitIdsForGroup.remove(habit.id)
+            } else {
+                selectedHabitIdsForGroup.insert(habit.id)
+            }
+        }
+        HapticFeedback.selection()
+    }
+
+}
+
+/// A row used during group selection mode — tappable with selection indicator
+struct SelectableHabitRow: View {
+    let habit: Habit
+    let isSelected: Bool
+    let lineHeight: CGFloat
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                // Selection indicator
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(
+                            isSelected ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.completedGray,
+                            lineWidth: 1.5
+                        )
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(isSelected ? JournalTheme.Colors.inkBlue : Color.clear)
+                        )
+                        .overlay {
+                            if isSelected {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .frame(width: 20, height: 20)
+                }
+
+                Text(habit.name)
+                    .font(JournalTheme.Fonts.habitName())
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                if let criteria = habit.successCriteria, !criteria.isEmpty {
+                    Text("(\(criteria))")
+                        .font(JournalTheme.Fonts.habitCriteria())
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                }
+
+                Spacer()
+
+                // Tier badge
+                Text(habit.tier == .mustDo ? "Must-do" : "Nice-to-do")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(habit.tier == .mustDo ? JournalTheme.Colors.amber : JournalTheme.Colors.navy)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill((habit.tier == .mustDo ? JournalTheme.Colors.amber : JournalTheme.Colors.navy).opacity(0.12))
+                    )
+            }
+            .frame(minHeight: 44)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+            .background(
+                isSelected
+                    ? JournalTheme.Colors.inkBlue.opacity(0.06)
+                    : Color.clear
+            )
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 /// A row that aligns to the paper lines
