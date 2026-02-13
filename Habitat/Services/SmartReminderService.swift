@@ -64,10 +64,11 @@ final class SmartReminderService {
     /// Reminder 1: Wake time — "Good morning! Write any tasks and start your morning habits"
     private func scheduleReminder1_WakeUp(habits: [Habit], groups: [HabitGroup], on date: Date) async {
         let afterWakeHabits = habitsForTimeSlot("After Wake", from: habits, groups: groups, on: date)
+        let uncompleted = afterWakeHabits.filter { !$0.isCompleted(for: date) }
 
-        guard !afterWakeHabits.isEmpty else { return }
+        guard !uncompleted.isEmpty else { return }
 
-        let habitNames = afterWakeHabits.map { displayName(for: $0) }
+        let habitNames = uncompleted.map { displayName(for: $0) }
         let habitList = habitNames.prefix(4).joined(separator: ", ")
 
         let body = "Good morning! Write any tasks for today and start your morning habits: \(habitList)"

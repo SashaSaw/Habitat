@@ -29,6 +29,7 @@ struct TodayContentView: View {
     // Celebration state
     @State private var showCelebration: Bool = false
     @State private var wasGoodDay: Bool = false
+    @State private var pendingCelebration: Bool = false  // Deferred celebration waiting for hobby overlay
 
     // Hobby completion overlay state
     @State private var showHobbyOverlay: Bool = false
@@ -43,6 +44,9 @@ struct TodayContentView: View {
 
     // Block setup sheet
     @State private var showingBlockSetup: Bool = false
+
+    // End of day reflection
+    @State private var showingReflection: Bool = false
     @State private var blockSettings = BlockSettings.shared
 
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
@@ -94,6 +98,9 @@ struct TodayContentView: View {
 
                         // DONE ✓ Section (completed nice-to-do + completed tasks)
                         doneSection
+
+                        // Daily reflection button
+                        reflectionButton
                     }
                     .padding(.top, 16)
 
@@ -128,14 +135,30 @@ struct TodayContentView: View {
             if showHobbyOverlay, let hobby = completingHobby {
                 HobbyCompletionOverlay(
                     habit: hobby,
-                    onSave: { note, image in
-                        store.saveHobbyCompletion(for: hobby, on: selectedDate, note: note, image: image)
+                    onSave: { note, images in
+                        store.saveHobbyCompletion(for: hobby, on: selectedDate, note: note, images: images)
                         showHobbyOverlay = false
                         completingHobby = nil
+                        // Trigger deferred celebration after hobby overlay dismisses
+                        if pendingCelebration {
+                            pendingCelebration = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                withAnimation { showCelebration = true }
+                                HapticFeedback.completionConfirmed()
+                            }
+                        }
                     },
                     onDismiss: {
                         showHobbyOverlay = false
                         completingHobby = nil
+                        // Trigger deferred celebration after hobby overlay dismisses
+                        if pendingCelebration {
+                            pendingCelebration = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                withAnimation { showCelebration = true }
+                                HapticFeedback.completionConfirmed()
+                            }
+                        }
                     }
                 )
             }
@@ -155,6 +178,13 @@ struct TodayContentView: View {
         .sheet(isPresented: $showingAddHabit) {
             AddHabitView(store: store)
         }
+        .sheet(isPresented: $showingReflection) {
+            EndOfDayNoteView(
+                store: store,
+                date: selectedDate,
+                onDismiss: { showingReflection = false }
+            )
+        }
         .sheet(isPresented: $showingBlockSetup) {
             BlockSetupView()
         }
@@ -172,6 +202,8 @@ struct TodayContentView: View {
             Text("The group '\(groupToDeleteAfterHabit?.name ?? "")' is now empty. Would you like to delete it?")
         }
         .onAppear {
+            // Lock yesterday's good day on app launch
+            store.lockPreviousDayIfNeeded()
             wasGoodDay = store.isGoodDay(for: selectedDate)
             // Show group tooltip if first time seeing a group
             if !hasSeenGroupTooltip && !store.mustDoGroups.isEmpty {
@@ -181,11 +213,15 @@ struct TodayContentView: View {
         .onChange(of: store.habits.map { $0.isCompleted(for: selectedDate) }) { _, _ in
             let isNowGoodDay = store.isGoodDay(for: selectedDate)
             if isNowGoodDay && !wasGoodDay {
-                // Just became a good day - celebrate!
-                withAnimation {
-                    showCelebration = true
+                // If hobby overlay is showing, defer celebration until it's dismissed
+                if showHobbyOverlay {
+                    pendingCelebration = true
+                } else {
+                    withAnimation {
+                        showCelebration = true
+                    }
+                    HapticFeedback.completionConfirmed()
                 }
-                HapticFeedback.completionConfirmed()
             }
             wasGoodDay = isNowGoodDay
         }
@@ -193,6 +229,8 @@ struct TodayContentView: View {
             if newPhase == .active {
                 let today = Calendar.current.startOfDay(for: Date())
                 if today != lastKnownDay {
+                    // Lock yesterday's good day status before switching to today
+                    store.lockPreviousDayIfNeeded()
                     selectedDate = Date()
                     lastKnownDay = today
                     wasGoodDay = store.isGoodDay(for: selectedDate)
@@ -202,6 +240,7 @@ struct TodayContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
             let today = Calendar.current.startOfDay(for: Date())
             if today != lastKnownDay {
+                store.lockPreviousDayIfNeeded()
                 selectedDate = Date()
                 lastKnownDay = today
                 wasGoodDay = store.isGoodDay(for: selectedDate)
@@ -541,6 +580,54 @@ struct TodayContentView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Reflection Button
+
+    @ViewBuilder
+    private var reflectionButton: some View {
+        let hasNote = store.endOfDayNote(for: selectedDate) != nil
+
+        Button {
+            showingReflection = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: hasNote ? "book.fill" : "book")
+                    .font(.system(size: 16))
+                    .foregroundStyle(JournalTheme.Colors.inkBlue)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(hasNote ? "View Today's Reflection" : "Write Today's Reflection")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                    if !hasNote {
+                        Text("How was your day?")
+                            .font(JournalTheme.Fonts.habitCriteria())
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                    } else if let note = store.endOfDayNote(for: selectedDate) {
+                        Text("\(note.fulfillmentScore)/10 — \(note.note.isEmpty ? "No note" : String(note.note.prefix(30)))")
+                            .font(JournalTheme.Fonts.habitCriteria())
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(JournalTheme.Colors.inkBlue.opacity(0.06))
+                    .strokeBorder(JournalTheme.Colors.inkBlue.opacity(0.15), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, contentPadding)
     }
 
     // MARK: - Quick Add Bar

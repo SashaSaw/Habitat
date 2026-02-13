@@ -9,6 +9,8 @@ final class HabitStore {
     var habits: [Habit] = []
     var allHabits: [Habit] = []
     var groups: [HabitGroup] = []
+    var dayRecords: [DayRecord] = []
+    var endOfDayNotes: [EndOfDayNote] = []
     var selectedDate: Date = Date()
 
     init(modelContext: ModelContext) {
@@ -22,6 +24,8 @@ final class HabitStore {
         fetchHabits()
         fetchAllHabits()
         fetchGroups()
+        fetchDayRecords()
+        fetchEndOfDayNotes()
     }
 
     private func fetchHabits() {
@@ -89,6 +93,86 @@ final class HabitStore {
             print("Failed to fetch groups: \(error)")
             groups = []
         }
+    }
+
+    private func fetchDayRecords() {
+        let descriptor = FetchDescriptor<DayRecord>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        do {
+            dayRecords = try modelContext.fetch(descriptor)
+        } catch {
+            print("Failed to fetch day records: \(error)")
+            dayRecords = []
+        }
+    }
+
+    private func fetchEndOfDayNotes() {
+        let descriptor = FetchDescriptor<EndOfDayNote>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        do {
+            endOfDayNotes = try modelContext.fetch(descriptor)
+            // Auto-lock notes past grace period
+            lockExpiredNotes()
+        } catch {
+            print("Failed to fetch end-of-day notes: \(error)")
+            endOfDayNotes = []
+        }
+    }
+
+    // MARK: - End of Day Notes
+
+    /// Returns the end-of-day note for a given date, if one exists
+    func endOfDayNote(for date: Date) -> EndOfDayNote? {
+        let calendar = Calendar.current
+        return endOfDayNotes.first { calendar.isDate($0.date, inSameDayAs: date) }
+    }
+
+    /// Creates or updates an end-of-day note
+    @discardableResult
+    func saveEndOfDayNote(for date: Date, note: String, fulfillmentScore: Int) -> EndOfDayNote {
+        if let existing = endOfDayNote(for: date) {
+            guard existing.isEditable else { return existing }
+            existing.note = note
+            existing.fulfillmentScore = fulfillmentScore
+            saveContext()
+            fetchEndOfDayNotes()
+            return existing
+        }
+
+        let newNote = EndOfDayNote(
+            date: date,
+            note: note,
+            fulfillmentScore: fulfillmentScore
+        )
+        modelContext.insert(newNote)
+        saveContext()
+        fetchEndOfDayNotes()
+        return newNote
+    }
+
+    /// Lock notes that are past the grace period (end of next day)
+    private func lockExpiredNotes() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        for note in endOfDayNotes where !note.isLocked {
+            let noteDay = calendar.startOfDay(for: note.date)
+            guard let gracePeriodEnd = calendar.date(byAdding: .day, value: 2, to: noteDay) else { continue }
+            if today >= gracePeriodEnd {
+                note.isLocked = true
+            }
+        }
+        saveContext()
+    }
+
+    /// Returns all end-of-day notes for a given number of past days, newest first
+    func recentEndOfDayNotes(days: Int = 30) -> [EndOfDayNote] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        guard let startDate = calendar.date(byAdding: .day, value: -(days - 1), to: today) else { return [] }
+        return endOfDayNotes.filter { $0.date >= startDate }
     }
 
     // MARK: - Filtered Habits
@@ -414,20 +498,21 @@ final class HabitStore {
         }
     }
 
-    /// Saves hobby completion with optional note and photo
-    func saveHobbyCompletion(for habit: Habit, on date: Date, note: String?, image: UIImage?) {
-        var photoPath: String? = nil
-        if let image = image {
-            photoPath = PhotoStorageService.shared.savePhoto(image, for: habit.id, on: date)
-        }
+    /// Saves hobby completion with optional note and photos (up to 3)
+    func saveHobbyCompletion(for habit: Habit, on date: Date, note: String?, images: [UIImage]) {
+        let savedPaths = PhotoStorageService.shared.savePhotos(images, for: habit.id, on: date)
 
-        // Update existing DailyLog with note and photoPath
+        // Legacy single photo path (first image for backward compat)
+        let legacyPath = savedPaths.first
+
+        // Update existing DailyLog with note and photoPaths
         let log = DailyLog.createOrUpdate(
             for: habit,
             on: date,
             completed: true,
             note: note,
-            photoPath: photoPath,
+            photoPath: legacyPath,
+            photoPaths: savedPaths,
             context: modelContext
         )
 
@@ -435,22 +520,69 @@ final class HabitStore {
         if let note = note {
             log.note = note
         }
-        if let photoPath = photoPath {
-            log.photoPath = photoPath
+        if let legacyPath = legacyPath {
+            log.photoPath = legacyPath
         }
+        log.photoPaths = savedPaths
+
+        saveContext()
+    }
+
+    /// Updates an existing hobby log's note and photos
+    func updateHobbyLog(for habit: Habit, on date: Date, note: String?, images: [UIImage]) {
+        guard let log = habit.log(for: date), log.completed else { return }
+
+        // Delete old photos
+        for path in log.allPhotoPaths {
+            PhotoStorageService.shared.deletePhoto(at: path)
+        }
+
+        // Save new photos
+        let savedPaths = PhotoStorageService.shared.savePhotos(images, for: habit.id, on: date)
+        let legacyPath = savedPaths.first
+
+        log.note = note
+        log.photoPath = legacyPath
+        log.photoPaths = savedPaths
 
         saveContext()
     }
 
     // MARK: - Good Day Logic
 
+    /// Check if a date is a good day.
+    /// For past dates with a locked DayRecord, uses the locked value.
+    /// For today and unlocked dates, calculates live from current habit state.
     func isGoodDay(for date: Date) -> Bool {
+        let calendar = Calendar.current
+
+        // Check for a locked DayRecord first (applies to past days locked at midnight)
+        if let record = dayRecord(for: date), record.lockedAt != nil {
+            return record.isGoodDay
+        }
+
+        // Live calculation for today and unlocked past dates
+        return isGoodDayLive(for: date)
+    }
+
+    /// Live calculation of good day status from current habit state.
+    /// Used for today and for evaluating whether to lock at midnight.
+    private func isGoodDayLive(for date: Date) -> Bool {
         // Get standalone POSITIVE must-do habits (not in any group, excludes negative)
-        let standaloneMustDos = mustDoHabits.filter { $0.groupId == nil && $0.type == .positive }
+        // Only count habits that existed on this date
+        let standaloneMustDos = mustDoHabits.filter { habit in
+            habit.groupId == nil && habit.type == .positive &&
+            Calendar.current.startOfDay(for: habit.createdAt) <= Calendar.current.startOfDay(for: date)
+        }
+
+        // Only count groups that had at least one member on this date
+        let applicableGroups = mustDoGroups.filter { group in
+            let memberHabits = habits.filter { group.habitIds.contains($0.id) }
+            return memberHabits.contains { Calendar.current.startOfDay(for: $0.createdAt) <= Calendar.current.startOfDay(for: date) }
+        }
 
         // If there are no positive must-do habits AND no must-do groups, it's not a "good day"
-        // (nothing to complete means no achievement)
-        if standaloneMustDos.isEmpty && mustDoGroups.isEmpty {
+        if standaloneMustDos.isEmpty && applicableGroups.isEmpty {
             return false
         }
 
@@ -458,7 +590,7 @@ final class HabitStore {
         let allMustDosCompleted = standaloneMustDos.allSatisfy { $0.isCompleted(for: date) }
 
         // All must-do groups must be satisfied
-        let allGroupsSatisfied = mustDoGroups.allSatisfy { group in
+        let allGroupsSatisfied = applicableGroups.allSatisfy { group in
             group.isSatisfied(habits: habits, for: date)
         }
 
@@ -466,6 +598,37 @@ final class HabitStore {
         let noNegativeSlips = negativeHabits.allSatisfy { !$0.isCompleted(for: date) }
 
         return allMustDosCompleted && allGroupsSatisfied && noNegativeSlips
+    }
+
+    /// Returns the DayRecord for a specific date, if one exists.
+    func dayRecord(for date: Date) -> DayRecord? {
+        let calendar = Calendar.current
+        return dayRecords.first { calendar.isDate($0.date, inSameDayAs: date) }
+    }
+
+    /// Lock yesterday's good day status. Called at midnight (or when the app opens on a new day).
+    /// If yesterday was a good day, it gets permanently locked.
+    func lockPreviousDayIfNeeded() {
+        let calendar = Calendar.current
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: Date()))!
+
+        // Already locked? Skip
+        if let existing = dayRecord(for: yesterday), existing.lockedAt != nil {
+            return
+        }
+
+        let wasGood = isGoodDayLive(for: yesterday)
+
+        if let existing = dayRecord(for: yesterday) {
+            existing.isGoodDay = wasGood
+            existing.lockedAt = Date()
+        } else {
+            let record = DayRecord(date: yesterday, isGoodDay: wasGood, lockedAt: Date())
+            modelContext.insert(record)
+        }
+
+        saveContext()
+        fetchDayRecords()
     }
 
     /// Returns good days in a date range

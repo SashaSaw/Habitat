@@ -223,6 +223,7 @@ struct MonthGridContentView: View {
 
     // Sheet state for hobby log detail
     @State private var selectedHobbyLog: HobbyLogSelection? = nil
+    @State private var selectedGroupHobbyLog: GroupHobbyLogSelection? = nil
 
     // Static formatters for performance
     private static let monthFormatter: DateFormatter = {
@@ -319,6 +320,9 @@ struct MonthGridContentView: View {
                             needsHorizontalScroll: needsHorizontalScroll,
                             onHobbyTap: { habit, date in
                                 selectedHobbyLog = HobbyLogSelection(habit: habit, date: date)
+                            },
+                            onGroupHobbyTap: { group, date in
+                                selectedGroupHobbyLog = GroupHobbyLogSelection(group: group, date: date, allHabits: store.recurringHabits)
                             }
                         )
                     }
@@ -350,6 +354,16 @@ struct MonthGridContentView: View {
                 date: selection.date,
                 onDismiss: {
                     selectedHobbyLog = nil
+                }
+            )
+        }
+        .sheet(item: $selectedGroupHobbyLog) { selection in
+            GroupHobbyLogSheet(
+                group: selection.group,
+                date: selection.date,
+                habits: selection.habits,
+                onDismiss: {
+                    selectedGroupHobbyLog = nil
                 }
             )
         }
@@ -453,6 +467,7 @@ struct DayRowView: View {
     let showGoodDayHighlight: Bool
     let needsHorizontalScroll: Bool
     var onHobbyTap: ((Habit, Date) -> Void)? = nil
+    var onGroupHobbyTap: ((HabitGroup, Date) -> Void)? = nil
 
     // Static formatters for performance
     private static let dayFormatter: DateFormatter = {
@@ -492,13 +507,15 @@ struct DayRowView: View {
 
             // Positive habit completion cells
             ForEach(habits) { habit in
+                let preCreation = Calendar.current.startOfDay(for: date) < Calendar.current.startOfDay(for: habit.createdAt)
                 GridCellView(
                     isCompleted: habit.isCompleted(for: date),
                     habitType: habit.type,
                     isFuture: isFuture,
                     showCross: showGoodDayHighlight, // Only show crosses in must-do view
                     isHobby: habit.isHobby,
-                    hasHobbyContent: habit.isHobby && habit.log(for: date)?.hasContent == true
+                    hasHobbyContent: habit.isHobby && habit.log(for: date)?.hasContent == true,
+                    isPreCreation: preCreation
                 )
                 .frame(width: 60)
                 .padding(.horizontal, 4)
@@ -512,23 +529,40 @@ struct DayRowView: View {
 
             // Group completion cells
             ForEach(groups) { group in
+                let groupHabits = allHabits.filter { group.habitIds.contains($0.id) }
+                let earliestCreation = groupHabits.map { $0.createdAt }.min() ?? Date()
+                let preCreation = Calendar.current.startOfDay(for: date) < Calendar.current.startOfDay(for: earliestCreation)
+                let groupHasHobbyContent = groupHabits.contains { habit in
+                    habit.isHobby && habit.isCompleted(for: date) && habit.log(for: date)?.hasContent == true
+                }
                 GridCellView(
                     isCompleted: group.isSatisfied(habits: allHabits, for: date),
                     habitType: .positive, // Groups are always positive
                     isFuture: isFuture,
-                    showCross: showGoodDayHighlight
+                    showCross: showGoodDayHighlight,
+                    isHobby: groupHasHobbyContent,
+                    hasHobbyContent: groupHasHobbyContent,
+                    isPreCreation: preCreation
                 )
                 .frame(width: 60)
                 .padding(.horizontal, 4)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if groupHasHobbyContent, !isFuture {
+                        onGroupHobbyTap?(group, date)
+                    }
+                }
             }
 
             // Negative habit cells (no per-cell background - handled by continuous overlay)
             ForEach(negativeHabits) { habit in
+                let preCreation = Calendar.current.startOfDay(for: date) < Calendar.current.startOfDay(for: habit.createdAt)
                 GridCellView(
                     isCompleted: habit.isCompleted(for: date),
                     habitType: habit.type,
                     isFuture: isFuture,
-                    showCross: true // Always show indicator for negative habits
+                    showCross: true, // Always show indicator for negative habits
+                    isPreCreation: preCreation
                 )
                 .frame(width: 60)
                 .padding(.horizontal, 4)
@@ -558,6 +592,7 @@ struct GridCellView: View {
     let showCross: Bool
     var isHobby: Bool = false
     var hasHobbyContent: Bool = false
+    var isPreCreation: Bool = false // Date is before habit was created
 
     var body: some View {
         ZStack {
@@ -565,6 +600,9 @@ struct GridCellView: View {
                 if isFuture {
                     // Future dates are empty
                     Color.clear
+                } else if isPreCreation {
+                    // Before this habit existed — hand-drawn dash
+                    HandDrawnDash(size: 18)
                 } else if habitType == .negative {
                     // Negative habits: inverted logic
                     // Completed = slipped (bad) = cross
@@ -590,7 +628,7 @@ struct GridCellView: View {
             }
 
             // Show indicator for hobbies with content
-            if isHobby && isCompleted && hasHobbyContent && !isFuture {
+            if isHobby && isCompleted && hasHobbyContent && !isFuture && !isPreCreation {
                 Circle()
                     .fill(JournalTheme.Colors.goodDayGreenDark)
                     .frame(width: 6, height: 6)
@@ -604,5 +642,5 @@ struct GridCellView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Habit.self, HabitGroup.self, DailyLog.self], inMemory: true)
+        .modelContainer(for: [Habit.self, HabitGroup.self, DailyLog.self, DayRecord.self], inMemory: true)
 }

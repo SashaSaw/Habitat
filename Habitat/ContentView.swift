@@ -60,11 +60,17 @@ struct ContentView: View {
                             }
                             .tag(2)
 
+                        JournalView(store: store)
+                            .tabItem {
+                                Label("Journal", systemImage: "book")
+                            }
+                            .tag(3)
+
                         StatsView(store: store)
                             .tabItem {
                                 Label("Stats", systemImage: "chart.bar")
                             }
-                            .tag(3)
+                            .tag(4)
                     }
                     .tint(JournalTheme.Colors.inkBlue)
                     .onAppear {
@@ -134,5 +140,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Habit.self, HabitGroup.self, DailyLog.self], inMemory: true)
+        .modelContainer(for: [Habit.self, HabitGroup.self, DailyLog.self, DayRecord.self, EndOfDayNote.self], inMemory: true)
 }

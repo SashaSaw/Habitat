@@ -8,7 +8,8 @@ final class DailyLog {
     var completed: Bool
     var value: Double?
     var note: String?
-    var photoPath: String?
+    var photoPath: String?        // Legacy single photo (kept for backward compat)
+    var photoPaths: [String] = [] // Up to 3 photos
     var selectedOption: String?
 
     // Relationship to habit
@@ -38,9 +39,19 @@ final class DailyLog {
 // MARK: - DailyLog Extensions
 
 extension DailyLog {
+    /// All photo paths (merges legacy single photoPath with new photoPaths array)
+    var allPhotoPaths: [String] {
+        var paths = photoPaths
+        // Include legacy single photo if it exists and isn't already in the array
+        if let legacy = photoPath, !legacy.isEmpty, !paths.contains(legacy) {
+            paths.insert(legacy, at: 0)
+        }
+        return paths
+    }
+
     /// Returns true if this log has any hobby content (note or photo)
     var hasContent: Bool {
-        (note != nil && !note!.isEmpty) || (photoPath != nil && !photoPath!.isEmpty)
+        (note != nil && !note!.isEmpty) || !allPhotoPaths.isEmpty
     }
 
     /// Creates or updates a log for a habit on a specific date
@@ -51,6 +62,7 @@ extension DailyLog {
         value: Double? = nil,
         note: String? = nil,
         photoPath: String? = nil,
+        photoPaths: [String]? = nil,
         context: ModelContext
     ) -> DailyLog {
         let calendar = Calendar.current
@@ -67,6 +79,9 @@ extension DailyLog {
             if photoPath != nil {
                 existingLog.photoPath = photoPath
             }
+            if let photoPaths = photoPaths {
+                existingLog.photoPaths = photoPaths
+            }
             return existingLog
         }
 
@@ -79,6 +94,9 @@ extension DailyLog {
             photoPath: photoPath,
             habit: habit
         )
+        if let photoPaths = photoPaths {
+            newLog.photoPaths = photoPaths
+        }
         context.insert(newLog)
         habit.dailyLogs.append(newLog)
         return newLog

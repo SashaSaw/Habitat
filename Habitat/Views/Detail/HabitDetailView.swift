@@ -14,6 +14,8 @@ struct HabitDetailView: View {
     @State private var editedCriteria: String = ""
     @State private var showTimeSlots = false
     @State private var showFrequencyEditor = false
+    @State private var editingPrompt = false
+    @State private var editedPrompt: String = ""
 
     var body: some View {
         ScrollView {
@@ -97,7 +99,7 @@ struct HabitDetailView: View {
 
                 // MARK: - Hobby Logs
                 if habit.isHobby || habit.enableNotesPhotos {
-                    HobbyLogsSection(habit: habit)
+                    HobbyLogsSection(habit: habit, store: store)
                 }
 
                 // MARK: - Settings
@@ -221,6 +223,44 @@ struct HabitDetailView: View {
                             .tint(JournalTheme.Colors.teal)
                         }
                         .padding(14)
+
+                        // Habit prompt — only for hobbies (notes & photos enabled)
+                        if habit.enableNotesPhotos {
+                            Divider().padding(.leading, 48)
+
+                            if editingPrompt {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(JournalTheme.Colors.amber)
+                                        .frame(width: 24)
+
+                                    TextField("e.g. Put on your trainers and step outside", text: $editedPrompt)
+                                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                                        .foregroundStyle(JournalTheme.Colors.inkBlack)
+                                        .textFieldStyle(.plain)
+
+                                    Button("Save") {
+                                        habit.habitPrompt = editedPrompt.trimmingCharacters(in: .whitespaces)
+                                        store.updateHabit(habit)
+                                        editingPrompt = false
+                                    }
+                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(JournalTheme.Colors.teal)
+                                }
+                                .padding(14)
+                            } else {
+                                settingsRow(
+                                    icon: "sparkles",
+                                    iconColor: JournalTheme.Colors.amber,
+                                    label: "Habit prompt",
+                                    value: habit.habitPrompt.isEmpty ? "Not set" : habit.habitPrompt
+                                ) {
+                                    editedPrompt = habit.habitPrompt
+                                    editingPrompt = true
+                                }
+                            }
+                        }
 
                         Divider().padding(.leading, 48)
 
@@ -581,12 +621,13 @@ struct RecentActivitySection: View {
 /// Section showing hobby logs with photos and notes
 struct HobbyLogsSection: View {
     let habit: Habit
+    let store: HabitStore
 
     @State private var selectedLogDate: HobbyLogSelection? = nil
 
-    private var logsWithContent: [DailyLog] {
+    private var completedLogs: [DailyLog] {
         habit.dailyLogs
-            .filter { $0.completed && $0.hasContent }
+            .filter { $0.completed }
             .sorted { $0.date > $1.date }
     }
 
@@ -603,8 +644,8 @@ struct HobbyLogsSection: View {
                 .foregroundStyle(JournalTheme.Colors.sectionHeader)
                 .tracking(2)
 
-            if logsWithContent.isEmpty {
-                Text("No photos or notes recorded yet")
+            if completedLogs.isEmpty {
+                Text("No completed entries yet")
                     .font(JournalTheme.Fonts.habitCriteria())
                     .foregroundStyle(JournalTheme.Colors.completedGray)
                     .padding()
@@ -616,15 +657,15 @@ struct HobbyLogsSection: View {
                     )
             } else {
                 VStack(spacing: 8) {
-                    ForEach(logsWithContent.prefix(5)) { log in
+                    ForEach(completedLogs.prefix(10)) { log in
                         HobbyLogRow(log: log, dateFormatter: dateFormatter)
                             .onTapGesture {
                                 selectedLogDate = HobbyLogSelection(habit: habit, date: log.date)
                             }
                     }
 
-                    if logsWithContent.count > 5 {
-                        Text("+ \(logsWithContent.count - 5) more entries")
+                    if completedLogs.count > 10 {
+                        Text("+ \(completedLogs.count - 10) more entries")
                             .font(JournalTheme.Fonts.habitCriteria())
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                             .padding(.top, 4)
@@ -638,7 +679,8 @@ struct HobbyLogsSection: View {
                 date: selection.date,
                 onDismiss: {
                     selectedLogDate = nil
-                }
+                },
+                store: store
             )
         }
     }
@@ -651,6 +693,8 @@ struct HobbyLogRow: View {
 
     @State private var loadedImage: UIImage? = nil
 
+    private var hasContent: Bool { log.hasContent }
+
     var body: some View {
         HStack(spacing: 12) {
             if let image = loadedImage {
@@ -659,7 +703,7 @@ struct HobbyLogRow: View {
                     .scaledToFill()
                     .frame(width: 50, height: 50)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-            } else if log.photoPath != nil {
+            } else if !log.allPhotoPaths.isEmpty {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(JournalTheme.Colors.lineLight)
                     .frame(width: 50, height: 50)
@@ -667,13 +711,21 @@ struct HobbyLogRow: View {
                         Image(systemName: "photo")
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     )
-            } else {
+            } else if hasContent {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(JournalTheme.Colors.lineLight)
                     .frame(width: 50, height: 50)
                     .overlay(
                         Image(systemName: "note.text")
                             .foregroundStyle(JournalTheme.Colors.completedGray)
+                    )
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(JournalTheme.Colors.lineLight.opacity(0.5))
+                    .frame(width: 50, height: 50)
+                    .overlay(
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(JournalTheme.Colors.inkBlue.opacity(0.5))
                     )
             }
 
@@ -687,14 +739,18 @@ struct HobbyLogRow: View {
                         .font(JournalTheme.Fonts.habitCriteria())
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                         .lineLimit(2)
+                } else if !hasContent {
+                    Text("Tap to add notes or photos")
+                        .font(JournalTheme.Fonts.habitCriteria())
+                        .foregroundStyle(JournalTheme.Colors.inkBlue.opacity(0.5))
                 }
             }
 
             Spacer()
 
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(JournalTheme.Colors.completedGray)
+            Image(systemName: "pencil")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(JournalTheme.Colors.inkBlue)
         }
         .padding(12)
         .background(
@@ -708,8 +764,8 @@ struct HobbyLogRow: View {
     }
 
     private func loadPhoto() {
-        if let photoPath = log.photoPath {
-            loadedImage = PhotoStorageService.shared.loadPhoto(from: photoPath)
+        if let firstPath = log.allPhotoPaths.first {
+            loadedImage = PhotoStorageService.shared.loadPhoto(from: firstPath)
         }
     }
 }

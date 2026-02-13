@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Charts
 
 /// Statistics and summary view
 struct StatsView: View {
@@ -25,6 +26,9 @@ struct StatsContentView: View {
 
                 // Good Day Streak
                 GoodDayStreakCard(store: store)
+
+                // Fulfillment Chart
+                FulfillmentChartCard(store: store)
 
                 // Habit Completion Rates
                 HabitCompletionSection(store: store)
@@ -284,7 +288,154 @@ struct HabitCompletionRow: View {
     }
 }
 
+/// Data point for the fulfillment chart
+struct FulfillmentDataPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let score: Int
+}
+
+/// Card showing fulfillment scores over time as a line chart
+struct FulfillmentChartCard: View {
+    let store: HabitStore
+
+    private var dataPoints: [FulfillmentDataPoint] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let notes = store.recentEndOfDayNotes(days: 30)
+
+        return notes.map { note in
+            FulfillmentDataPoint(date: note.date, score: note.fulfillmentScore)
+        }.sorted { $0.date < $1.date }
+    }
+
+    private var averageScore: Double {
+        guard !dataPoints.isEmpty else { return 0 }
+        let sum = dataPoints.reduce(0) { $0 + $1.score }
+        return Double(sum) / Double(dataPoints.count)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(JournalTheme.Colors.teal)
+
+                Text("Fulfillment")
+                    .font(JournalTheme.Fonts.sectionHeader())
+                    .foregroundStyle(JournalTheme.Colors.inkBlue)
+
+                Spacer()
+
+                if !dataPoints.isEmpty {
+                    Text("avg \(String(format: "%.1f", averageScore))")
+                        .font(JournalTheme.Fonts.habitCriteria())
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                }
+            }
+
+            if dataPoints.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.system(size: 32))
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                    Text("No reflections yet")
+                        .font(JournalTheme.Fonts.habitCriteria())
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                    Text("Write daily reflections in the Journal tab to see your fulfillment trend")
+                        .font(JournalTheme.Fonts.habitCriteria())
+                        .foregroundStyle(JournalTheme.Colors.completedGray.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            } else {
+                // Line chart
+                Chart {
+                    ForEach(dataPoints) { point in
+                        LineMark(
+                            x: .value("Date", point.date, unit: .day),
+                            y: .value("Score", point.score)
+                        )
+                        .foregroundStyle(
+                            .linearGradient(
+                                colors: [JournalTheme.Colors.negativeRedDark, JournalTheme.Colors.amber, JournalTheme.Colors.goodDayGreenDark],
+                                startPoint: .bottom,
+                                endPoint: .top
+                            )
+                        )
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(StrokeStyle(lineWidth: 2.5))
+
+                        AreaMark(
+                            x: .value("Date", point.date, unit: .day),
+                            y: .value("Score", point.score)
+                        )
+                        .foregroundStyle(
+                            .linearGradient(
+                                colors: [JournalTheme.Colors.teal.opacity(0.2), JournalTheme.Colors.teal.opacity(0.02)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .interpolationMethod(.catmullRom)
+
+                        PointMark(
+                            x: .value("Date", point.date, unit: .day),
+                            y: .value("Score", point.score)
+                        )
+                        .foregroundStyle(chartPointColor(for: point.score))
+                        .symbolSize(30)
+                    }
+
+                    // Average line
+                    RuleMark(y: .value("Average", averageScore))
+                        .foregroundStyle(JournalTheme.Colors.completedGray.opacity(0.5))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 3]))
+                }
+                .chartYScale(domain: 1...10)
+                .chartYAxis {
+                    AxisMarks(values: [1, 5, 10]) { value in
+                        AxisValueLabel()
+                            .font(.system(size: 10, design: .rounded))
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [3]))
+                            .foregroundStyle(JournalTheme.Colors.lineLight)
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day, count: 7)) { value in
+                        AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+                            .font(.system(size: 10, design: .rounded))
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [3]))
+                            .foregroundStyle(JournalTheme.Colors.lineLight)
+                    }
+                }
+                .frame(height: 180)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.7))
+                .shadow(color: .black.opacity(0.05), radius: 5, y: 2)
+        )
+    }
+
+    private func chartPointColor(for score: Int) -> Color {
+        switch score {
+        case 1...3: return JournalTheme.Colors.negativeRedDark
+        case 4...5: return JournalTheme.Colors.amber
+        case 6...7: return JournalTheme.Colors.teal
+        case 8...10: return JournalTheme.Colors.goodDayGreenDark
+        default: return JournalTheme.Colors.completedGray
+        }
+    }
+}
+
 #Preview {
     ContentView()
-        .modelContainer(for: [Habit.self, HabitGroup.self, DailyLog.self], inMemory: true)
+        .modelContainer(for: [Habit.self, HabitGroup.self, DailyLog.self, DayRecord.self, EndOfDayNote.self], inMemory: true)
 }

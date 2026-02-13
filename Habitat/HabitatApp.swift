@@ -17,7 +17,9 @@ struct HabitatApp: App {
         let schema = Schema([
             Habit.self,
             HabitGroup.self,
-            DailyLog.self
+            DailyLog.self,
+            DayRecord.self,
+            EndOfDayNote.self
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,

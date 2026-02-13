@@ -44,13 +44,14 @@ final class PhotoStorageService {
     ///   - image: The UIImage to save
     ///   - habitId: The habit's UUID
     ///   - date: The date of the completion
+    ///   - index: Photo index (0-2) for multiple photos per day
     /// - Returns: The relative path to the saved photo, or nil if save failed
-    func savePhoto(_ image: UIImage, for habitId: UUID, on date: Date) -> String? {
+    func savePhoto(_ image: UIImage, for habitId: UUID, on date: Date, index: Int = 0) -> String? {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let dateString = dateFormatter.string(from: date)
 
-        let filename = "\(dateString).jpg"
+        let filename = index == 0 ? "\(dateString).jpg" : "\(dateString)_\(index).jpg"
         let relativePath = "\(photosDirectoryName)/\(habitId.uuidString)/\(filename)"
         let fullURL = habitDirectory(for: habitId).appendingPathComponent(filename)
 
@@ -66,6 +67,18 @@ final class PhotoStorageService {
             print("Failed to save photo: \(error)")
             return nil
         }
+    }
+
+    /// Saves multiple photos for a habit on a specific date
+    /// - Returns: Array of relative paths for successfully saved photos
+    func savePhotos(_ images: [UIImage], for habitId: UUID, on date: Date) -> [String] {
+        var paths: [String] = []
+        for (index, image) in images.prefix(3).enumerated() {
+            if let path = savePhoto(image, for: habitId, on: date, index: index) {
+                paths.append(path)
+            }
+        }
+        return paths
     }
 
     /// Loads a photo from a relative path

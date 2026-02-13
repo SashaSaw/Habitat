@@ -1,16 +1,25 @@
 import SwiftUI
+import UIKit
 
-/// Overlay shown when completing a hobby, allowing photo/note capture
+/// Wrapper to give UIImage a stable identity for ForEach
+private struct IdentifiablePhoto: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
+/// Overlay shown when completing a hobby, allowing photo/note capture (up to 3 photos)
 struct HobbyCompletionOverlay: View {
     let habit: Habit
-    let onSave: (String?, UIImage?) -> Void
+    let onSave: (String?, [UIImage]) -> Void
     let onDismiss: () -> Void
 
     @State private var note: String = ""
-    @State private var selectedImage: UIImage? = nil
+    @State private var selectedImages: [IdentifiablePhoto] = []
     @State private var showingImageSourcePicker = false
     @State private var showingCamera = false
     @State private var showingPhotoLibrary = false
+
+    private let maxPhotos = 3
 
     var body: some View {
         ZStack {
@@ -34,50 +43,65 @@ struct HobbyCompletionOverlay: View {
                         .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
                 }
 
-                // Photo section
-                Button {
-                    showingImageSourcePicker = true
-                } label: {
-                    if let image = selectedImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 120, height: 120)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(JournalTheme.Colors.inkBlue, lineWidth: 2)
-                            )
-                    } else {
-                        VStack(spacing: 8) {
-                            Image(systemName: "camera")
-                                .font(.system(size: 32))
-                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                // Photo section — horizontal row of up to 3
+                HStack(spacing: 12) {
+                    ForEach(selectedImages) { item in
+                        ZStack(alignment: .topTrailing) {
+                            Image(uiImage: item.image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(JournalTheme.Colors.inkBlue, lineWidth: 1.5)
+                                )
 
-                            Text("Add Photo")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(JournalTheme.Colors.completedGray)
-                        }
-                        .frame(width: 120, height: 120)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(style: StrokeStyle(lineWidth: 2, dash: [6]))
-                                .foregroundStyle(JournalTheme.Colors.completedGray)
-                        )
-                    }
-                }
-                .confirmationDialog("Add Photo", isPresented: $showingImageSourcePicker) {
-                    if ImagePicker.isCameraAvailable {
-                        Button("Take Photo") {
-                            showingCamera = true
+                            // Remove button
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedImages.removeAll { $0.id == item.id }
+                                }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(.white)
+                                    .background(Circle().fill(Color.black.opacity(0.5)).frame(width: 16, height: 16))
+                            }
+                            .offset(x: 4, y: -4)
                         }
                     }
-                    Button("Choose from Library") {
-                        showingPhotoLibrary = true
-                    }
-                    if selectedImage != nil {
-                        Button("Remove Photo", role: .destructive) {
-                            selectedImage = nil
+
+                    // Add photo button (if under max)
+                    if selectedImages.count < maxPhotos {
+                        Button {
+                            showingImageSourcePicker = true
+                        } label: {
+                            VStack(spacing: 6) {
+                                Image(systemName: "camera")
+                                    .font(.system(size: 24))
+                                    .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                                Text(selectedImages.isEmpty ? "Add Photo" : "+")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(JournalTheme.Colors.completedGray)
+                            }
+                            .frame(width: 80, height: 80)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [5]))
+                                    .foregroundStyle(JournalTheme.Colors.completedGray)
+                            )
+                        }
+                        .confirmationDialog("Add Photo", isPresented: $showingImageSourcePicker) {
+                            if ImagePicker.isCameraAvailable {
+                                Button("Take Photo") {
+                                    showingCamera = true
+                                }
+                            }
+                            Button("Choose from Library") {
+                                showingPhotoLibrary = true
+                            }
                         }
                     }
                 }
@@ -122,7 +146,7 @@ struct HobbyCompletionOverlay: View {
 
                     Button {
                         let noteToSave = note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : note
-                        onSave(noteToSave, selectedImage)
+                        onSave(noteToSave, selectedImages.map(\.image))
                     } label: {
                         Text("Save")
                             .font(.system(size: 16, weight: .semibold))
@@ -146,12 +170,16 @@ struct HobbyCompletionOverlay: View {
         }
         .sheet(isPresented: $showingCamera) {
             ImagePicker(sourceType: .camera) { image in
-                selectedImage = image
+                if selectedImages.count < maxPhotos {
+                    selectedImages.append(IdentifiablePhoto(image: image))
+                }
             }
         }
         .sheet(isPresented: $showingPhotoLibrary) {
             ImagePicker(sourceType: .photoLibrary) { image in
-                selectedImage = image
+                if selectedImages.count < maxPhotos {
+                    selectedImages.append(IdentifiablePhoto(image: image))
+                }
             }
         }
     }

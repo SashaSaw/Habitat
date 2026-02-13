@@ -135,6 +135,43 @@ struct HandDrawnCross: View {
     }
 }
 
+/// Hand-drawn horizontal dash for dates before a habit was created
+struct HandDrawnDash: View {
+    let size: CGFloat
+    let color: Color
+
+    init(size: CGFloat = 20, color: Color = JournalTheme.Colors.inkBlack.opacity(0.3)) {
+        self.size = size
+        self.color = color
+    }
+
+    var body: some View {
+        Canvas { context, canvasSize in
+            var path = Path()
+
+            let startX = canvasSize.width * 0.2
+            let endX = canvasSize.width * 0.8
+            let midY = canvasSize.height * 0.5
+
+            path.move(to: CGPoint(x: startX, y: midY))
+            path.addQuadCurve(
+                to: CGPoint(x: endX, y: midY),
+                control: CGPoint(
+                    x: canvasSize.width * 0.5 + CGFloat.random(in: -1.5...1.5),
+                    y: midY + CGFloat.random(in: -1.5...1.5)
+                )
+            )
+
+            context.stroke(
+                path,
+                with: .color(color),
+                style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+            )
+        }
+        .frame(width: size, height: size)
+    }
+}
+
 /// Hand-drawn strikethrough line shape
 struct StrikethroughShape: Shape {
     var progress: CGFloat
