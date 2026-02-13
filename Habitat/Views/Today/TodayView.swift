@@ -59,6 +59,11 @@ struct TodayContentView: View {
     @State private var selectedHabitIdsForGroup: Set<UUID> = []
     @State private var showingAddGroup: Bool = false
 
+    // Morning tasks prompt
+    @State private var showingMorningTasks: Bool = false
+    @AppStorage("lastMorningPromptDate") private var lastMorningPromptDate: String = ""
+    private var schedule: UserSchedule { UserSchedule.shared }
+
 
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let contentPadding: CGFloat = 24
@@ -73,9 +78,14 @@ struct TodayContentView: View {
         !store.todayVisibleTasks.isEmpty
     }
 
+    /// Whether any today tasks have ever been added (some may be completed now)
+    private var hasAnyTodayTasks: Bool {
+        hasTodayOnlyContent || !store.todayCompletedTasks.isEmpty
+    }
+
     /// Whether the "New today task" button should appear in a section (vs toolbar)
     private var showTodayTaskButtonInSection: Bool {
-        hasDoneContent || hasTodayOnlyContent
+        hasAnyTodayTasks
     }
 
     var body: some View {
@@ -264,6 +274,11 @@ struct TodayContentView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $showingMorningTasks) {
+            MorningTasksView(store: store) {
+                showingMorningTasks = false
+            }
+        }
         .toolbar {
             // Show "+" button in top right when neither today-only nor done section exists
             if !showTodayTaskButtonInSection {
@@ -301,6 +316,8 @@ struct TodayContentView: View {
                     showGroupCallout = true
                 }
             }
+            // Check for morning tasks prompt
+            checkMorningTasksPrompt()
         }
         .onChange(of: store.habits.map { $0.isCompleted(for: selectedDate) }) { _, _ in
             let isNowGoodDay = store.isGoodDay(for: selectedDate)
@@ -334,6 +351,8 @@ struct TodayContentView: View {
                     lastKnownDay = today
                     wasGoodDay = store.isGoodDay(for: selectedDate)
                 }
+                // Check for morning tasks prompt when returning to app
+                checkMorningTasksPrompt()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
@@ -364,6 +383,32 @@ struct TodayContentView: View {
             timeOfDay = "Good evening"
         }
         return "\(timeOfDay), \(userName)!"
+    }
+
+    // MARK: - Morning Tasks Prompt
+
+    /// Show the morning tasks prompt once per day, on the first open after wake time
+    private func checkMorningTasksPrompt() {
+        let calendar = Calendar.current
+        let now = Date()
+        let todayString = {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            return formatter.string(from: now)
+        }()
+
+        // Already shown today
+        guard lastMorningPromptDate != todayString else { return }
+
+        // Check if current time is after wake time
+        let currentMinutes = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+        guard currentMinutes >= schedule.wakeTimeMinutes else { return }
+
+        // Mark as shown and present after a brief delay
+        lastMorningPromptDate = todayString
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            showingMorningTasks = true
+        }
     }
 
     // MARK: - Streak Tracker Bar
@@ -792,10 +837,8 @@ struct TodayContentView: View {
                 }
                 .animation(.easeInOut(duration: 0.25), value: store.todayVisibleTasks.count)
 
-                // Show "New today task" button here if today-only section exists but done section doesn't
-                if !hasDoneContent {
-                    newTodayTaskButton
-                }
+                // Show "New today task" button under today-only when there are uncompleted tasks
+                newTodayTaskButton
             }
         }
     }
@@ -900,8 +943,10 @@ struct TodayContentView: View {
                     .opacity(0.6)
                 }
 
-                // "New today task" button at bottom of done section
-                newTodayTaskButton
+                // "New today task" button at bottom of done section only when all tasks are done (today-only is empty)
+                if !hasTodayOnlyContent && !store.todayCompletedTasks.isEmpty {
+                    newTodayTaskButton
+                }
             }
         }
     }
