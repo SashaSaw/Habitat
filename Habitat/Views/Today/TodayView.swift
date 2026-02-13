@@ -17,6 +17,7 @@ struct TodayView: View {
 struct TodayContentView: View {
     @Bindable var store: HabitStore
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("userName") private var userName = ""
     @State private var selectedDate = Date()
     @State private var lastKnownDay: Date = Calendar.current.startOfDay(for: Date())
     @State private var selectedHabit: Habit?
@@ -87,7 +88,14 @@ struct TodayContentView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     // Header — left aligned
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if !userName.isEmpty {
+                            Text(greetingText)
+                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                                .padding(.bottom, 2)
+                        }
+
                         Text("Todays to-dos")
                             .font(JournalTheme.Fonts.title())
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
@@ -95,10 +103,11 @@ struct TodayContentView: View {
                         Text(formattedDate)
                             .font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
+                            .padding(.top, 4)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, contentPadding)
-                    .padding(.top, lineHeight * 2)
+                    .padding(.top, userName.isEmpty ? lineHeight * 2 : lineHeight)
                     .padding(.bottom, 8)
 
                     // Streak tracker bar
@@ -342,6 +351,19 @@ struct TodayContentView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, MMMM d"
         return formatter.string(from: selectedDate)
+    }
+
+    private var greetingText: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let timeOfDay: String
+        if hour < 12 {
+            timeOfDay = "Good morning"
+        } else if hour < 17 {
+            timeOfDay = "Good afternoon"
+        } else {
+            timeOfDay = "Good evening"
+        }
+        return "\(timeOfDay), \(userName)!"
     }
 
     // MARK: - Streak Tracker Bar

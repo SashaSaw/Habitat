@@ -67,6 +67,7 @@ struct AddCustomPillField: View {
             HStack(spacing: 10) {
                 TextField(placeholder, text: $text)
                     .font(.system(size: 15, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .focused($isFocused)
                     .onSubmit { addPill() }
 

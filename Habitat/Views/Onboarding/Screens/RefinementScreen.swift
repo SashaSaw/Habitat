@@ -307,6 +307,7 @@ struct RefinementScreen: View {
 
                     TextField("How will you measure this?", text: $data.draftHabits[index].successCriteria)
                         .font(.system(size: 14, design: .rounded))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack)
                         .padding(10)
                         .background(
                             RoundedRectangle(cornerRadius: 8)

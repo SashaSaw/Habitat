@@ -250,6 +250,7 @@ struct EditGroupView: View {
                 Section {
                     TextField("Group name", text: $name)
                         .font(JournalTheme.Fonts.habitName())
+                        .foregroundStyle(JournalTheme.Colors.inkBlack)
                 } header: {
                     Text("Group Name")
                 }

@@ -6,9 +6,13 @@ struct OnboardingView: View {
     let onComplete: () -> Void
 
     @State private var currentPage = 0
+    @State private var highestPageReached = 0
     @State private var data = OnboardingData()
 
-    private let totalPages = 7 // 0=Welcome, 1=Basics, 2=Responsibilities, 3=Fulfilment, 4=Schedule, 5=Refinement, 6=Complete
+    // 0=Welcome, 1=Name, 2=Basics, 3=Responsibilities, 4=TodayTasks, 5=Fulfilment, 6=Schedule, 7=Refinement, 8=Complete
+    private let totalPages = 9
+    /// Index of the Schedule screen (draft habits generated when leaving it)
+    private let schedulePageIndex = 6
 
     var body: some View {
         ZStack {
@@ -17,9 +21,9 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Progress bar (visible on screens 1-5, not welcome or complete)
-                if currentPage > 0 && currentPage < totalPages - 1 {
-                    OnboardingProgressBar(current: currentPage, total: totalPages - 2)
+                // Progress bar (visible on screens 2-7, not welcome/name or complete)
+                if currentPage > 1 && currentPage < totalPages - 1 {
+                    OnboardingProgressBar(current: currentPage - 1, total: totalPages - 3)
                         .padding(.horizontal, 28)
                         .padding(.top, 12)
                         .padding(.bottom, 8)
@@ -31,34 +35,51 @@ struct OnboardingView: View {
                     WelcomeScreen(onContinue: { advance() })
                         .tag(0)
 
-                    BasicsScreen(data: data, onContinue: { advance() })
+                    NameScreen(onContinue: { advance() })
                         .tag(1)
 
-                    ResponsibilitiesScreen(data: data, onContinue: { advance() })
+                    BasicsScreen(data: data, onContinue: { advance() })
                         .tag(2)
 
-                    FulfilmentScreen(data: data, onContinue: { advance() })
+                    ResponsibilitiesScreen(data: data, onContinue: { advance() })
                         .tag(3)
 
-                    ScheduleScreen(data: data, onContinue: { advance() })
+                    TodayTasksScreen(data: data, onContinue: { advance() })
                         .tag(4)
+
+                    FulfilmentScreen(data: data, onContinue: { advance() })
+                        .tag(5)
+
+                    ScheduleScreen(data: data, onContinue: { advance() })
+                        .tag(6)
 
                     RefinementScreen(
                         data: data,
                         onContinue: { advance() },
-                        onGoBack: { goBack(to: 1) }
+                        onGoBack: { goBack(to: 2) }
                     )
-                    .tag(5)
+                    .tag(7)
 
                     CompleteScreen(
                         data: data,
                         store: store,
                         onFinish: onComplete
                     )
-                    .tag(6)
+                    .tag(8)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut(duration: 0.35), value: currentPage)
+            }
+        }
+        .onChange(of: currentPage) { oldPage, newPage in
+            // When user swipes forward past a page they haven't visited, treat it like continue/skip
+            if newPage > highestPageReached {
+                // Generate draft habits when swiping past the schedule screen
+                if oldPage == schedulePageIndex {
+                    data.draftHabits = HabitGenerator.generate(from: data)
+                }
+                highestPageReached = newPage
+                HapticFeedback.selection()
             }
         }
     }
@@ -67,13 +88,14 @@ struct OnboardingView: View {
 
     private func advance() {
         // Generate draft habits before showing the refinement screen
-        if currentPage == 4 {
+        if currentPage == schedulePageIndex {
             data.draftHabits = HabitGenerator.generate(from: data)
         }
 
         withAnimation(.easeInOut(duration: 0.35)) {
             currentPage = min(currentPage + 1, totalPages - 1)
         }
+        highestPageReached = max(highestPageReached, currentPage)
         HapticFeedback.selection()
     }
 

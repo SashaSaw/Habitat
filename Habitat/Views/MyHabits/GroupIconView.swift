@@ -545,6 +545,7 @@ struct GroupDetailSheet: View {
                 // Inline editing
                 TextField("Sub-habit name", text: $editingHabitName)
                     .font(JournalTheme.Fonts.habitName())
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .textFieldStyle(.plain)
                     .onSubmit {
                         habit.name = editingHabitName.trimmingCharacters(in: .whitespaces)
