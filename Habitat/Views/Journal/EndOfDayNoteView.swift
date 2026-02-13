@@ -115,6 +115,7 @@ struct EndOfDayNoteView: View {
                         } else {
                             TextEditor(text: $noteText)
                                 .font(JournalTheme.Fonts.habitName())
+                                .foregroundStyle(JournalTheme.Colors.inkBlack)
                                 .frame(minHeight: 150)
                                 .scrollContentBackground(.hidden)
                                 .padding(12)

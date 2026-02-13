@@ -114,6 +114,7 @@ struct HobbyCompletionOverlay: View {
 
                     TextEditor(text: $note)
                         .font(JournalTheme.Fonts.habitName())
+                        .foregroundStyle(JournalTheme.Colors.inkBlack)
                         .frame(height: 80)
                         .scrollContentBackground(.hidden)
                         .padding(8)

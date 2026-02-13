@@ -289,6 +289,7 @@ struct HobbyLogDetailSheet: View {
 
             TextEditor(text: $editNote)
                 .font(JournalTheme.Fonts.habitName())
+                .foregroundStyle(JournalTheme.Colors.inkBlack)
                 .frame(minHeight: 100)
                 .scrollContentBackground(.hidden)
                 .padding(8)
