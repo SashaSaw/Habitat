@@ -35,8 +35,9 @@ struct TodayContentView: View {
     @State private var showHobbyOverlay: Bool = false
     @State private var completingHobby: Habit? = nil
 
-    // Quick-add sheet
+    // Quick-add sheets
     @State private var showingAddHabit: Bool = false
+    @State private var showingAddMustDo: Bool = false
 
     // First-time group tooltip
     @AppStorage("hasSeenGroupTooltip") private var hasSeenGroupTooltip: Bool = false
@@ -63,7 +64,7 @@ struct TodayContentView: View {
                 VStack(spacing: 0) {
                     // Header — left aligned
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Today")
+                        Text("Todays to-dos")
                             .font(JournalTheme.Fonts.title())
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
 
@@ -84,14 +85,14 @@ struct TodayContentView: View {
 
                     // Sections
                     VStack(spacing: 24) {
+                        // ◇ TODAY ONLY Section (uncompleted tasks only)
+                        todayOnlySection
+
                         // ★ MUST DO Section
                         mustDoSection
 
                         // NICE TO DO Section (uncompleted only)
                         niceToDoSection
-
-                        // ◇ TODAY ONLY Section (uncompleted tasks only)
-                        todayOnlySection
 
                         // DON'T DO Section (negative habits)
                         dontDoSection
@@ -110,17 +111,13 @@ struct TodayContentView: View {
                             Text("No habits yet")
                                 .font(JournalTheme.Fonts.habitName())
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
-                            Text("Tap below to add your first habit")
+                            Text("Tap '+ New must-do' to add your first habit")
                                 .font(JournalTheme.Fonts.habitCriteria())
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
                     }
-
-                    // Quick add bar
-                    quickAddBar
-                        .padding(.top, 16)
 
                     Spacer(minLength: 120)
                 }
@@ -177,6 +174,9 @@ struct TodayContentView: View {
         }
         .sheet(isPresented: $showingAddHabit) {
             AddHabitView(store: store)
+        }
+        .sheet(isPresented: $showingAddMustDo) {
+            AddMustDoView(store: store)
         }
         .sheet(isPresented: $showingReflection) {
             EndOfDayNoteView(
@@ -376,9 +376,9 @@ struct TodayContentView: View {
 
     @ViewBuilder
     private var mustDoSection: some View {
-        if !store.standalonePositiveMustDoHabits.isEmpty || !store.mustDoGroups.isEmpty {
-            VStack(spacing: 0) {
-                sectionHeader("★ MUST DO", color: JournalTheme.Colors.amber)
+        VStack(spacing: 0) {
+            if !store.standalonePositiveMustDoHabits.isEmpty || !store.mustDoGroups.isEmpty {
+                sectionHeader("★ MUST-DOS:", color: JournalTheme.Colors.amber)
 
                 // Standalone must-do habits (positive only) — completed stay inline
                 ForEach(store.standalonePositiveMustDoHabits) { habit in
@@ -454,7 +454,41 @@ struct TodayContentView: View {
                     }
                 }
             }
+
+            // "+ New must-do" button at the end of the section
+            newMustDoButton
         }
+    }
+
+    /// Dashed "New must-do" button at the end of the must-do section
+    private var newMustDoButton: some View {
+        Button {
+            showingAddMustDo = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.amber)
+
+                Text("New must-do")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.amber)
+
+                Spacer()
+            }
+            .padding(.vertical, 11)
+            .padding(.horizontal, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(
+                        JournalTheme.Colors.amber.opacity(0.4),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, contentPadding)
+        .padding(.top, 8)
     }
 
     // MARK: - Nice To Do Section (uncompleted only)
@@ -464,7 +498,7 @@ struct TodayContentView: View {
         let uncompleted = store.uncompletedNiceToDoHabits(for: selectedDate)
         if !uncompleted.isEmpty {
             VStack(spacing: 0) {
-                sectionHeader("NICE TO DO", color: JournalTheme.Colors.sectionHeader)
+                sectionHeader("NICE-TO-DOS:", color: JournalTheme.Colors.sectionHeader)
 
                 ForEach(uncompleted) { habit in
                     HabitLinedRow(
@@ -519,7 +553,7 @@ struct TodayContentView: View {
     private var dontDoSection: some View {
         if !store.negativeHabits.isEmpty {
             VStack(spacing: 0) {
-                sectionHeader("DON'T DO", color: JournalTheme.Colors.negativeRedDark)
+                sectionHeader("DON'T-DOS:", color: JournalTheme.Colors.negativeRedDark)
 
                 ForEach(store.negativeHabits) { habit in
                     NegativeHabitLinedRow(
@@ -630,36 +664,6 @@ struct TodayContentView: View {
         .padding(.horizontal, contentPadding)
     }
 
-    // MARK: - Quick Add Bar
-
-    private var quickAddBar: some View {
-        Button {
-            showingAddHabit = true
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(JournalTheme.Colors.completedGray)
-
-                Text("Add a habit or task...")
-                    .font(JournalTheme.Fonts.habitCriteria())
-                    .foregroundStyle(JournalTheme.Colors.completedGray)
-
-                Spacer()
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(
-                        JournalTheme.Colors.completedGray.opacity(0.35),
-                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, contentPadding)
-    }
 }
 
 /// A row that aligns to the paper lines
