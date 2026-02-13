@@ -224,41 +224,39 @@ struct HabitDetailView: View {
                         }
                         .padding(14)
 
-                        // Habit prompt — only for hobbies (notes & photos enabled)
-                        if habit.enableNotesPhotos {
-                            Divider().padding(.leading, 48)
+                        Divider().padding(.leading, 48)
 
-                            if editingPrompt {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "sparkles")
-                                        .font(.system(size: 14))
-                                        .foregroundStyle(JournalTheme.Colors.amber)
-                                        .frame(width: 24)
+                        // Habit prompt — shown for all habits
+                        if editingPrompt {
+                            HStack(spacing: 12) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(JournalTheme.Colors.amber)
+                                    .frame(width: 24)
 
-                                    TextField("e.g. Put on your trainers and step outside", text: $editedPrompt)
-                                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                                        .foregroundStyle(JournalTheme.Colors.inkBlack)
-                                        .textFieldStyle(.plain)
+                                TextField("e.g. Put on your trainers and step outside", text: $editedPrompt)
+                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+                                    .textFieldStyle(.plain)
 
-                                    Button("Save") {
-                                        habit.habitPrompt = editedPrompt.trimmingCharacters(in: .whitespaces)
-                                        store.updateHabit(habit)
-                                        editingPrompt = false
-                                    }
-                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(JournalTheme.Colors.teal)
+                                Button("Save") {
+                                    habit.habitPrompt = editedPrompt.trimmingCharacters(in: .whitespaces)
+                                    store.updateHabit(habit)
+                                    editingPrompt = false
                                 }
-                                .padding(14)
-                            } else {
-                                settingsRow(
-                                    icon: "sparkles",
-                                    iconColor: JournalTheme.Colors.amber,
-                                    label: "Habit prompt",
-                                    value: habit.habitPrompt.isEmpty ? "Not set" : habit.habitPrompt
-                                ) {
-                                    editedPrompt = habit.habitPrompt
-                                    editingPrompt = true
-                                }
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.teal)
+                            }
+                            .padding(14)
+                        } else {
+                            settingsRow(
+                                icon: "sparkles",
+                                iconColor: JournalTheme.Colors.amber,
+                                label: "Habit prompt",
+                                value: habit.habitPrompt.isEmpty ? "Not set" : habit.habitPrompt
+                            ) {
+                                editedPrompt = habit.habitPrompt
+                                editingPrompt = true
                             }
                         }
 

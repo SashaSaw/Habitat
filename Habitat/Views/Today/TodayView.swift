@@ -38,6 +38,7 @@ struct TodayContentView: View {
     // Quick-add sheets
     @State private var showingAddHabit: Bool = false
     @State private var showingAddMustDo: Bool = false
+    @State private var showingAddNiceToDo: Bool = false
 
     // First-time group tooltip
     @AppStorage("hasSeenGroupTooltip") private var hasSeenGroupTooltip: Bool = false
@@ -177,6 +178,9 @@ struct TodayContentView: View {
         }
         .sheet(isPresented: $showingAddMustDo) {
             AddMustDoView(store: store)
+        }
+        .sheet(isPresented: $showingAddNiceToDo) {
+            AddNiceToDoView(store: store)
         }
         .sheet(isPresented: $showingReflection) {
             EndOfDayNoteView(
@@ -496,8 +500,9 @@ struct TodayContentView: View {
     @ViewBuilder
     private var niceToDoSection: some View {
         let uncompleted = store.uncompletedNiceToDoHabits(for: selectedDate)
-        if !uncompleted.isEmpty {
-            VStack(spacing: 0) {
+
+        VStack(spacing: 0) {
+            if !uncompleted.isEmpty {
                 sectionHeader("NICE-TO-DOS:", color: JournalTheme.Colors.sectionHeader)
 
                 ForEach(uncompleted) { habit in
@@ -519,7 +524,41 @@ struct TodayContentView: View {
                 }
                 .animation(.easeInOut(duration: 0.25), value: uncompleted.count)
             }
+
+            // "+ New nice-to-do" button at the end of the section
+            newNiceToDoButton
         }
+    }
+
+    /// Dashed "New nice-to-do" button at the end of the nice-to-do section
+    private var newNiceToDoButton: some View {
+        Button {
+            showingAddNiceToDo = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.navy)
+
+                Text("New nice-to-do")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(JournalTheme.Colors.navy)
+
+                Spacer()
+            }
+            .padding(.vertical, 11)
+            .padding(.horizontal, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(
+                        JournalTheme.Colors.navy.opacity(0.3),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, contentPadding)
+        .padding(.top, 8)
     }
 
     // MARK: - Today Only Section (uncompleted tasks only)
