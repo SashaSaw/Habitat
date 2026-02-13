@@ -1,12 +1,10 @@
 import SwiftUI
 
-/// Main settings sheet — accessed from gear icon in MyHabitsView
+/// Main settings view — shown as a tab
 struct SettingsView: View {
     @Bindable var store: HabitStore
     @State private var schedule = UserSchedule.shared
     @State private var showingBlockSetup = false
-
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
@@ -49,6 +47,43 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
 
+                    // Archived Habits
+                    NavigationLink {
+                        ArchivedHabitsListView(store: store)
+                    } label: {
+                        HStack {
+                            Image(systemName: "archivebox")
+                                .font(.system(size: 18))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                            Text("Archived Habits")
+                                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                            Spacer()
+
+                            if !store.archivedHabits.isEmpty {
+                                Text("\(store.archivedHabits.count)")
+                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .foregroundStyle(JournalTheme.Colors.completedGray)
+                            }
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(JournalTheme.Colors.paperLight)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(JournalTheme.Colors.lineLight, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+
                     Spacer(minLength: 80)
                 }
                 .padding(.horizontal, 20)
@@ -57,12 +92,6 @@ struct SettingsView: View {
             .linedPaperBackground()
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .foregroundStyle(JournalTheme.Colors.inkBlue)
-                }
-            }
             .sheet(isPresented: $showingBlockSetup) {
                 BlockSetupView()
             }

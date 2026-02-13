@@ -42,9 +42,9 @@ struct TodayContentView: View {
     @State private var showingAddTodayTask: Bool = false
     @State private var showingAddDontDo: Bool = false
 
-    // First-time group tooltip
-    @AppStorage("hasSeenGroupTooltip") private var hasSeenGroupTooltip: Bool = false
-    @State private var showGroupTooltip: Bool = false
+    // First-time group callout (lightbulb tip)
+    @AppStorage("hasSeenGroupCallout") private var hasSeenGroupCallout: Bool = false
+    @State private var showGroupCallout: Bool = false
 
     // Block setup sheet
     @State private var showingBlockSetup: Bool = false
@@ -286,9 +286,11 @@ struct TodayContentView: View {
             // Lock yesterday's good day on app launch
             store.lockPreviousDayIfNeeded()
             wasGoodDay = store.isGoodDay(for: selectedDate)
-            // Show group tooltip if first time seeing a group
-            if !hasSeenGroupTooltip && !store.mustDoGroups.isEmpty {
-                showGroupTooltip = true
+            // Show group callout if first time seeing a group
+            if !hasSeenGroupCallout && !store.groups.isEmpty {
+                withAnimation(.easeOut(duration: 0.3).delay(0.5)) {
+                    showGroupCallout = true
+                }
             }
         }
         .onChange(of: store.habits.map { $0.isCompleted(for: selectedDate) }) { _, _ in
@@ -535,34 +537,9 @@ struct TodayContentView: View {
                             }
                         )
 
-                        // First-time group tooltip
-                        if showGroupTooltip && group.id == store.mustDoGroups.first?.id {
-                            HStack(spacing: 8) {
-                                Text("Complete any one of these to tick off \(group.name)")
-                                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                                    .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
-
-                                Button {
-                                    withAnimation {
-                                        showGroupTooltip = false
-                                        hasSeenGroupTooltip = true
-                                    }
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 14))
-                                        .foregroundStyle(JournalTheme.Colors.completedGray)
-                                }
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(JournalTheme.Colors.amber.opacity(0.08))
-                                    .strokeBorder(JournalTheme.Colors.amber.opacity(0.2), lineWidth: 1)
-                            )
-                            .padding(.horizontal, contentPadding)
-                            .padding(.top, 4)
-                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        // First-time group callout
+                        if showGroupCallout && group.id == store.mustDoGroups.first?.id {
+                            groupCalloutView
                         }
                     }
                 }
@@ -571,6 +548,51 @@ struct TodayContentView: View {
             // "+ New must-do" button at the end of the section
             newMustDoButton
         }
+    }
+
+    /// Lightbulb callout explaining habit groups — shown once when user first creates a group
+    private var groupCalloutView: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("💡")
+                .font(.system(size: 20))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Habit groups")
+                    .font(JournalTheme.Fonts.handwritten(size: 15))
+                    .fontWeight(.semibold)
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                Text("Some habits have multiple ways to do them. \"Exercise\" might be gym, swimming, or a run. Create a group and add your options as sub-habits. Complete any one to tick off the group for the day.")
+                    .font(JournalTheme.Fonts.habitCriteria())
+                    .foregroundStyle(JournalTheme.Colors.sectionHeader)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+
+            Button {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    showGroupCallout = false
+                    hasSeenGroupCallout = true
+                }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(JournalTheme.Colors.completedGray)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(JournalTheme.Colors.amber.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(JournalTheme.Colors.amber.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, contentPadding)
+        .padding(.top, 4)
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     /// Dashed "New must-do" button at the end of the must-do section

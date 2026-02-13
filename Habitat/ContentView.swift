@@ -48,27 +48,27 @@ struct ContentView: View {
                             }
                             .tag(0)
 
-                        MyHabitsView(store: store)
-                            .tabItem {
-                                Label("My Habits", systemImage: "square.grid.2x2")
-                            }
-                            .tag(1)
-
                         MonthGridView(store: store)
                             .tabItem {
                                 Label("Month", systemImage: "calendar")
                             }
-                            .tag(2)
+                            .tag(1)
 
                         JournalView(store: store)
                             .tabItem {
                                 Label("Journal", systemImage: "book")
                             }
-                            .tag(3)
+                            .tag(2)
 
                         StatsView(store: store)
                             .tabItem {
                                 Label("Stats", systemImage: "chart.bar")
+                            }
+                            .tag(3)
+
+                        SettingsView(store: store)
+                            .tabItem {
+                                Label("Settings", systemImage: "gearshape")
                             }
                             .tag(4)
                     }
