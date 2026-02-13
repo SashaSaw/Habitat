@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "585BCAC02F3143C900EF7350"
-               BuildableName = "Habitat.app"
-               BlueprintName = "Habitat"
-               ReferencedContainer = "container:Habitat.xcodeproj">
+               BuildableName = "SeedBed.app"
+               BlueprintName = "SeedBed"
+               ReferencedContainer = "container:SeedBed.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "585BCAC02F3143C900EF7350"
-            BuildableName = "Habitat.app"
-            BlueprintName = "Habitat"
-            ReferencedContainer = "container:Habitat.xcodeproj">
+            BuildableName = "SeedBed.app"
+            BlueprintName = "SeedBed"
+            ReferencedContainer = "container:SeedBed.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "585BCAC02F3143C900EF7350"
-            BuildableName = "Habitat.app"
-            BlueprintName = "Habitat"
-            ReferencedContainer = "container:Habitat.xcodeproj">
+            BuildableName = "SeedBed.app"
+            BlueprintName = "SeedBed"
+            ReferencedContainer = "container:SeedBed.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

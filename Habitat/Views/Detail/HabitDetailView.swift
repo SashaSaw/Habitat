@@ -11,7 +11,7 @@ struct HabitDetailView: View {
     @State private var editingName = false
     @State private var editedName: String = ""
     @State private var editingCriteria = false
-    @State private var editedCriteria: String = ""
+    @State private var editedCriteria: [CriterionEntry] = [CriterionEntry()]
     @State private var showTimeSlots = false
     @State private var showFrequencyEditor = false
     @State private var editingPrompt = false
@@ -262,27 +262,32 @@ struct HabitDetailView: View {
 
                         Divider().padding(.leading, 48)
 
-                        // Success Criteria — inline editable
+                        // Success Criteria — structured editor
                         if editingCriteria {
-                            HStack(spacing: 12) {
-                                Image(systemName: "target")
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(JournalTheme.Colors.successGreen)
-                                    .frame(width: 24)
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "target")
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(JournalTheme.Colors.successGreen)
+                                        .frame(width: 24)
 
-                                TextField("e.g. 3L, 30 mins, 5000 steps", text: $editedCriteria)
-                                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                                    .foregroundStyle(JournalTheme.Colors.inkBlack)
-                                    .textFieldStyle(.plain)
+                                    Text("Success criteria")
+                                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                                        .foregroundStyle(JournalTheme.Colors.inkBlack)
 
-                                Button("Save") {
-                                    habit.successCriteria = editedCriteria.trimmingCharacters(in: .whitespaces).isEmpty
-                                        ? nil : editedCriteria.trimmingCharacters(in: .whitespaces)
-                                    store.updateHabit(habit)
-                                    editingCriteria = false
+                                    Spacer()
+
+                                    Button("Save") {
+                                        let criteriaString = CriteriaEditorView.buildCriteriaString(from: editedCriteria)
+                                        habit.successCriteria = criteriaString.isEmpty ? nil : criteriaString
+                                        store.updateHabit(habit)
+                                        editingCriteria = false
+                                    }
+                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(JournalTheme.Colors.teal)
                                 }
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundStyle(JournalTheme.Colors.teal)
+
+                                CriteriaEditorView(criteria: $editedCriteria)
                             }
                             .padding(14)
                         } else {
@@ -292,7 +297,7 @@ struct HabitDetailView: View {
                                 label: "Success criteria",
                                 value: habit.successCriteria ?? "None"
                             ) {
-                                editedCriteria = habit.successCriteria ?? ""
+                                editedCriteria = CriteriaEditorView.parseCriteriaString(habit.successCriteria)
                                 editingCriteria = true
                             }
                         }

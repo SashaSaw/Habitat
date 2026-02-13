@@ -6,7 +6,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.incept5.Habitat</string>
+		<string>group.com.incept5.SeedBed</string>
 	</array>
 </dict>
 </plist>

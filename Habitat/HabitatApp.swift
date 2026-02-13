@@ -1,6 +1,6 @@
 //
-//  HabitatApp.swift
-//  Habitat
+//  SeedBedApp.swift
+//  SeedBed
 //
 //  Created by Alexander Saw on 02/02/2026.
 //
@@ -10,7 +10,7 @@ import SwiftData
 import UserNotifications
 
 @main
-struct HabitatApp: App {
+struct SeedBedApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var sharedModelContainer: ModelContainer = {
@@ -50,7 +50,7 @@ struct HabitatApp: App {
 
 // MARK: - App Delegate for Notification Handling
 
-/// Handles notification delegate so tapping "Open Habitat" notification opens the app
+/// Handles notification delegate so tapping "Open SeedBed" notification opens the app
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     func application(
@@ -68,9 +68,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        if response.notification.request.content.categoryIdentifier == "OPEN_HABITAT" {
+        if response.notification.request.content.categoryIdentifier == "OPEN_SEEDBED" {
             // Write the flag so ContentView shows InterceptView
-            let defaults = UserDefaults(suiteName: "group.com.incept5.Habitat")
+            let defaults = UserDefaults(suiteName: "group.com.incept5.SeedBed")
             defaults?.set(Date().timeIntervalSince1970, forKey: "interceptRequested")
         }
         completionHandler()
@@ -82,9 +82,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        // If it's our "open habitat" notification and the app is already open, suppress it
+        // If it's our "open SeedBed" notification and the app is already open, suppress it
         // and just show the intercept view directly
-        if notification.request.content.categoryIdentifier == "OPEN_HABITAT" {
+        if notification.request.content.categoryIdentifier == "OPEN_SEEDBED" {
             completionHandler([]) // suppress — the app is already open
         } else {
             completionHandler([.banner, .sound])

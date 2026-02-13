@@ -102,7 +102,7 @@ struct BlockSetupView: View {
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
-            Text("Habitat needs Screen Time permission to block distracting apps and show your habits instead.")
+            Text("SeedBed needs Screen Time permission to block distracting apps and show your habits instead.")
                 .font(.system(size: 14, weight: .regular, design: .rounded))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .multilineTextAlignment(.center)
@@ -428,7 +428,7 @@ struct BlockSetupView: View {
             Text("💡")
                 .font(.system(size: 20))
 
-            Text("When you try to open a blocked app, you'll see a shield. Open Habitat to see your habits for today instead.")
+            Text("When you try to open a blocked app, you'll see a shield. Open SeedBed to see your habits for today instead.")
                 .font(JournalTheme.Fonts.habitCriteria())
                 .foregroundStyle(JournalTheme.Colors.sectionHeader)
                 .fixedSize(horizontal: false, vertical: true)

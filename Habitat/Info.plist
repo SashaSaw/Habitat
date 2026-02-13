@@ -6,10 +6,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.incept5.Habitat</string>
+			<string>com.incept5.SeedBed</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>habitat</string>
+				<string>seedbed</string>
 			</array>
 		</dict>
 	</array>

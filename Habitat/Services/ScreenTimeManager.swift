@@ -35,7 +35,7 @@ final class ScreenTimeManager {
     private static let selectionKey = "screenTimeSelection"
 
     /// App Group identifier for sharing data between main app and extensions
-    static let appGroupID = "group.com.incept5.Habitat"
+    static let appGroupID = "group.com.incept5.SeedBed"
 
     /// Shared UserDefaults for app ↔ extension communication
     private var sharedDefaults: UserDefaults {
@@ -43,7 +43,7 @@ final class ScreenTimeManager {
     }
 
     // The activity name for our blocking schedule
-    private let blockingActivity = DeviceActivityName("habitat.blocking")
+    private let blockingActivity = DeviceActivityName("seedbed.blocking")
 
     private init() {
         // Check existing authorization status

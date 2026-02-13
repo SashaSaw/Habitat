@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  Habitat
+//  SeedBed
 //
 //  Created by Alexander Saw on 02/02/2026.
 //
@@ -86,8 +86,8 @@ struct ContentView: View {
                         }
                     }
                     .onOpenURL { url in
-                        // Handle habitat://intercept deep link
-                        if url.scheme == "habitat" && url.host == "intercept" {
+                        // Handle seedbed://intercept deep link
+                        if url.scheme == "seedbed" && url.host == "intercept" {
                             showingInterceptView = true
                         }
                     }
@@ -119,7 +119,7 @@ struct ContentView: View {
     private func checkAndShowIntercept() {
         guard !showingInterceptView else { return }
 
-        let defaults = UserDefaults(suiteName: "group.com.incept5.Habitat")
+        let defaults = UserDefaults(suiteName: "group.com.incept5.SeedBed")
         if let requestTime = defaults?.double(forKey: "interceptRequested"), requestTime > 0 {
             // Only honour requests from the last 30 seconds (avoid stale flags)
             let age = Date().timeIntervalSince1970 - requestTime

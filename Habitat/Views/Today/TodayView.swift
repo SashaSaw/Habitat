@@ -36,6 +36,10 @@ struct TodayContentView: View {
     @State private var showHobbyOverlay: Bool = false
     @State private var completingHobby: Habit? = nil
 
+    // Success criteria overlay state
+    @State private var showCriteriaOverlay: Bool = false
+    @State private var criteriaHabit: Habit? = nil
+
     // Quick-add sheets
     @State private var showingAddHabit: Bool = false
     @State private var showingAddMustDo: Bool = false
@@ -203,6 +207,44 @@ struct TodayContentView: View {
                 )
             }
 
+            // Success criteria overlay
+            if showCriteriaOverlay, let habit = criteriaHabit {
+                SuccessCriteriaOverlay(
+                    habit: habit,
+                    onSave: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showCriteriaOverlay = false
+                        }
+                        // Proceed to notes overlay if enabled, otherwise just dismiss
+                        if habit.isHobby || habit.enableNotesPhotos {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                completingHobby = habit
+                                showHobbyOverlay = true
+                                criteriaHabit = nil
+                            }
+                        } else {
+                            criteriaHabit = nil
+                            // Trigger deferred celebration if pending
+                            if pendingCelebration {
+                                pendingCelebration = false
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    withAnimation { showCelebration = true }
+                                    HapticFeedback.completionConfirmed()
+                                }
+                            }
+                        }
+                    },
+                    onCancel: {
+                        // Uncross the habit
+                        store.setCompletion(for: habit, completed: false, on: selectedDate)
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showCriteriaOverlay = false
+                        }
+                        criteriaHabit = nil
+                    }
+                )
+            }
+
             // Floating "Create Group" button during selection mode
             if isSelectingForGroup && selectedHabitIdsForGroup.count >= 2 {
                 VStack {
@@ -322,8 +364,8 @@ struct TodayContentView: View {
         .onChange(of: store.habits.map { $0.isCompleted(for: selectedDate) }) { _, _ in
             let isNowGoodDay = store.isGoodDay(for: selectedDate)
             if isNowGoodDay && !wasGoodDay {
-                // If hobby overlay is showing, defer celebration until it's dismissed
-                if showHobbyOverlay {
+                // If an overlay is showing, defer celebration until it's dismissed
+                if showHobbyOverlay || showCriteriaOverlay {
                     pendingCelebration = true
                 } else {
                     withAnimation {
@@ -408,6 +450,22 @@ struct TodayContentView: View {
         lastMorningPromptDate = todayString
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             showingMorningTasks = true
+        }
+    }
+
+    // MARK: - Completion Overlay Flow
+
+    /// Handles the post-swipe overlay flow for a habit:
+    /// 1. If successCriteria → show criteria overlay (which chains to notes if needed)
+    /// 2. Else if isHobby/enableNotesPhotos → show hobby overlay
+    /// 3. Else → nothing extra
+    private func handleCompletionOverlay(for habit: Habit) {
+        if let criteria = habit.successCriteria, !criteria.isEmpty {
+            criteriaHabit = habit
+            showCriteriaOverlay = true
+        } else if habit.isHobby || habit.enableNotesPhotos {
+            completingHobby = habit
+            showHobbyOverlay = true
         }
     }
 
@@ -554,10 +612,7 @@ struct TodayContentView: View {
                             lineHeight: lineHeight,
                             onComplete: {
                                 store.setCompletion(for: habit, completed: true, on: selectedDate)
-                                if habit.isHobby {
-                                    completingHobby = habit
-                                    showHobbyOverlay = true
-                                }
+                                handleCompletionOverlay(for: habit)
                             },
                             onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
                             onArchive: { store.archiveHabit(habit) },
@@ -599,8 +654,7 @@ struct TodayContentView: View {
                             },
                             onLongPress: { selectedGroup = group },
                             onHobbyComplete: { habit in
-                                completingHobby = habit
-                                showHobbyOverlay = true
+                                handleCompletionOverlay(for: habit)
                             }
                         )
 
@@ -719,10 +773,7 @@ struct TodayContentView: View {
                             lineHeight: lineHeight,
                             onComplete: {
                                 store.setCompletion(for: habit, completed: true, on: selectedDate)
-                                if habit.isHobby {
-                                    completingHobby = habit
-                                    showHobbyOverlay = true
-                                }
+                                handleCompletionOverlay(for: habit)
                             },
                             onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
                             onArchive: { store.archiveHabit(habit) },
@@ -2078,7 +2129,8 @@ struct GroupLinedRow: View {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                                 isCollapsed = true
                             }
-                            if habit.isHobby || habit.enableNotesPhotos {
+                            let hasCriteria = habit.successCriteria != nil && !(habit.successCriteria?.isEmpty ?? true)
+                            if hasCriteria || habit.isHobby || habit.enableNotesPhotos {
                                 onHobbyComplete?(habit)
                             }
                         },

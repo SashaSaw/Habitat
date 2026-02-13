@@ -40,7 +40,7 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
                 color: UIColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 1.0)
             ),
             primaryButtonLabel: ShieldConfiguration.Label(
-                text: "Open Habitat",
+                text: "Open SeedBed",
                 color: .white
             ),
             primaryButtonBackgroundColor: UIColor(red: 212/255, green: 160/255, blue: 40/255, alpha: 1.0), // amber

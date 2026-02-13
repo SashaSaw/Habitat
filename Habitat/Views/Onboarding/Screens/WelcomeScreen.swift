@@ -22,7 +22,7 @@ struct WelcomeScreen: View {
                 }
 
                 // Title
-                Text("Welcome to Habitat")
+                Text("Welcome to SeedBed")
                     .font(.system(size: 32, weight: .bold, design: .serif))
                     .foregroundStyle(JournalTheme.Colors.navy)
                     .opacity(showTitle ? 1 : 0)

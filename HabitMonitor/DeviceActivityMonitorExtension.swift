@@ -9,7 +9,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     private let store = ManagedSettingsStore()
     private static let selectionKey = "screenTimeSelection"
-    private static let appGroupID = "group.com.incept5.Habitat"
+    private static let appGroupID = "group.com.incept5.SeedBed"
 
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
