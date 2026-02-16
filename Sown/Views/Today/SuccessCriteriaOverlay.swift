@@ -23,14 +23,14 @@ struct SuccessCriteriaOverlay: View {
     @FocusState private var focusedId: UUID?
 
     var body: some View {
-        ZStack {
-            // Semi-transparent background
-            Color.white.opacity(0.7)
-                .ignoresSafeArea()
-                .onTapGesture { /* block taps */ }
+        GeometryReader { geometry in
+            ZStack {
+                // Semi-transparent background
+                Color.white.opacity(0.7)
+                    .onTapGesture { /* block taps */ }
 
-            // Content card
-            VStack(spacing: 20) {
+                // Content card
+                VStack(spacing: 20) {
                 // Header
                 VStack(spacing: 6) {
                     Text("Well done!")
@@ -89,7 +89,10 @@ struct SuccessCriteriaOverlay: View {
             .padding(.horizontal, 32)
             .scaleEffect(appeared ? 1 : 0.9)
             .opacity(appeared ? 1 : 0)
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
+        .ignoresSafeArea()
         .onAppear {
             criteria = buildParsedCriteria(from: habit.successCriteria)
             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
@@ -170,6 +173,7 @@ struct SuccessCriteriaOverlay: View {
             )
             .datePickerStyle(.wheel)
             .labelsHidden()
+            .colorScheme(.light)
             .frame(height: 120)
             .clipped()
         }

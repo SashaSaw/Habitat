@@ -178,6 +178,7 @@ struct MonthGridView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
+                        Feedback.selection()
                         withAnimation {
                             showingNiceToDoGrid.toggle()
                         }
@@ -191,6 +192,7 @@ struct MonthGridView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
                         Button {
+                            Feedback.selection()
                             withAnimation {
                                 selectedMonth = Calendar.current.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
                             }
@@ -200,6 +202,7 @@ struct MonthGridView: View {
                         }
 
                         Button {
+                            Feedback.selection()
                             withAnimation {
                                 selectedMonth = Calendar.current.date(byAdding: .month, value: 1, to: selectedMonth) ?? selectedMonth
                             }

@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Bindable var store: HabitStore
     @State private var schedule = UserSchedule.shared
     @State private var showingBlockSetup = false
+    @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -16,8 +17,39 @@ struct SettingsView: View {
                     // Schedule section (wake/bed times)
                     scheduleCard
 
+                    // Sound Effects toggle
+                    HStack {
+                        Image(systemName: soundEffectsEnabled ? "speaker.wave.2" : "speaker.slash")
+                            .font(.system(size: 18))
+                            .foregroundStyle(JournalTheme.Colors.teal)
+                            .frame(width: 24)
+
+                        Text("Sound Effects")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                        Spacer()
+
+                        Toggle("", isOn: $soundEffectsEnabled)
+                            .tint(JournalTheme.Colors.teal)
+                            .labelsHidden()
+                            .onChange(of: soundEffectsEnabled) { _, _ in
+                                Feedback.selection()
+                            }
+                    }
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(JournalTheme.Colors.paperLight)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(JournalTheme.Colors.lineLight, lineWidth: 1)
+                    )
+
                     // App Blocking button
                     Button {
+                        Feedback.buttonPress()
                         showingBlockSetup = true
                     } label: {
                         HStack {
@@ -50,6 +82,7 @@ struct SettingsView: View {
                     // Archived Habits
                     NavigationLink {
                         ArchivedHabitsListView(store: store)
+                            .onAppear { Feedback.sheetOpen() }
                     } label: {
                         HStack {
                             Image(systemName: "archivebox")
@@ -94,6 +127,7 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingBlockSetup) {
                 BlockSetupView()
+                    .onAppear { Feedback.sheetOpen() }
             }
             .onChange(of: schedule.wakeTimeMinutes) { _, _ in
                 store.refreshSmartReminders()

@@ -69,7 +69,7 @@ struct CompleteScreen: View {
 
             // Pledge button
             Button {
-                HapticFeedback.success()
+                Feedback.success()
                 withAnimation(.easeInOut(duration: 0.4)) {
                     showPledge = false
                 }
@@ -274,7 +274,7 @@ struct CompleteScreen: View {
                     visibleCount = i + 1
                 }
                 if i < selectedHabits.count {
-                    HapticFeedback.selection()
+                    Feedback.selection()
                 }
             }
         }
@@ -285,7 +285,7 @@ struct CompleteScreen: View {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 showCheckmark = true
             }
-            HapticFeedback.success()
+            Feedback.success()
         }
 
         // Show button

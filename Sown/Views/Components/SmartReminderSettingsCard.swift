@@ -22,6 +22,9 @@ struct SmartReminderSettingsCard: View {
                 Toggle("", isOn: $schedule.smartRemindersEnabled)
                     .tint(JournalTheme.Colors.amber)
                     .labelsHidden()
+                    .onChange(of: schedule.smartRemindersEnabled) { _, _ in
+                        Feedback.selection()
+                    }
             }
 
             if schedule.smartRemindersEnabled {

@@ -60,7 +60,7 @@ struct CriteriaEditorView: View {
             withAnimation(.easeInOut(duration: 0.2)) {
                 criteria.append(CriterionEntry())
             }
-            HapticFeedback.selection()
+            Feedback.selection()
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
@@ -132,7 +132,7 @@ struct CriteriaEditorView: View {
                         criteria[index].mode = mode
                         onChanged?()
                     }
-                    HapticFeedback.selection()
+                    Feedback.selection()
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: mode == .measure ? "number" : "clock")
@@ -286,7 +286,7 @@ struct CriteriaEditorView: View {
                             criteria[index].unit = ""
                             criteria[index].customUnit = ""
                         }
-                        HapticFeedback.selection()
+                        Feedback.selection()
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "pencil")
@@ -322,7 +322,7 @@ struct CriteriaEditorView: View {
                 criteria[index].customUnit = ""
                 onChanged?()
             }
-            HapticFeedback.selection()
+            Feedback.selection()
         } label: {
             Text(unit)
                 .font(.system(size: 13, weight: .medium, design: .rounded))

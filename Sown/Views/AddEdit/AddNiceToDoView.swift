@@ -105,7 +105,7 @@ struct AddNiceToDoView: View {
             .toolbarBackground(JournalTheme.Colors.paper, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { Feedback.buttonPress(); dismiss() }
                         .foregroundStyle(JournalTheme.Colors.inkBlue)
                 }
             }
@@ -157,7 +157,7 @@ struct AddNiceToDoView: View {
                         withAnimation(.easeInOut(duration: 0.25)) {
                             name = suggestion.emoji + " " + suggestion.name
                         }
-                        HapticFeedback.selection()
+                        Feedback.selection()
                     } label: {
                         HStack(spacing: 6) {
                             Text(suggestion.emoji)
@@ -264,7 +264,7 @@ struct AddNiceToDoView: View {
                 }
                 markFrequencySet()
             }
-            HapticFeedback.selection()
+            Feedback.selection()
         } label: {
             Text(label)
                 .font(JournalTheme.Fonts.habitCriteria())

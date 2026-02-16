@@ -73,6 +73,9 @@ struct ContentView: View {
                             .tag(4)
                     }
                     .tint(JournalTheme.Colors.inkBlue)
+                    .onChange(of: selectedTab) { _, _ in
+                        Feedback.tabSwitch()
+                    }
                     .onAppear {
                         // Refresh smart reminders on app launch with current habit state
                         store.refreshSmartReminders()

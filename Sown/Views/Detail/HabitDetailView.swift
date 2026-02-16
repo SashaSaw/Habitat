@@ -35,6 +35,7 @@ struct HabitDetailView: View {
                                 .textFieldStyle(.plain)
 
                             Button("Save") {
+                                Feedback.buttonPress()
                                 habit.name = editedName.trimmingCharacters(in: .whitespaces)
                                 store.updateHabit(habit)
                                 editingName = false
@@ -119,7 +120,7 @@ struct HabitDetailView: View {
                         ) {
                             habit.tier = habit.tier == .mustDo ? .niceToDo : .mustDo
                             store.updateHabit(habit)
-                            HapticFeedback.selection()
+                            Feedback.selection()
                         }
 
                         Divider().padding(.leading, 48)
@@ -193,7 +194,7 @@ struct HabitDetailView: View {
                         ) {
                             habit.notificationsEnabled.toggle()
                             store.updateHabit(habit)
-                            HapticFeedback.selection()
+                            Feedback.selection()
                         }
 
                         Divider().padding(.leading, 48)
@@ -240,6 +241,7 @@ struct HabitDetailView: View {
                                     .textFieldStyle(.plain)
 
                                 Button("Save") {
+                                    Feedback.buttonPress()
                                     habit.habitPrompt = editedPrompt.trimmingCharacters(in: .whitespaces)
                                     store.updateHabit(habit)
                                     editingPrompt = false
@@ -278,6 +280,7 @@ struct HabitDetailView: View {
                                     Spacer()
 
                                     Button("Save") {
+                                        Feedback.buttonPress()
                                         let criteriaString = CriteriaEditorView.buildCriteriaString(from: editedCriteria)
                                         habit.successCriteria = criteriaString.isEmpty ? nil : criteriaString
                                         store.updateHabit(habit)

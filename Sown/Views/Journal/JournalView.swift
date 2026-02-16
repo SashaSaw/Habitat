@@ -58,6 +58,7 @@ struct JournalContentView: View {
                             dateFormatter: dateFormatter
                         )
                         .onTapGesture {
+                            Feedback.sheetOpen()
                             selectedNoteDate = date
                         }
                     }

@@ -36,7 +36,7 @@ struct TimeSlotPicker: View {
                     selectedSlots.insert(slot.rawValue)
                 }
             }
-            HapticFeedback.selection()
+            Feedback.selection()
         } label: {
             HStack(spacing: 5) {
                 Text(slot.emoji)

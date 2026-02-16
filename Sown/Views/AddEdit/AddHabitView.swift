@@ -407,6 +407,7 @@ struct ImageCropperView: View {
                 // Header with background extending into safe area
                 HStack {
                     Button("Cancel") {
+                        Feedback.buttonPress()
                         onComplete(nil)
                         dismiss()
                     }
@@ -422,6 +423,7 @@ struct ImageCropperView: View {
                     Spacer()
 
                     Button("Done") {
+                        Feedback.buttonPress()
                         let cropped = cropImage(viewWidth: UIScreen.main.bounds.width)
                         onComplete(cropped)
                         dismiss()
@@ -817,7 +819,7 @@ struct AddHabitConfirmationView: View {
             withAnimation(.easeOut(duration: 0.4).delay(0.2)) {
                 showText = true
             }
-            HapticFeedback.success()
+            Feedback.success()
             // Auto-dismiss after a short delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 onDismiss()
@@ -1075,7 +1077,7 @@ struct AddHabitView: View {
             .toolbarBackground(JournalTheme.Colors.paper, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }.foregroundStyle(JournalTheme.Colors.inkBlue)
+                    Button("Cancel") { Feedback.buttonPress(); dismiss() }.foregroundStyle(JournalTheme.Colors.inkBlue)
                 }
             }
         }
@@ -1130,7 +1132,7 @@ struct AddHabitView: View {
                             type = suggestion.type
                             triggersAppBlockSlip = suggestion.triggersAppBlockSlip
                         }
-                        HapticFeedback.selection()
+                        Feedback.selection()
                     } label: {
                         HStack(spacing: 6) {
                             Text(suggestion.emoji).font(.system(size: 15))

@@ -229,7 +229,7 @@ struct RefinementScreen: View {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         data.draftHabits[index].isSelected.toggle()
                     }
-                    HapticFeedback.selection()
+                    Feedback.selection()
                 } label: {
                     Image(systemName: habit.isSelected ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 22))

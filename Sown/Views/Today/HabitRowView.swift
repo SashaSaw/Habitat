@@ -102,7 +102,7 @@ struct HabitRowView: View {
         .padding(.horizontal, isIndented ? 8 : 16)
         .contentShape(Rectangle())
         .onTapGesture {
-            HapticFeedback.completion()
+            Feedback.completion()
             let newState = !isCompleted
             showStrikethrough = newState
             withAnimation(JournalTheme.Animations.completion) {
@@ -111,7 +111,7 @@ struct HabitRowView: View {
             onToggle()
         }
         .onLongPressGesture(minimumDuration: 0.5) {
-            HapticFeedback.selection()
+            Feedback.longPress()
             onLongPress?()
         }
         .onChange(of: isCompleted) { oldValue, newValue in

@@ -79,7 +79,7 @@ struct OnboardingView: View {
                     data.draftHabits = HabitGenerator.generate(from: data)
                 }
                 highestPageReached = newPage
-                HapticFeedback.selection()
+                Feedback.selection()
             }
         }
     }
@@ -96,7 +96,7 @@ struct OnboardingView: View {
             currentPage = min(currentPage + 1, totalPages - 1)
         }
         highestPageReached = max(highestPageReached, currentPage)
-        HapticFeedback.selection()
+        Feedback.selection()
     }
 
     private func goBack(to page: Int) {

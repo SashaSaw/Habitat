@@ -403,7 +403,7 @@ struct FocusModeView: View {
             store.setCompletion(for: habit, completed: true, on: Date())
         }
 
-        HapticFeedback.completionConfirmed()
+        Feedback.completionConfirmed()
 
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             showCompletion = true

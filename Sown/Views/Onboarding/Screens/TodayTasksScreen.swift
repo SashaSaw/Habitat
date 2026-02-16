@@ -28,7 +28,7 @@ struct TodayTasksScreen: View {
                                         data.todayTasks.removeAll { $0 == task }
                                         data.selectedTasks.remove(task)
                                     }
-                                    HapticFeedback.selection()
+                                    Feedback.selection()
                                 }
                             }
                         }

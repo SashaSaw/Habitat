@@ -54,6 +54,7 @@ struct BlockSetupView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
+                        Feedback.buttonPress()
                         dismiss()
                     }
                     .font(.system(size: 16, weight: .medium, design: .rounded))
@@ -109,6 +110,7 @@ struct BlockSetupView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             Button {
+                Feedback.buttonPress()
                 Task {
                     await screenTimeManager.requestAuthorization()
                 }
@@ -172,6 +174,7 @@ struct BlockSetupView: View {
                     Toggle("", isOn: Binding(
                         get: { blockSettings.isEnabled },
                         set: { newValue in
+                            Feedback.selection()
                             if newValue {
                                 // Show warning before enabling
                                 showingEnableWarning = true

@@ -112,33 +112,126 @@ extension Color {
     }
 }
 
-// MARK: - Haptic Feedback
+// MARK: - Unified Feedback (Haptics + Sound)
 
-enum HapticFeedback {
+/// Combined haptic + sound feedback. Call these instead of HapticFeedback directly.
+/// Sound can be toggled off in Settings; haptics always fire.
+enum Feedback {
+    private static let sound = SoundEffectService.shared
+
+    // === Original feedback types (1:1 replacements for HapticFeedback) ===
+
+    /// Light impact + completion sound (habit tap-to-complete)
     static func completion() {
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        sound.completion()
     }
 
+    /// Notification success + success chime (habit saved, onboarding complete)
     static func success() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        sound.successSound()
     }
 
+    /// Selection changed + light click (toggles, pills, general taps)
     static func selection() {
-        let generator = UISelectionFeedbackGenerator()
-        generator.selectionChanged()
+        UISelectionFeedbackGenerator().selectionChanged()
+        sound.selection()
     }
 
-    /// Haptic for crossing the completion threshold during swipe
+    /// Medium impact + threshold click (swipe passes commit point)
     static func thresholdCrossed() {
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred(intensity: 0.7)
+        sound.thresholdCrossed()
     }
 
-    /// Stronger haptic for final completion confirmation
+    /// Strong success + completion sound (final swipe confirm)
     static func completionConfirmed() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        sound.completion()
+    }
+
+    // === New feedback types (richer sound categories) ===
+
+    /// Good day achieved! Strong haptic + custom celebration fanfare.
+    static func celebration() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        sound.celebration()
+    }
+
+    /// Negative habit slipped. Medium impact + warning tone.
+    static func slip() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        sound.slip()
+    }
+
+    /// Undo action. Light impact + subtle reverse sound.
+    static func undo() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        sound.undo()
+    }
+
+    /// Archive confirmed. Medium impact + swoosh.
+    static func archive() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        sound.archive()
+    }
+
+    /// Delete confirmed. Medium impact + delete tone.
+    static func delete() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        sound.deleteSound()
+    }
+
+    /// Tab bar switched. Sound only, no haptic.
+    static func tabSwitch() {
+        sound.tabSwitch()
+    }
+
+    /// Sheet/modal opened. Sound only, no haptic.
+    static func sheetOpen() {
+        sound.sheetOpen()
+    }
+
+    /// Button pressed (add habit, toolbar). Light impact + tap.
+    static func buttonPress() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        sound.buttonPress()
+    }
+
+    /// Long press confirmed. Medium impact + subtle thud.
+    static func longPress() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        sound.longPress()
+    }
+
+    /// Group expand/collapse. Light impact + click.
+    static func groupToggle() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        sound.groupToggle()
+    }
+
+    // === Swipe gesture sounds ===
+
+    /// Start looping swipe sound (call when drag begins)
+    static func startSwiping() {
+        sound.startSwiping()
+    }
+
+    /// Stop looping swipe sound (call if needed manually)
+    static func stopSwiping() {
+        sound.stopSwiping()
+    }
+
+    /// Swipe completed successfully. Stops loop + plays completion sound.
+    static func swipeCompleted() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        sound.swipeCompleted()
+    }
+
+    /// Swipe cancelled. Stops loop + plays cancel sound.
+    static func swipeCancelled() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        sound.swipeCancelled()
     }
 }

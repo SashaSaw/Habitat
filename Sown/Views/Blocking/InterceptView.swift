@@ -117,7 +117,7 @@ struct InterceptView: View {
                 withAnimation(.easeInOut(duration: 0.25)) {
                     screen = .controlled
                 }
-                HapticFeedback.selection()
+                Feedback.selection()
             } label: {
                 VStack(spacing: 6) {
                     Text("I am the kind of person who")
@@ -161,7 +161,7 @@ struct InterceptView: View {
                 withAnimation(.easeInOut(duration: 0.25)) {
                     screen = .habits
                 }
-                HapticFeedback.selection()
+                Feedback.selection()
             } label: {
                 VStack(spacing: 6) {
                     Text("I am the kind of person who")
@@ -259,7 +259,7 @@ struct InterceptView: View {
                             withAnimation(.easeInOut(duration: 0.25)) {
                                 screen = .countdown
                             }
-                            HapticFeedback.selection()
+                            Feedback.selection()
                         } label: {
                             Text("Continue to \(blockedAppName) (5 min)")
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -279,7 +279,7 @@ struct InterceptView: View {
                         withAnimation(.easeInOut(duration: 0.25)) {
                             screen = .habits
                         }
-                        HapticFeedback.selection()
+                        Feedback.selection()
                     } label: {
                         Text("You can still choose the right path")
                             .font(.system(size: 14, weight: .medium, design: .rounded))
@@ -344,7 +344,7 @@ struct InterceptView: View {
                 withAnimation(.easeInOut(duration: 0.25)) {
                     screen = .habits
                 }
-                HapticFeedback.selection()
+                Feedback.selection()
             } label: {
                 Text("I want to choose the right path")
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -367,7 +367,7 @@ struct InterceptView: View {
                     // Mark all negative habits as slipped (completed = failed for negative habits)
                     markNegativeHabitsAsSlipped()
                     ScreenTimeManager.shared.grantTemporaryUnlock(minutes: 5)
-                    HapticFeedback.selection()
+                    Feedback.selection()
                     dismiss()
                 } label: {
                     Text("Continue to \(blockedAppName) (5 min)")
@@ -773,7 +773,7 @@ struct InterceptTaskRow: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     isCompleted = true
                     onComplete()
-                    HapticFeedback.completion()
+                    Feedback.completion()
                 }
             } label: {
                 RoundedRectangle(cornerRadius: 4)

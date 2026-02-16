@@ -34,6 +34,9 @@ struct SownApp: App {
     }()
 
     init() {
+        // Sound effects enabled by default on first launch
+        UserDefaults.standard.register(defaults: ["soundEffectsEnabled": true])
+
         // Request notification permission on app launch
         Task {
             _ = await NotificationService.shared.requestPermission()

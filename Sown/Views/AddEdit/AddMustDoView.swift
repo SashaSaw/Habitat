@@ -93,7 +93,7 @@ struct AddMustDoView: View {
             .toolbarBackground(JournalTheme.Colors.paper, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") { Feedback.buttonPress(); dismiss() }
                         .foregroundStyle(JournalTheme.Colors.inkBlue)
                 }
             }
@@ -145,7 +145,7 @@ struct AddMustDoView: View {
                         withAnimation(.easeInOut(duration: 0.25)) {
                             name = suggestion.emoji + " " + suggestion.name
                         }
-                        HapticFeedback.selection()
+                        Feedback.selection()
                     } label: {
                         HStack(spacing: 6) {
                             Text(suggestion.emoji)

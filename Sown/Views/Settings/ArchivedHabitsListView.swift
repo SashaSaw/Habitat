@@ -83,6 +83,7 @@ struct ArchivedHabitsListView: View {
                             Spacer()
 
                             Button {
+                                Feedback.undo()
                                 store.unarchiveHabit(habit)
                             } label: {
                                 Text("Restore")
@@ -100,6 +101,7 @@ struct ArchivedHabitsListView: View {
                         .listRowBackground(JournalTheme.Colors.paper)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
+                                Feedback.delete()
                                 habitToDelete = habit
                                 showDeleteConfirmation = true
                             } label: {
@@ -108,6 +110,7 @@ struct ArchivedHabitsListView: View {
                         }
                         .swipeActions(edge: .leading) {
                             Button {
+                                Feedback.undo()
                                 store.unarchiveHabit(habit)
                             } label: {
                                 Label("Restore", systemImage: "arrow.uturn.backward")

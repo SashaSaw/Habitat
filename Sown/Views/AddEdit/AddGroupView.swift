@@ -65,6 +65,7 @@ struct AddGroupView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        Feedback.buttonPress()
                         onComplete()
                         dismiss()
                     }
@@ -327,12 +328,14 @@ struct EditGroupView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        Feedback.buttonPress()
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
+                        Feedback.buttonPress()
                         saveChanges()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || selectedHabitIds.isEmpty)

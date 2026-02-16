@@ -81,11 +81,13 @@ struct HobbyLogDetailSheet: View {
                 if isEditing {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") {
+                            Feedback.buttonPress()
                             isEditing = false
                         }
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
+                            Feedback.buttonPress()
                             saveEdits()
                         }
                         .fontWeight(.semibold)

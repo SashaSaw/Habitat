@@ -696,6 +696,16 @@ final class HabitStore {
         positiveNiceToDoHabits.filter { !$0.isCompleted(for: date) }
     }
 
+    /// Completed standalone must-do habits for a given date (for the Done section)
+    func completedStandaloneMustDoHabits(for date: Date) -> [Habit] {
+        standalonePositiveMustDoHabits.filter { $0.isCompleted(for: date) }
+    }
+
+    /// Uncompleted standalone must-do habits for a given date
+    func uncompletedStandaloneMustDoHabits(for date: Date) -> [Habit] {
+        standalonePositiveMustDoHabits.filter { !$0.isCompleted(for: date) }
+    }
+
     // MARK: - Streak Calculation
 
     func updateStreak(for habit: Habit) {

@@ -72,9 +72,11 @@ struct TodayContentView: View {
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let contentPadding: CGFloat = 24
 
-    /// Whether the done section has any content (completed nice-to-do or completed tasks)
+    /// Whether the done section has any content (completed must-do, nice-to-do, or tasks)
     private var hasDoneContent: Bool {
-        !store.completedNiceToDoHabits(for: selectedDate).isEmpty || !store.todayCompletedTasks.isEmpty
+        !store.completedStandaloneMustDoHabits(for: selectedDate).isEmpty ||
+        !store.completedNiceToDoHabits(for: selectedDate).isEmpty ||
+        !store.todayCompletedTasks.isEmpty
     }
 
     /// Whether the today-only section has any content (uncompleted tasks)
@@ -188,7 +190,7 @@ struct TodayContentView: View {
                             pendingCelebration = false
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 withAnimation { showCelebration = true }
-                                HapticFeedback.completionConfirmed()
+                                Feedback.celebration()
                             }
                         }
                     },
@@ -200,7 +202,7 @@ struct TodayContentView: View {
                             pendingCelebration = false
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 withAnimation { showCelebration = true }
-                                HapticFeedback.completionConfirmed()
+                                Feedback.celebration()
                             }
                         }
                     }
@@ -229,7 +231,7 @@ struct TodayContentView: View {
                                 pendingCelebration = false
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                     withAnimation { showCelebration = true }
-                                    HapticFeedback.completionConfirmed()
+                                    Feedback.celebration()
                                 }
                             }
                         }
@@ -243,6 +245,8 @@ struct TodayContentView: View {
                         criteriaHabit = nil
                     }
                 )
+                .transition(.opacity)
+                .zIndex(100)
             }
 
             // Floating "Create Group" button during selection mode
@@ -251,6 +255,7 @@ struct TodayContentView: View {
                     Spacer()
 
                     Button {
+                        Feedback.buttonPress()
                         showingAddGroup = true
                     } label: {
                         Text("Create Group")
@@ -274,6 +279,7 @@ struct TodayContentView: View {
             NavigationStack {
                 HabitDetailView(store: store, habit: habit)
             }
+            .onAppear { Feedback.sheetOpen() }
         }
         .sheet(item: $selectedGroup) { group in
             GroupDetailSheet(
@@ -281,21 +287,27 @@ struct TodayContentView: View {
                 store: store,
                 onDismiss: { selectedGroup = nil }
             )
+            .onAppear { Feedback.sheetOpen() }
         }
         .sheet(isPresented: $showingAddHabit) {
             AddHabitView(store: store)
+                .onAppear { Feedback.sheetOpen() }
         }
         .sheet(isPresented: $showingAddMustDo) {
             AddMustDoView(store: store)
+                .onAppear { Feedback.sheetOpen() }
         }
         .sheet(isPresented: $showingAddNiceToDo) {
             AddNiceToDoView(store: store)
+                .onAppear { Feedback.sheetOpen() }
         }
         .sheet(isPresented: $showingAddTodayTask) {
             AddTodayTaskView(store: store)
+                .onAppear { Feedback.sheetOpen() }
         }
         .sheet(isPresented: $showingAddDontDo) {
             AddDontDoView(store: store)
+                .onAppear { Feedback.sheetOpen() }
         }
         .sheet(isPresented: $showingReflection) {
             EndOfDayNoteView(
@@ -303,9 +315,11 @@ struct TodayContentView: View {
                 date: selectedDate,
                 onDismiss: { showingReflection = false }
             )
+            .onAppear { Feedback.sheetOpen() }
         }
         .sheet(isPresented: $showingBlockSetup) {
             BlockSetupView()
+                .onAppear { Feedback.sheetOpen() }
         }
         .sheet(isPresented: $showingAddGroup) {
             AddGroupView(store: store, selectedHabitIds: selectedHabitIdsForGroup) {
@@ -315,17 +329,20 @@ struct TodayContentView: View {
                     selectedHabitIdsForGroup.removeAll()
                 }
             }
+            .onAppear { Feedback.sheetOpen() }
         }
         .fullScreenCover(isPresented: $showingMorningTasks) {
             MorningTasksView(store: store) {
                 showingMorningTasks = false
             }
+            .onAppear { Feedback.sheetOpen() }
         }
         .toolbar {
             // Show "+" button in top right when neither today-only nor done section exists
             if !showTodayTaskButtonInSection {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        Feedback.buttonPress()
                         showingAddHabit = true
                     } label: {
                         Image(systemName: "plus")
@@ -371,7 +388,7 @@ struct TodayContentView: View {
                     withAnimation {
                         showCelebration = true
                     }
-                    HapticFeedback.completionConfirmed()
+                    Feedback.celebration()
                 }
             }
             wasGoodDay = isNowGoodDay
@@ -462,7 +479,9 @@ struct TodayContentView: View {
     private func handleCompletionOverlay(for habit: Habit) {
         if let criteria = habit.successCriteria, !criteria.isEmpty {
             criteriaHabit = habit
-            showCriteriaOverlay = true
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showCriteriaOverlay = true
+            }
         } else if habit.isHobby || habit.enableNotesPhotos {
             completingHobby = habit
             showHobbyOverlay = true
@@ -591,12 +610,15 @@ struct TodayContentView: View {
 
     @ViewBuilder
     private var mustDoSection: some View {
+        let uncompletedMustDos = store.uncompletedStandaloneMustDoHabits(for: selectedDate)
+        let uncompletedGroups = store.mustDoGroups.filter { !$0.isSatisfied(habits: store.habits, for: selectedDate) }
+
         VStack(spacing: 0) {
-            if !store.standalonePositiveMustDoHabits.isEmpty || !store.mustDoGroups.isEmpty {
+            if !uncompletedMustDos.isEmpty || !uncompletedGroups.isEmpty {
                 sectionHeader("★ MUST-DOS:", color: JournalTheme.Colors.amber)
 
-                // Standalone must-do habits (positive only) — completed stay inline
-                ForEach(store.standalonePositiveMustDoHabits) { habit in
+                // Standalone must-do habits (uncompleted only)
+                ForEach(uncompletedMustDos) { habit in
                     if isSelectingForGroup {
                         SelectableHabitRow(
                             habit: habit,
@@ -635,10 +657,10 @@ struct TodayContentView: View {
                         }
                     }
                 }
-                .animation(.easeInOut(duration: 0.25), value: store.standalonePositiveMustDoHabits.count)
+                .animation(.easeInOut(duration: 0.25), value: uncompletedMustDos.count)
 
-                // Must-do groups with their habits
-                ForEach(store.mustDoGroups) { group in
+                // Must-do groups with their habits (uncompleted only)
+                ForEach(uncompletedGroups) { group in
                     VStack(spacing: 0) {
                         GroupLinedRow(
                             group: group,
@@ -958,12 +980,27 @@ struct TodayContentView: View {
 
     @ViewBuilder
     private var doneSection: some View {
+        let completedMustDo = store.completedStandaloneMustDoHabits(for: selectedDate)
         let completedNiceToDo = store.completedNiceToDoHabits(for: selectedDate)
         let completedTasks = store.todayCompletedTasks
 
-        if !completedNiceToDo.isEmpty || !completedTasks.isEmpty {
+        if !completedMustDo.isEmpty || !completedNiceToDo.isEmpty || !completedTasks.isEmpty {
             VStack(spacing: 0) {
                 sectionHeader("DONE ✓", color: JournalTheme.Colors.completedGray)
+
+                // Completed must-do habits
+                ForEach(completedMustDo) { habit in
+                    HabitLinedRow(
+                        habit: habit,
+                        isCompleted: true,
+                        lineHeight: lineHeight,
+                        onComplete: { },
+                        onUncomplete: { store.setCompletion(for: habit, completed: false, on: selectedDate) },
+                        onArchive: { store.archiveHabit(habit) },
+                        onLongPress: { selectedHabit = habit }
+                    )
+                    .opacity(0.6)
+                }
 
                 // Completed nice-to-do habits
                 ForEach(completedNiceToDo) { habit in
@@ -1060,7 +1097,7 @@ struct TodayContentView: View {
                 selectedHabitIdsForGroup.insert(habit.id)
             }
         }
-        HapticFeedback.selection()
+        Feedback.selection()
     }
 
 }
@@ -1302,7 +1339,7 @@ struct HabitLinedRow: View {
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in
-                    HapticFeedback.selection()
+                    Feedback.longPress()
                     onLongPress()
                 }
         )
@@ -1313,7 +1350,7 @@ struct HabitLinedRow: View {
                     strikethroughProgress = 0.0
                     hasPassedThreshold = false
                 }
-                HapticFeedback.selection()
+                Feedback.undo()
                 onUncomplete()
             }
         }
@@ -1368,6 +1405,8 @@ struct HabitLinedRow: View {
                 // Only process right swipes that are predominantly horizontal
                 guard horizontal > vertical, translation > 0 else { return }
 
+                // Keep swipe sound playing while finger is moving
+                Feedback.startSwiping()
                 isDragging = true
 
                 if isCompleted {
@@ -1381,7 +1420,7 @@ struct HabitLinedRow: View {
                     let currentlyPastThreshold = strikethroughProgress >= completionThreshold
                     if currentlyPastThreshold != hasPassedThreshold {
                         hasPassedThreshold = currentlyPastThreshold
-                        HapticFeedback.thresholdCrossed()
+                        Feedback.thresholdCrossed()
                     }
                 }
             }
@@ -1390,7 +1429,10 @@ struct HabitLinedRow: View {
                 let translation = value.translation.width
 
                 // Only handle right swipes
-                guard translation > 0 else { return }
+                guard translation > 0 else {
+                    Feedback.stopSwiping()
+                    return
+                }
 
                 if !isCompleted {
                     if strikethroughProgress >= completionThreshold {
@@ -1398,7 +1440,7 @@ struct HabitLinedRow: View {
                         withAnimation(JournalTheme.Animations.strikethrough) {
                             strikethroughProgress = 1.0
                         }
-                        HapticFeedback.completionConfirmed()
+                        Feedback.swipeCompleted()
                         onComplete()
                         hasPassedThreshold = true
                     } else {
@@ -1406,8 +1448,11 @@ struct HabitLinedRow: View {
                         withAnimation(JournalTheme.Animations.strikethrough) {
                             strikethroughProgress = 0
                         }
+                        Feedback.swipeCancelled()
                         hasPassedThreshold = false
                     }
+                } else {
+                    Feedback.stopSwiping()
                 }
             }
     }
@@ -1435,7 +1480,7 @@ struct HabitLinedRow: View {
                 let currentlyPastArchive = abs(translation) >= archiveDistanceThreshold
                 if currentlyPastArchive != hasPassedArchiveThreshold {
                     hasPassedArchiveThreshold = currentlyPastArchive
-                    HapticFeedback.thresholdCrossed()
+                    Feedback.thresholdCrossed()
                 }
             }
             .onEnded { value in
@@ -1447,7 +1492,7 @@ struct HabitLinedRow: View {
 
                 if abs(translation) >= archiveDistanceThreshold {
                     // Archive the habit
-                    HapticFeedback.completionConfirmed()
+                    Feedback.archive()
                     archiveOffset = 0
                     withAnimation(.easeOut(duration: 0.25)) {
                         onArchive()
@@ -1591,7 +1636,7 @@ struct NegativeHabitLinedRow: View {
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in
-                    HapticFeedback.selection()
+                    Feedback.longPress()
                     onLongPress()
                 }
         )
@@ -1600,11 +1645,11 @@ struct NegativeHabitLinedRow: View {
                 // If locked (auto-slipped via blocker), prevent undo
                 guard !isLocked else { return }
                 // Tap to undo slip
-                HapticFeedback.selection()
+                Feedback.undo()
                 onUncomplete()
             } else {
                 // Tap to mark as slipped
-                HapticFeedback.thresholdCrossed()
+                Feedback.slip()
                 onComplete()
             }
         }
@@ -1645,7 +1690,7 @@ struct NegativeHabitLinedRow: View {
                 let currentlyPastArchive = abs(translation) >= archiveDistanceThreshold
                 if currentlyPastArchive != hasPassedArchiveThreshold {
                     hasPassedArchiveThreshold = currentlyPastArchive
-                    HapticFeedback.thresholdCrossed()
+                    Feedback.thresholdCrossed()
                 }
             }
             .onEnded { value in
@@ -1655,7 +1700,7 @@ struct NegativeHabitLinedRow: View {
                 guard translation < 0 else { return }
 
                 if abs(translation) >= archiveDistanceThreshold {
-                    HapticFeedback.completionConfirmed()
+                    Feedback.archive()
                     archiveOffset = 0
                     withAnimation(.easeOut(duration: 0.25)) {
                         onArchive()
@@ -1821,7 +1866,7 @@ struct TaskLinedRow: View {
                     strikethroughProgress = 0.0
                     hasPassedThreshold = false
                 }
-                HapticFeedback.selection()
+                Feedback.undo()
                 onUncomplete()
             }
         }
@@ -1871,6 +1916,8 @@ struct TaskLinedRow: View {
 
                 guard horizontal > vertical, translation > 0 else { return }
 
+                // Keep swipe sound playing while finger is moving
+                Feedback.startSwiping()
                 isDragging = true
 
                 if isCompleted {
@@ -1882,7 +1929,7 @@ struct TaskLinedRow: View {
                     let currentlyPastThreshold = strikethroughProgress >= completionThreshold
                     if currentlyPastThreshold != hasPassedThreshold {
                         hasPassedThreshold = currentlyPastThreshold
-                        HapticFeedback.thresholdCrossed()
+                        Feedback.thresholdCrossed()
                     }
                 }
             }
@@ -1890,22 +1937,28 @@ struct TaskLinedRow: View {
                 isDragging = false
                 let translation = value.translation.width
 
-                guard translation > 0 else { return }
+                guard translation > 0 else {
+                    Feedback.stopSwiping()
+                    return
+                }
 
                 if !isCompleted {
                     if strikethroughProgress >= completionThreshold {
                         withAnimation(JournalTheme.Animations.strikethrough) {
                             strikethroughProgress = 1.0
                         }
-                        HapticFeedback.completionConfirmed()
+                        Feedback.swipeCompleted()
                         onComplete()
                         hasPassedThreshold = true
                     } else {
                         withAnimation(JournalTheme.Animations.strikethrough) {
                             strikethroughProgress = 0
                         }
+                        Feedback.swipeCancelled()
                         hasPassedThreshold = false
                     }
+                } else {
+                    Feedback.stopSwiping()
                 }
             }
     }
@@ -1930,7 +1983,7 @@ struct TaskLinedRow: View {
                 let currentlyPastDelete = abs(translation) >= deleteDistanceThreshold
                 if currentlyPastDelete != hasPassedDeleteThreshold {
                     hasPassedDeleteThreshold = currentlyPastDelete
-                    HapticFeedback.thresholdCrossed()
+                    Feedback.thresholdCrossed()
                 }
             }
             .onEnded { value in
@@ -1940,7 +1993,7 @@ struct TaskLinedRow: View {
                 guard translation < 0 else { return }
 
                 if abs(translation) >= deleteDistanceThreshold {
-                    HapticFeedback.completionConfirmed()
+                    Feedback.delete()
                     deleteOffset = 0
                     withAnimation(.easeOut(duration: 0.25)) {
                         onDelete()
@@ -2097,7 +2150,7 @@ struct GroupLinedRow: View {
             .simultaneousGesture(
                 LongPressGesture(minimumDuration: 0.5)
                     .onEnded { _ in
-                        HapticFeedback.selection()
+                        Feedback.longPress()
                         onLongPress()
                     }
             )
@@ -2110,7 +2163,7 @@ struct GroupLinedRow: View {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                         isCollapsed = false
                     }
-                    HapticFeedback.selection()
+                    Feedback.undo()
                 }
             }
 
@@ -2196,7 +2249,7 @@ struct GroupLinedRow: View {
                 let currentlyPast = abs(translation) >= deleteDistanceThreshold
                 if currentlyPast != hasPassedDeleteThreshold {
                     hasPassedDeleteThreshold = currentlyPast
-                    HapticFeedback.thresholdCrossed()
+                    Feedback.thresholdCrossed()
                 }
             }
             .onEnded { value in
@@ -2205,7 +2258,7 @@ struct GroupLinedRow: View {
                 guard translation < 0 else { return }
 
                 if abs(translation) >= deleteDistanceThreshold {
-                    HapticFeedback.completionConfirmed()
+                    Feedback.delete()
                     deleteOffset = 0
                     withAnimation(.easeOut(duration: 0.25)) {
                         onDelete()
@@ -2318,7 +2371,7 @@ struct SubHabitRow: View {
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in
-                    HapticFeedback.selection()
+                    Feedback.longPress()
                     onLongPress()
                 }
         )
@@ -2328,7 +2381,7 @@ struct SubHabitRow: View {
                     strikethroughProgress = 0.0
                     hasPassedThreshold = false
                 }
-                HapticFeedback.selection()
+                Feedback.undo()
                 onUncomplete()
             }
         }
@@ -2370,6 +2423,8 @@ struct SubHabitRow: View {
                 let translation = value.translation.width
                 guard horizontal > vertical, translation > 0 else { return }
 
+                // Keep swipe sound playing while finger is moving
+                Feedback.startSwiping()
                 isDragging = true
                 if isCompleted { return }
 
@@ -2379,28 +2434,34 @@ struct SubHabitRow: View {
                 let currentlyPastThreshold = strikethroughProgress >= completionThreshold
                 if currentlyPastThreshold != hasPassedThreshold {
                     hasPassedThreshold = currentlyPastThreshold
-                    HapticFeedback.thresholdCrossed()
+                    Feedback.thresholdCrossed()
                 }
             }
             .onEnded { value in
                 isDragging = false
                 let translation = value.translation.width
-                guard translation > 0 else { return }
+                guard translation > 0 else {
+                    Feedback.stopSwiping()
+                    return
+                }
 
                 if !isCompleted {
                     if strikethroughProgress >= completionThreshold {
                         withAnimation(JournalTheme.Animations.strikethrough) {
                             strikethroughProgress = 1.0
                         }
-                        HapticFeedback.completionConfirmed()
+                        Feedback.swipeCompleted()
                         onComplete()
                         hasPassedThreshold = true
                     } else {
                         withAnimation(JournalTheme.Animations.strikethrough) {
                             strikethroughProgress = 0
                         }
+                        Feedback.swipeCancelled()
                         hasPassedThreshold = false
                     }
+                } else {
+                    Feedback.stopSwiping()
                 }
             }
     }

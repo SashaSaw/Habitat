@@ -72,7 +72,7 @@ struct EndOfDayNoteView: View {
                                         withAnimation(.easeInOut(duration: 0.15)) {
                                             score = value
                                         }
-                                        HapticFeedback.selection()
+                                        Feedback.selection()
                                     } label: {
                                         Circle()
                                             .fill(value <= score ? scoreColor(for: score) : JournalTheme.Colors.lineLight)
@@ -168,6 +168,7 @@ struct EndOfDayNoteView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        Feedback.buttonPress()
                         onDismiss()
                     }
                 }
@@ -175,6 +176,7 @@ struct EndOfDayNoteView: View {
                 if !isLocked {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
+                            Feedback.buttonPress()
                             store.saveEndOfDayNote(for: date, note: noteText, fulfillmentScore: score)
                             onDismiss()
                         }

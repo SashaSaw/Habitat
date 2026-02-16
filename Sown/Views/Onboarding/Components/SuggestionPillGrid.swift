@@ -23,7 +23,7 @@ struct SuggestionPillGrid: View {
                                 selectedNames.insert(suggestion.name)
                             }
                         }
-                        HapticFeedback.selection()
+                        Feedback.selection()
                     }
                 )
             }
@@ -40,7 +40,7 @@ struct SuggestionPillGrid: View {
                             customPills.removeAll { $0 == name }
                             selectedNames.remove(name)
                         }
-                        HapticFeedback.selection()
+                        Feedback.selection()
                     }
                 )
             }
@@ -110,7 +110,7 @@ struct AddCustomPillField: View {
             selectedNames.insert(name)
         }
         text = ""
-        HapticFeedback.selection()
+        Feedback.selection()
     }
 }
 
