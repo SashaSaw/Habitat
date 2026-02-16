@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
    LastUpgradeVersion = "2620"
-   wasCreatedForAppExtension = "YES"
    version = "2.0">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -16,10 +15,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "584CC1D02F3CCEC70002B104"
-               BuildableName = "HabitShieldAction.appex"
-               BlueprintName = "HabitShieldAction"
-               ReferencedContainer = "container:SeedBed.xcodeproj">
+               BlueprintIdentifier = "584CC1A62F3CCB820002B104"
+               BuildableName = "HabitMonitor.appex"
+               BlueprintName = "HabitMonitor"
+               ReferencedContainer = "container:Sown.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -31,9 +30,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "585BCAC02F3143C900EF7350"
-               BuildableName = "SeedBed.app"
-               BlueprintName = "SeedBed"
-               ReferencedContainer = "container:SeedBed.xcodeproj">
+               BuildableName = "Sown.app"
+               BlueprintName = "Sown"
+               ReferencedContainer = "container:Sown.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -62,9 +61,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "585BCAC02F3143C900EF7350"
-            BuildableName = "SeedBed.app"
-            BlueprintName = "SeedBed"
-            ReferencedContainer = "container:SeedBed.xcodeproj">
+            BuildableName = "Sown.app"
+            BlueprintName = "Sown"
+            ReferencedContainer = "container:Sown.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -81,9 +80,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "585BCAC02F3143C900EF7350"
-            BuildableName = "SeedBed.app"
-            BlueprintName = "SeedBed"
-            ReferencedContainer = "container:SeedBed.xcodeproj">
+            BuildableName = "Sown.app"
+            BlueprintName = "Sown"
+            ReferencedContainer = "container:Sown.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

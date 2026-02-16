@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  SeedBed
+//  Sown
 //
 //  Created by Alexander Saw on 02/02/2026.
 //
@@ -86,8 +86,8 @@ struct ContentView: View {
                         }
                     }
                     .onOpenURL { url in
-                        // Handle seedbed://intercept deep link
-                        if url.scheme == "seedbed" && url.host == "intercept" {
+                        // Handle sown://intercept deep link
+                        if url.scheme == "sown" && url.host == "intercept" {
                             showingInterceptView = true
                         }
                     }

@@ -9,7 +9,7 @@
 			<string>com.incept5.SeedBed</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>seedbed</string>
+				<string>sown</string>
 			</array>
 		</dict>
 	</array>

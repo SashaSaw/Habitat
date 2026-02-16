@@ -63,7 +63,7 @@
 		584CC1BD2F3CCDD90002B104 /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
 		584CC1BF2F3CCDD90002B104 /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = System/Library/Frameworks/ManagedSettingsUI.framework; sourceTree = SDKROOT; };
 		584CC1D12F3CCEC70002B104 /* HabitShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = HabitShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		585BCAC12F3143C900EF7350 /* SeedBed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeedBed.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		585BCAC12F3143C900EF7350 /* Sown.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sown.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -88,12 +88,12 @@
 			);
 			target = 584CC1D02F3CCEC70002B104 /* HabitShieldAction */;
 		};
-		585BCAD02F3143CA00EF7350 /* Exceptions for "Habitat" folder in "SeedBed" target */ = {
+		585BCAC42F3143C900EF7351 /* Exceptions for "Sown" folder in "Sown" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 585BCAC02F3143C900EF7350 /* SeedBed */;
+			target = 585BCAC02F3143C900EF7350 /* Sown */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -122,12 +122,12 @@
 			path = HabitShieldAction;
 			sourceTree = "<group>";
 		};
-		585BCAC32F3143C900EF7350 /* Habitat */ = {
+		585BCAC32F3143C900EF7350 /* Sown */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				585BCAD02F3143CA00EF7350 /* Exceptions for "Habitat" folder in "SeedBed" target */,
+				585BCAC42F3143C900EF7351 /* Exceptions for "Sown" folder in "Sown" target */,
 			);
-			path = Habitat;
+			path = Sown;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -181,7 +181,7 @@
 		585BCAB82F3143C900EF7350 = {
 			isa = PBXGroup;
 			children = (
-				585BCAC32F3143C900EF7350 /* Habitat */,
+				585BCAC32F3143C900EF7350 /* Sown */,
 				584CC1AB2F3CCB830002B104 /* HabitMonitor */,
 				584CC1C12F3CCDD90002B104 /* HabitShieldConfig */,
 				584CC1D32F3CCEC70002B104 /* HabitShieldAction */,
@@ -193,7 +193,7 @@
 		585BCAC22F3143C900EF7350 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				585BCAC12F3143C900EF7350 /* SeedBed.app */,
+				585BCAC12F3143C900EF7350 /* Sown.app */,
 				584CC1A72F3CCB820002B104 /* HabitMonitor.appex */,
 				584CC1BC2F3CCDD90002B104 /* HabitShieldConfig.appex */,
 				584CC1D12F3CCEC70002B104 /* HabitShieldAction.appex */,
@@ -270,9 +270,9 @@
 			productReference = 584CC1D12F3CCEC70002B104 /* HabitShieldAction.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		585BCAC02F3143C900EF7350 /* SeedBed */ = {
+		585BCAC02F3143C900EF7350 /* Sown */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 585BCACC2F3143C900EF7350 /* Build configuration list for PBXNativeTarget "SeedBed" */;
+			buildConfigurationList = 585BCACC2F3143C900EF7350 /* Build configuration list for PBXNativeTarget "Sown" */;
 			buildPhases = (
 				585BCABD2F3143C900EF7350 /* Sources */,
 				585BCABE2F3143C900EF7350 /* Frameworks */,
@@ -287,13 +287,13 @@
 				584CC1D92F3CCEC70002B104 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				585BCAC32F3143C900EF7350 /* Habitat */,
+				585BCAC32F3143C900EF7350 /* Sown */,
 			);
-			name = SeedBed;
+			name = Sown;
 			packageProductDependencies = (
 			);
-			productName = Habitat;
-			productReference = 585BCAC12F3143C900EF7350 /* SeedBed.app */;
+			productName = Sown;
+			productReference = 585BCAC12F3143C900EF7350 /* Sown.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -320,7 +320,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 585BCABC2F3143C900EF7350 /* Build configuration list for PBXProject "SeedBed" */;
+			buildConfigurationList = 585BCABC2F3143C900EF7350 /* Build configuration list for PBXProject "Sown" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -334,7 +334,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				585BCAC02F3143C900EF7350 /* SeedBed */,
+				585BCAC02F3143C900EF7350 /* Sown */,
 				584CC1A62F3CCB820002B104 /* HabitMonitor */,
 				584CC1BB2F3CCDD90002B104 /* HabitShieldConfig */,
 				584CC1D02F3CCEC70002B104 /* HabitShieldAction */,
@@ -729,13 +729,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Habitat/Habitat.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Sown/Sown.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 3365FP92M9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Habitat/Info.plist;
+				INFOPLIST_FILE = Sown/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Sown.;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of your hobby activities";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Add photos from your library to hobby entries";
@@ -767,13 +768,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Habitat/Habitat.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Sown/Sown.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 3365FP92M9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Habitat/Info.plist;
+				INFOPLIST_FILE = Sown/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Sown.;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of your hobby activities";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Add photos from your library to hobby entries";
@@ -830,7 +832,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		585BCABC2F3143C900EF7350 /* Build configuration list for PBXProject "SeedBed" */ = {
+		585BCABC2F3143C900EF7350 /* Build configuration list for PBXProject "Sown" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				585BCACA2F3143C900EF7350 /* Debug */,
@@ -839,7 +841,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		585BCACC2F3143C900EF7350 /* Build configuration list for PBXNativeTarget "SeedBed" */ = {
+		585BCACC2F3143C900EF7350 /* Build configuration list for PBXNativeTarget "Sown" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				585BCACD2F3143C900EF7350 /* Debug */,

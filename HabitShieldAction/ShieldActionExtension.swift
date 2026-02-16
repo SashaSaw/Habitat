@@ -10,8 +10,8 @@ class ShieldActionExtension: ShieldActionDelegate {
     override func handle(action: ShieldAction, for application: ApplicationToken, completionHandler: @escaping (ShieldActionResponse) -> Void) {
         switch action {
         case .primaryButtonPressed:
-            // "Open SeedBed" — fire a notification to open the app, then close shield
-            sendOpenSeedBedNotification()
+            // "Open Sown" — fire a notification to open the app, then close shield
+            sendOpenSownNotification()
             completionHandler(.close)
         case .secondaryButtonPressed:
             // "Close" — defer to keep the shield in place
@@ -24,7 +24,7 @@ class ShieldActionExtension: ShieldActionDelegate {
     override func handle(action: ShieldAction, for webDomain: WebDomainToken, completionHandler: @escaping (ShieldActionResponse) -> Void) {
         switch action {
         case .primaryButtonPressed:
-            sendOpenSeedBedNotification()
+            sendOpenSownNotification()
             completionHandler(.close)
         case .secondaryButtonPressed:
             completionHandler(.defer)
@@ -36,7 +36,7 @@ class ShieldActionExtension: ShieldActionDelegate {
     override func handle(action: ShieldAction, for category: ActivityCategoryToken, completionHandler: @escaping (ShieldActionResponse) -> Void) {
         switch action {
         case .primaryButtonPressed:
-            sendOpenSeedBedNotification()
+            sendOpenSownNotification()
             completionHandler(.close)
         case .secondaryButtonPressed:
             completionHandler(.defer)
@@ -45,24 +45,24 @@ class ShieldActionExtension: ShieldActionDelegate {
         }
     }
 
-    // MARK: - Open SeedBed via Local Notification
+    // MARK: - Open Sown via Local Notification
 
-    /// Sends an immediate local notification that, when tapped, opens SeedBed
-    private func sendOpenSeedBedNotification() {
+    /// Sends an immediate local notification that, when tapped, opens Sown
+    private func sendOpenSownNotification() {
         // Also write a flag so the app knows to show InterceptView
         let defaults = UserDefaults(suiteName: Self.appGroupID)
         defaults?.set(Date().timeIntervalSince1970, forKey: "interceptRequested")
 
         let content = UNMutableNotificationContent()
-        content.title = "Open SeedBed"
+        content.title = "Open Sown"
         content.body = "Tap to choose the person you want to be."
         content.sound = nil
-        content.categoryIdentifier = "OPEN_SEEDBED"
+        content.categoryIdentifier = "OPEN_SOWN"
 
         // Fire immediately (1 second delay — minimum for a trigger)
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(
-            identifier: "seedbed.open.\(UUID().uuidString)",
+            identifier: "sown.open.\(UUID().uuidString)",
             content: content,
             trigger: trigger
         )

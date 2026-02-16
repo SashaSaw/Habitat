@@ -43,7 +43,7 @@ final class ScreenTimeManager {
     }
 
     // The activity name for our blocking schedule
-    private let blockingActivity = DeviceActivityName("seedbed.blocking")
+    private let blockingActivity = DeviceActivityName("sown.blocking")
 
     private init() {
         // Check existing authorization status
