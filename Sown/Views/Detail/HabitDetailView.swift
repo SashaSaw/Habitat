@@ -119,9 +119,23 @@ struct HabitDetailView: View {
                             label: "Priority",
                             value: habit.tier.displayName
                         ) {
-                            habit.tier = habit.tier == .mustDo ? .niceToDo : .mustDo
-                            store.updateHabit(habit)
                             Feedback.selection()
+                            if habit.tier == .mustDo {
+                                // Switching to nice-to-do: if daily, change to weekly 1x
+                                habit.tier = .niceToDo
+                                if habit.frequencyType == .daily {
+                                    habit.frequencyType = .weekly
+                                    habit.frequencyTarget = 1
+                                }
+                            } else {
+                                // Switching to must-do: if not daily, change to daily
+                                habit.tier = .mustDo
+                                if habit.frequencyType != .daily {
+                                    habit.frequencyType = .daily
+                                    habit.frequencyTarget = 1
+                                }
+                            }
+                            store.updateHabit(habit)
                         }
 
                         Divider().padding(.leading, 48)
@@ -147,7 +161,17 @@ struct HabitDetailView: View {
                                     set: { newValue in
                                         Feedback.selection()
                                         habit.frequencyType = newValue
-                                        if newValue == .daily { habit.frequencyTarget = 1 }
+                                        if newValue == .daily {
+                                            // Daily frequency → must be must-do
+                                            habit.frequencyTarget = 1
+                                            habit.tier = .mustDo
+                                        } else if habit.tier == .mustDo {
+                                            // Non-daily AND was must-do → switch to nice-to-do
+                                            habit.tier = .niceToDo
+                                            if newValue == .weekly && habit.frequencyTarget > 7 {
+                                                habit.frequencyTarget = 1
+                                            }
+                                        }
                                         store.updateHabit(habit)
                                     }
                                 )) {
