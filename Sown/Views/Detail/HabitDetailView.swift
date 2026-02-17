@@ -644,27 +644,18 @@ struct HabitDetailView: View {
         let bgColor: Color = habit.tier == .mustDo ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.goodDayGreenDark
 
         ZStack {
-            if let data = habit.iconImageData, let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: iconSize, height: iconSize)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
-            } else {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(bgColor)
-                    .frame(width: iconSize, height: iconSize)
-                    .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(bgColor)
+                .frame(width: iconSize, height: iconSize)
+                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
 
-                if let emoji = emoji {
-                    Text(emoji)
-                        .font(.custom("PatrickHand-Regular", size: 36))
-                } else {
-                    Text(initials)
-                        .font(.custom("PatrickHand-Regular", size: 24))
-                        .foregroundStyle(.white)
-                }
+            if let emoji = emoji {
+                Text(emoji)
+                    .font(.custom("PatrickHand-Regular", size: 36))
+            } else {
+                Text(initials)
+                    .font(.custom("PatrickHand-Regular", size: 24))
+                    .foregroundStyle(.white)
             }
         }
     }

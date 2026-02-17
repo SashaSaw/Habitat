@@ -237,4 +237,10 @@ enum Feedback {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         sound.swipeCancelled()
     }
+
+    /// Success criteria saved. Light impact + ding sound.
+    static func ding() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        sound.ding()
+    }
 }

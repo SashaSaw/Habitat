@@ -61,17 +61,27 @@ final class SmartReminderService {
 
     // MARK: - Individual Reminders
 
-    /// Reminder 1: Wake time — "Good morning! Write any tasks and start your morning habits"
+    /// Reminder 1: Wake time — "Good morning! Start your morning habits"
     private func scheduleReminder1_WakeUp(habits: [Habit], groups: [HabitGroup], on date: Date) async {
         let afterWakeHabits = habitsForTimeSlot("After Wake", from: habits, groups: groups, on: date)
-        let uncompleted = afterWakeHabits.filter { !$0.isCompleted(for: date) }
+        let uncompletedHabits = afterWakeHabits.filter { !$0.isCompleted(for: date) }
+        let uncompletedTasks = todayTasks(from: habits, on: date)
 
-        guard !uncompleted.isEmpty else { return }
+        guard !uncompletedHabits.isEmpty || !uncompletedTasks.isEmpty else { return }
 
-        let habitNames = uncompleted.map { displayName(for: $0) }
-        let habitList = habitNames.prefix(4).joined(separator: ", ")
+        var bodyParts: [String] = []
 
-        let body = "Good morning! Write any tasks for today and start your morning habits: \(habitList)"
+        if !uncompletedHabits.isEmpty {
+            let habitList = uncompletedHabits.map { displayName(for: $0) }.prefix(3).joined(separator: ", ")
+            bodyParts.append("Morning habits: \(habitList)")
+        }
+
+        if !uncompletedTasks.isEmpty {
+            let taskList = uncompletedTasks.map { $0.name }.prefix(3).joined(separator: ", ")
+            bodyParts.append("Tasks: \(taskList)")
+        }
+
+        let body = "Good morning! " + bodyParts.joined(separator: ". ")
 
         await scheduleNotification(
             index: 0,
@@ -85,15 +95,27 @@ final class SmartReminderService {
     private func scheduleReminder2_LateMorning(habits: [Habit], groups: [HabitGroup], on date: Date) async {
         let morningHabits = habitsForTimeSlot("Morning", from: habits, groups: groups, on: date)
             + habitsForTimeSlot("After Wake", from: habits, groups: groups, on: date)
-        let uncompleted = morningHabits.filter { !$0.isCompleted(for: date) }
+        let uncompletedHabits = morningHabits.filter { !$0.isCompleted(for: date) }
+        let uncompletedTasks = todayTasks(from: habits, on: date)
 
-        guard !uncompleted.isEmpty else { return }
+        guard !uncompletedHabits.isEmpty || !uncompletedTasks.isEmpty else { return }
 
         let total = mustDoTotal(habits: habits, groups: groups)
         let completed = mustDoCompleted(habits: habits, groups: groups, on: date)
-        let habitNames = uncompleted.map { displayName(for: $0) }.prefix(3).joined(separator: ", ")
 
-        let body = "You still have \(uncompleted.count) morning habit\(uncompleted.count == 1 ? "" : "s") left: \(habitNames). Progress: \(completed)/\(total) must-dos done."
+        var bodyParts: [String] = []
+
+        if !uncompletedHabits.isEmpty {
+            let habitNames = uncompletedHabits.map { displayName(for: $0) }.prefix(3).joined(separator: ", ")
+            bodyParts.append("\(uncompletedHabits.count) habit\(uncompletedHabits.count == 1 ? "" : "s"): \(habitNames)")
+        }
+
+        if !uncompletedTasks.isEmpty {
+            let taskNames = uncompletedTasks.map { $0.name }.prefix(2).joined(separator: ", ")
+            bodyParts.append("\(uncompletedTasks.count) task\(uncompletedTasks.count == 1 ? "" : "s"): \(taskNames)")
+        }
+
+        let body = "Still to do: " + bodyParts.joined(separator: " · ") + ". Progress: \(completed)/\(total) must-dos."
 
         await scheduleNotification(
             index: 1,
@@ -106,15 +128,27 @@ final class SmartReminderService {
     /// Reminder 3: 5:00 PM — "Afternoon check-in: get your daytime habits done"
     private func scheduleReminder3_Afternoon(habits: [Habit], groups: [HabitGroup], on date: Date) async {
         let daytimeHabits = habitsForTimeSlot("During the Day", from: habits, groups: groups, on: date)
-        let uncompleted = daytimeHabits.filter { !$0.isCompleted(for: date) }
+        let uncompletedHabits = daytimeHabits.filter { !$0.isCompleted(for: date) }
+        let uncompletedTasks = todayTasks(from: habits, on: date)
 
-        guard !uncompleted.isEmpty else { return }
+        guard !uncompletedHabits.isEmpty || !uncompletedTasks.isEmpty else { return }
 
         let total = mustDoTotal(habits: habits, groups: groups)
         let completed = mustDoCompleted(habits: habits, groups: groups, on: date)
-        let habitNames = uncompleted.map { displayName(for: $0) }.prefix(3).joined(separator: ", ")
 
-        let body = "Get your daytime habits done: \(habitNames). Progress: \(completed)/\(total) must-dos."
+        var bodyParts: [String] = []
+
+        if !uncompletedHabits.isEmpty {
+            let habitNames = uncompletedHabits.map { displayName(for: $0) }.prefix(3).joined(separator: ", ")
+            bodyParts.append("Habits: \(habitNames)")
+        }
+
+        if !uncompletedTasks.isEmpty {
+            let taskNames = uncompletedTasks.map { $0.name }.prefix(2).joined(separator: ", ")
+            bodyParts.append("Tasks: \(taskNames)")
+        }
+
+        let body = bodyParts.joined(separator: ". ") + ". Progress: \(completed)/\(total) must-dos."
 
         await scheduleNotification(
             index: 2,
@@ -128,6 +162,7 @@ final class SmartReminderService {
     private func scheduleReminder4_Evening(habits: [Habit], groups: [HabitGroup], on date: Date) async {
         let eveningHabits = habitsForTimeSlot("Evening", from: habits, groups: groups, on: date)
         let uncompleted = eveningHabits.filter { !$0.isCompleted(for: date) }
+        let uncompletedTasks = todayTasks(from: habits, on: date)
 
         // Also include uncompleted nice-to-do hobbies from any time slot
         let allUncompleted = habits.filter { habit in
@@ -138,13 +173,24 @@ final class SmartReminderService {
         let combined = Array(Set(uncompleted.map(\.id)).union(allUncompleted.map(\.id)))
             .compactMap { id in habits.first(where: { $0.id == id }) }
 
-        guard !combined.isEmpty else { return }
+        guard !combined.isEmpty || !uncompletedTasks.isEmpty else { return }
 
         let total = mustDoTotal(habits: habits, groups: groups)
         let completed = mustDoCompleted(habits: habits, groups: groups, on: date)
-        let habitNames = combined.map { displayNameWithPrompt(for: $0) }.prefix(3).joined(separator: ", ")
 
-        let body = "Wind down and finish up: \(habitNames). Must-dos: \(completed)/\(total)."
+        var bodyParts: [String] = []
+
+        if !combined.isEmpty {
+            let habitNames = combined.map { displayNameWithPrompt(for: $0) }.prefix(3).joined(separator: ", ")
+            bodyParts.append(habitNames)
+        }
+
+        if !uncompletedTasks.isEmpty {
+            let taskNames = uncompletedTasks.map { $0.name }.prefix(2).joined(separator: ", ")
+            bodyParts.append("Tasks: \(taskNames)")
+        }
+
+        let body = "Wind down and finish up: " + bodyParts.joined(separator: ". ") + ". Must-dos: \(completed)/\(total)."
 
         await scheduleNotification(
             index: 3,
@@ -250,6 +296,17 @@ final class SmartReminderService {
             }
 
             return false
+        }
+    }
+
+    /// Get uncompleted tasks for today (habits with frequencyType == .once, created today)
+    private func todayTasks(from habits: [Habit], on date: Date) -> [Habit] {
+        let calendar = Calendar.current
+        return habits.filter { habit in
+            guard habit.isTask && habit.isActive else { return false }
+            guard !habit.isCompleted(for: date) else { return false }
+            // Only include tasks created today
+            return calendar.isDate(habit.createdAt, inSameDayAs: date)
         }
     }
 

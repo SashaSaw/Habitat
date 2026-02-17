@@ -66,6 +66,7 @@ struct SuccessCriteriaOverlay: View {
                     }
 
                     Button {
+                        Feedback.ding()
                         onSave()
                     } label: {
                         Text("Save")

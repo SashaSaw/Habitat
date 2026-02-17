@@ -16,11 +16,18 @@ struct InterceptView: View {
     /// Which screen we're on
     @State private var screen: InterceptScreen = .vote
 
+    /// Today's right choice count
+    @State private var rightChoiceCount: Int = 0
+
     @Environment(\.dismiss) private var dismiss
 
     private let selectedDate = Date()
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
     private let contentPadding: CGFloat = 24
+
+    private let appGroupID = "group.com.incept5.SeedBed"
+    private let rightChoiceKey = "rightChoiceCount"
+    private let rightChoiceDateKey = "rightChoiceDate"
 
     enum InterceptScreen {
         case vote
@@ -29,59 +36,55 @@ struct InterceptView: View {
         case habits       // show habits to do
     }
 
+    // MARK: - Choice Tracking
+
+    private func loadRightChoiceCount() {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
+        let savedDate = defaults.string(forKey: rightChoiceDateKey) ?? ""
+        let today = formatDate(Date())
+
+        if savedDate == today {
+            rightChoiceCount = defaults.integer(forKey: rightChoiceKey)
+        } else {
+            // Reset for new day
+            rightChoiceCount = 0
+            defaults.set(0, forKey: rightChoiceKey)
+            defaults.set(today, forKey: rightChoiceDateKey)
+        }
+    }
+
+    private func recordRightChoice() {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
+        let today = formatDate(Date())
+        defaults.set(today, forKey: rightChoiceDateKey)
+        rightChoiceCount += 1
+        defaults.set(rightChoiceCount, forKey: rightChoiceKey)
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+
     var body: some View {
-        NavigationStack {
-            ZStack {
-                LinedPaperBackground(lineSpacing: lineHeight)
-                    .ignoresSafeArea()
+        ZStack {
+            LinedPaperBackground(lineSpacing: lineHeight)
+                .ignoresSafeArea()
 
-                switch screen {
-                case .vote:
-                    voteScreen
-                case .controlled:
-                    controlledScreen
-                case .countdown:
-                    countdownScreen
-                case .habits:
-                    habitsScreen
-                }
+            switch screen {
+            case .vote:
+                voteScreen
+            case .controlled:
+                controlledScreen
+            case .countdown:
+                countdownScreen
+            case .habits:
+                habitsScreen
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.custom("PatrickHand-Regular", size: 14))
-                            .foregroundStyle(JournalTheme.Colors.completedGray)
-                    }
-                }
-
-                if screen != .vote {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                if screen == .countdown {
-                                    countdownTimer?.invalidate()
-                                    countdownTimer = nil
-                                    screen = .controlled
-                                } else {
-                                    screen = .vote
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.left")
-                                    .font(.custom("PatrickHand-Regular", size: 13))
-                                Text("Back")
-                                    .font(.custom("PatrickHand-Regular", size: 15))
-                            }
-                            .foregroundStyle(JournalTheme.Colors.completedGray)
-                        }
-                    }
-                }
-            }
+        }
+        .onAppear {
+            loadRightChoiceCount()
         }
     }
 
@@ -112,31 +115,26 @@ struct InterceptView: View {
                 .lineSpacing(4)
                 .padding(.bottom, 40)
 
-            // Choice 1: Controlled by phone
+            // Choice 1: Use phone (negative) - goes to countdown first
             Button {
                 withAnimation(.easeInOut(duration: 0.25)) {
-                    screen = .controlled
+                    screen = .countdown
                 }
                 Feedback.selection()
             } label: {
-                VStack(spacing: 6) {
-                    Text("I am the kind of person who")
-                        .font(.custom("PatrickHand-Regular", size: 15))
-                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
-                    Text("is controlled by their phone")
-                        .font(.custom("PatrickHand-Regular", size: 17))
-                        .foregroundStyle(JournalTheme.Colors.negativeRedDark)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(JournalTheme.Colors.negativeRedDark.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .strokeBorder(JournalTheme.Colors.negativeRedDark.opacity(0.2), lineWidth: 1)
-                        )
-                )
+                Text("I want to use my phone")
+                    .font(.custom("PatrickHand-Regular", size: 17))
+                    .foregroundStyle(JournalTheme.Colors.negativeRedDark)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(JournalTheme.Colors.negativeRedDark.opacity(0.06))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .strokeBorder(JournalTheme.Colors.negativeRedDark.opacity(0.2), lineWidth: 1)
+                            )
+                    )
             }
             .buttonStyle(.plain)
             .padding(.horizontal, contentPadding)
@@ -156,31 +154,27 @@ struct InterceptView: View {
             .padding(.horizontal, contentPadding + 20)
             .padding(.vertical, 16)
 
-            // Choice 2: The person I promised
+            // Choice 2: Disciplined (positive)
             Button {
+                recordRightChoice()
                 withAnimation(.easeInOut(duration: 0.25)) {
                     screen = .habits
                 }
                 Feedback.selection()
             } label: {
-                VStack(spacing: 6) {
-                    Text("I am the kind of person who")
-                        .font(.custom("PatrickHand-Regular", size: 15))
-                        .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
-                    Text("I promised myself I would be")
-                        .font(.custom("PatrickHand-Regular", size: 17))
-                        .foregroundStyle(JournalTheme.Colors.successGreen)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(JournalTheme.Colors.successGreen.opacity(0.06))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .strokeBorder(JournalTheme.Colors.successGreen.opacity(0.2), lineWidth: 1)
-                        )
-                )
+                Text("I am a disciplined person")
+                    .font(.custom("PatrickHand-Regular", size: 17))
+                    .foregroundStyle(JournalTheme.Colors.successGreen)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(JournalTheme.Colors.successGreen.opacity(0.06))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .strokeBorder(JournalTheme.Colors.successGreen.opacity(0.2), lineWidth: 1)
+                            )
+                    )
             }
             .buttonStyle(.plain)
             .padding(.horizontal, contentPadding)
@@ -253,13 +247,14 @@ struct InterceptView: View {
                             )
                     }
 
-                    // Unlock button (only when sentence matches)
+                    // Unlock button (only when sentence matches) - actually unlocks the app
                     if sentenceMatches {
                         Button {
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                screen = .countdown
-                            }
+                            // Mark all negative habits as slipped (completed = failed for negative habits)
+                            markNegativeHabitsAsSlipped()
+                            ScreenTimeManager.shared.grantTemporaryUnlock(minutes: 5)
                             Feedback.selection()
+                            dismiss()
                         } label: {
                             Text("Continue to \(blockedAppName) (5 min)")
                                 .font(.custom("PatrickHand-Regular", size: 16))
@@ -274,18 +269,32 @@ struct InterceptView: View {
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                     }
 
-                    // Right path escape hatch
+                    // Right choice encouragement
+                    if rightChoiceCount > 0 {
+                        Text("You made the right choice \(rightChoiceCount) time\(rightChoiceCount == 1 ? "" : "s") today. You can do it again!")
+                            .font(.custom("PatrickHand-Regular", size: 14))
+                            .foregroundStyle(JournalTheme.Colors.successGreen)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 8)
+                    }
+
+                    // Right path escape hatch - styled as a proper button
                     Button {
+                        recordRightChoice()
                         withAnimation(.easeInOut(duration: 0.25)) {
                             screen = .habits
                         }
                         Feedback.selection()
                     } label: {
-                        Text("You can still choose the right path")
-                            .font(.custom("PatrickHand-Regular", size: 14))
-                            .foregroundStyle(JournalTheme.Colors.successGreen)
+                        Text("I am a disciplined person")
+                            .font(.custom("PatrickHand-Regular", size: 16))
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(JournalTheme.Colors.successGreen)
+                            )
                     }
 
                     Spacer(minLength: 100)
@@ -335,18 +344,29 @@ struct InterceptView: View {
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, contentPadding)
-                .padding(.bottom, 40)
+                .padding(.bottom, 24)
+
+            // Right choice encouragement
+            if rightChoiceCount > 0 {
+                Text("You made the right choice \(rightChoiceCount) time\(rightChoiceCount == 1 ? "" : "s") today. You can do it again!")
+                    .font(.custom("PatrickHand-Regular", size: 14))
+                    .foregroundStyle(JournalTheme.Colors.successGreen)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, contentPadding)
+                    .padding(.bottom, 16)
+            }
 
             // Right path button (always visible)
             Button {
                 countdownTimer?.invalidate()
                 countdownTimer = nil
+                recordRightChoice()
                 withAnimation(.easeInOut(duration: 0.25)) {
                     screen = .habits
                 }
                 Feedback.selection()
             } label: {
-                Text("I want to choose the right path")
+                Text("I am a disciplined person")
                     .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -359,18 +379,17 @@ struct InterceptView: View {
             .padding(.horizontal, contentPadding)
             .padding(.bottom, 12)
 
-            // Unlock button (appears when countdown finishes)
+            // Continue button (appears when countdown finishes) - goes to shame sentence
             if countdownSeconds <= 0 {
                 Button {
                     countdownTimer?.invalidate()
                     countdownTimer = nil
-                    // Mark all negative habits as slipped (completed = failed for negative habits)
-                    markNegativeHabitsAsSlipped()
-                    ScreenTimeManager.shared.grantTemporaryUnlock(minutes: 5)
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        screen = .controlled
+                    }
                     Feedback.selection()
-                    dismiss()
                 } label: {
-                    Text("Continue to \(blockedAppName) (5 min)")
+                    Text("Continue")
                         .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -425,6 +444,24 @@ struct InterceptView: View {
 
                 // Done section
                 doneSection
+
+                // Continue to Today view button
+                Button {
+                    Feedback.selection()
+                    dismiss()
+                } label: {
+                    Text("Continue to Sown")
+                        .font(.custom("PatrickHand-Regular", size: 16))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(JournalTheme.Colors.successGreen)
+                        )
+                }
+                .padding(.horizontal, contentPadding)
+                .padding(.top, 20)
 
                 Spacer(minLength: 80)
             }
@@ -695,27 +732,18 @@ struct InterceptHabitRow: View {
         Button(action: onTap) {
             HStack(spacing: 12) {
                 // Habit emoji/icon
-                if let imageData = habit.iconImageData,
-                   let uiImage = UIImage(data: imageData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 28, height: 28)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                } else {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(habit.tier == .mustDo
-                            ? JournalTheme.Colors.amber.opacity(0.12)
-                            : JournalTheme.Colors.teal.opacity(0.12))
-                        .frame(width: 28, height: 28)
-                        .overlay(
-                            Text(String(habit.name.prefix(1)))
-                                .font(.custom("PatrickHand-Regular", size: 14))
-                                .foregroundStyle(habit.tier == .mustDo
-                                    ? JournalTheme.Colors.amber
-                                    : JournalTheme.Colors.teal)
-                        )
-                }
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(habit.tier == .mustDo
+                        ? JournalTheme.Colors.amber.opacity(0.12)
+                        : JournalTheme.Colors.teal.opacity(0.12))
+                    .frame(width: 28, height: 28)
+                    .overlay(
+                        Text(String(habit.name.prefix(1)))
+                            .font(.custom("PatrickHand-Regular", size: 14))
+                            .foregroundStyle(habit.tier == .mustDo
+                                ? JournalTheme.Colors.amber
+                                : JournalTheme.Colors.teal)
+                    )
 
                 VStack(alignment: .leading, spacing: 2) {
                     // Show habit prompt as primary text for hobbies, with name smaller

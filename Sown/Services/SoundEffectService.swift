@@ -28,6 +28,7 @@ final class SoundEffectService {
     private var tickPlayer: AVAudioPlayer?
     private var whooshPlayer: AVAudioPlayer?
     private var tabPlayer: AVAudioPlayer?
+    private var dingPlayer: AVAudioPlayer?
 
     // Swipe gesture sounds
     private var swipingPlayer: AVAudioPlayer?      // Loops while swiping
@@ -75,6 +76,7 @@ final class SoundEffectService {
         tickPlayer = loadPlayer(named: "tick")
         whooshPlayer = loadPlayer(named: "whoosh")
         tabPlayer = loadPlayer(named: "tab")
+        dingPlayer = loadPlayer(named: "ding")
     }
 
     private func loadPlayer(named name: String, looping: Bool = false) -> AVAudioPlayer? {
@@ -181,4 +183,5 @@ final class SoundEffectService {
     func selection()        { playCustom(clickPlayer) }
     func longPress()        { playCustom(clickPlayer) }
     func groupToggle()      { playCustom(clickPlayer) }
+    func ding()             { playCustom(dingPlayer) }
 }

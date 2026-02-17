@@ -72,12 +72,6 @@ struct GroupIconView: View {
 struct MiniHabitIcon: View {
     let habit: Habit
 
-    /// Custom image from data if available
-    private var customImage: UIImage? {
-        guard let data = habit.iconImageData else { return nil }
-        return UIImage(data: data)
-    }
-
     /// Extracts the first emoji from the habit name
     private var emoji: String? {
         for char in habit.name {
@@ -105,25 +99,17 @@ struct MiniHabitIcon: View {
 
     var body: some View {
         ZStack {
-            if let customImage = customImage {
-                Image(uiImage: customImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 24, height: 24)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-            } else {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(backgroundColor)
-                    .frame(width: 24, height: 24)
+            RoundedRectangle(cornerRadius: 6)
+                .fill(backgroundColor)
+                .frame(width: 24, height: 24)
 
-                if let emoji = emoji {
-                    Text(emoji)
-                        .font(.custom("PatrickHand-Regular", size: 12))
-                } else {
-                    Text(initial)
-                        .font(.custom("PatrickHand-Regular", size: 10))
-                        .foregroundStyle(.white)
-                }
+            if let emoji = emoji {
+                Text(emoji)
+                    .font(.custom("PatrickHand-Regular", size: 12))
+            } else {
+                Text(initial)
+                    .font(.custom("PatrickHand-Regular", size: 10))
+                    .foregroundStyle(.white)
             }
         }
     }

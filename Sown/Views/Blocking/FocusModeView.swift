@@ -270,25 +270,14 @@ struct FocusModeView: View {
     }
 
     private var habitIcon: some View {
-        Group {
-            if let imageData = habit.iconImageData,
-               let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 72, height: 72)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-            } else {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(JournalTheme.Colors.amber.opacity(0.12))
-                    .frame(width: 72, height: 72)
-                    .overlay(
-                        Text(String(habit.name.prefix(1)))
-                            .font(.custom("PatrickHand-Regular", size: 32))
-                            .foregroundStyle(JournalTheme.Colors.amber)
-                    )
-            }
-        }
+        RoundedRectangle(cornerRadius: 16)
+            .fill(JournalTheme.Colors.amber.opacity(0.12))
+            .frame(width: 72, height: 72)
+            .overlay(
+                Text(String(habit.name.prefix(1)))
+                    .font(.custom("PatrickHand-Regular", size: 32))
+                    .foregroundStyle(JournalTheme.Colors.amber)
+            )
     }
 
     private var timerSelector: some View {

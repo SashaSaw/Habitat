@@ -8,12 +8,6 @@ struct HabitIconView: View {
 
     private let iconSize: CGFloat = 72
 
-    /// Custom image from data if available
-    private var customImage: UIImage? {
-        guard let data = habit.iconImageData else { return nil }
-        return UIImage(data: data)
-    }
-
     /// Extracts the first emoji from the habit name, or returns nil
     private var emoji: String? {
         for scalar in habit.name.unicodeScalars {
@@ -64,30 +58,18 @@ struct HabitIconView: View {
         VStack(spacing: 8) {
             // Icon rounded square
             ZStack {
-                if let customImage = customImage {
-                    // Custom image icon
-                    Image(uiImage: customImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: iconSize, height: iconSize)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .opacity(isArchived ? 0.4 : 1.0)
-                        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
-                } else {
-                    // Default icon with emoji or initials
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(backgroundColor.opacity(isArchived ? 0.4 : 1.0))
-                        .frame(width: iconSize, height: iconSize)
-                        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(backgroundColor.opacity(isArchived ? 0.4 : 1.0))
+                    .frame(width: iconSize, height: iconSize)
+                    .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
 
-                    if let emoji = emoji {
-                        Text(emoji)
-                            .font(.custom("PatrickHand-Regular", size: 36))
-                    } else {
-                        Text(initials)
-                            .font(.custom("PatrickHand-Regular", size: 24))
-                            .foregroundStyle(.white)
-                    }
+                if let emoji = emoji {
+                    Text(emoji)
+                        .font(.custom("PatrickHand-Regular", size: 36))
+                } else {
+                    Text(initials)
+                        .font(.custom("PatrickHand-Regular", size: 24))
+                        .foregroundStyle(.white)
                 }
             }
 

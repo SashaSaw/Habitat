@@ -69,6 +69,33 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		58471A0A2F4489B40066A33B /* Exceptions for "Sown" folder in "HabitMonitor" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				LaunchScreen.storyboard,
+				"Resources/Fonts/PatrickHand-Regular.ttf",
+			);
+			target = 584CC1A62F3CCB820002B104 /* HabitMonitor */;
+		};
+		58471A0B2F4489B40066A33B /* Exceptions for "Sown" folder in "HabitShieldConfig" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				LaunchScreen.storyboard,
+				"Resources/Fonts/PatrickHand-Regular.ttf",
+			);
+			target = 584CC1BB2F3CCDD90002B104 /* HabitShieldConfig */;
+		};
+		58471A0C2F4489B40066A33B /* Exceptions for "Sown" folder in "HabitShieldAction" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				LaunchScreen.storyboard,
+				"Resources/Fonts/PatrickHand-Regular.ttf",
+			);
+			target = 584CC1D02F3CCEC70002B104 /* HabitShieldAction */;
+		};
 		584CC1B32F3CCB830002B104 /* Exceptions for "HabitMonitor" folder in "HabitMonitor" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -128,6 +155,9 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				585BCAC42F3143C900EF7351 /* Exceptions for "Sown" folder in "Sown" target */,
+				58471A0A2F4489B40066A33B /* Exceptions for "Sown" folder in "HabitMonitor" target */,
+				58471A0B2F4489B40066A33B /* Exceptions for "Sown" folder in "HabitShieldConfig" target */,
+				58471A0C2F4489B40066A33B /* Exceptions for "Sown" folder in "HabitShieldAction" target */,
 			);
 			path = Sown;
 			sourceTree = "<group>";
@@ -733,6 +763,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Sown/Sown.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -740,13 +771,15 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Sown/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Sown.;
+				INFOPLIST_KEY_CFBundleDisplayName = Sown;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of your hobby activities";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Sown tracks your health metrics to automatically complete linked habits when you reach your goals.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Add photos from your library to hobby entries";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
@@ -772,6 +805,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Sown/Sown.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -779,13 +813,15 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Sown/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Sown.;
+				INFOPLIST_KEY_CFBundleDisplayName = Sown;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Take photos of your hobby activities";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Sown tracks your health metrics to automatically complete linked habits when you reach your goals.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Add photos from your library to hobby entries";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
