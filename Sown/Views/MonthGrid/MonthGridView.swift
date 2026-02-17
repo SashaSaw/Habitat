@@ -157,11 +157,18 @@ struct MonthGridView: View {
 
     init(store: HabitStore) {
         self.store = store
-        // Configure navigation bar title color
+        // Configure navigation bar title color and font
+        let navTitleFont = UIFont(name: "PatrickHand-Regular", size: 17) ?? UIFont.systemFont(ofSize: 17)
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
-        appearance.titleTextAttributes = [.foregroundColor: UIColor(JournalTheme.Colors.inkBlack)]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor(JournalTheme.Colors.inkBlack)]
+        appearance.titleTextAttributes = [
+            .foregroundColor: UIColor(JournalTheme.Colors.inkBlack),
+            .font: navTitleFont
+        ]
+        appearance.largeTitleTextAttributes = [
+            .foregroundColor: UIColor(JournalTheme.Colors.inkBlack),
+            .font: UIFont(name: "PatrickHand-Regular", size: 34) ?? UIFont.systemFont(ofSize: 34)
+        ]
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
     }
@@ -184,7 +191,7 @@ struct MonthGridView: View {
                         }
                     } label: {
                         Text(showingNiceToDoGrid ? "Must Do" : "Nice To Do")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 14))
                             .foregroundStyle(JournalTheme.Colors.inkBlue)
                     }
                 }
@@ -292,7 +299,7 @@ struct MonthGridContentView: View {
             VStack(alignment: .leading, spacing: 0) {
                 // Month header
                 Text(Self.monthFormatter.string(from: selectedMonth))
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 20))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
@@ -392,7 +399,7 @@ struct HabitHeaderRowView: View {
             // Positive habit column headers
             ForEach(habits) { habit in
                 Text(habit.name)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 11))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .lineLimit(2)
                     .frame(width: 60, alignment: .center)
@@ -402,7 +409,7 @@ struct HabitHeaderRowView: View {
             // Group column headers
             ForEach(groups) { group in
                 Text(group.name)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 11))
                     .foregroundStyle(JournalTheme.Colors.inkBlue) // Blue to distinguish groups
                     .lineLimit(2)
                     .frame(width: 60, alignment: .center)
@@ -412,7 +419,7 @@ struct HabitHeaderRowView: View {
             // Negative habit column headers (no per-row divider - handled by continuous overlay)
             ForEach(negativeHabits) { habit in
                 Text(habit.name)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 11))
                     .foregroundStyle(JournalTheme.Colors.negativeRedDark)
                     .lineLimit(2)
                     .frame(width: 60, alignment: .center)
@@ -502,7 +509,7 @@ struct DayRowView: View {
                     .foregroundStyle(isToday ? JournalTheme.Colors.inkBlue : JournalTheme.Colors.inkBlack)
 
                 Text(Self.weekdayFormatter.string(from: date))
-                    .font(.system(size: 9, weight: .regular))
+                    .font(.custom("PatrickHand-Regular", size: 9))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
             .frame(width: 50, alignment: .leading)
@@ -615,7 +622,7 @@ struct GridCellView: View {
                     } else {
                         // Show subtle dash to indicate "no slip"
                         Text("–")
-                            .font(.system(size: 14, weight: .light))
+                            .font(.custom("PatrickHand-Regular", size: 14))
                             .foregroundStyle(JournalTheme.Colors.completedGray.opacity(0.5))
                     }
                 } else if isCompleted {

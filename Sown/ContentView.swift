@@ -19,19 +19,38 @@ struct ContentView: View {
     @State private var showingInterceptView = false
 
     init() {
-        // Make tab bar fully transparent
+        // Custom font for tab bar and navigation
+        let patrickHand = UIFont(name: "PatrickHand-Regular", size: 10) ?? UIFont.systemFont(ofSize: 10)
+        let navTitleFont = UIFont(name: "PatrickHand-Regular", size: 17) ?? UIFont.systemFont(ofSize: 17)
+        let largeTitleFont = UIFont(name: "PatrickHand-Regular", size: 34) ?? UIFont.systemFont(ofSize: 34)
+
+        // Make tab bar fully transparent with custom font
         let tabBarAppearance = UITabBarAppearance()
         tabBarAppearance.configureWithTransparentBackground()
         tabBarAppearance.backgroundColor = UIColor.clear
         tabBarAppearance.shadowColor = UIColor.clear
+
+        // Set tab bar item font
+        let normalAttrs: [NSAttributedString.Key: Any] = [.font: patrickHand]
+        let selectedAttrs: [NSAttributedString.Key: Any] = [.font: patrickHand]
+        tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = normalAttrs
+        tabBarAppearance.stackedLayoutAppearance.selected.titleTextAttributes = selectedAttrs
+        tabBarAppearance.inlineLayoutAppearance.normal.titleTextAttributes = normalAttrs
+        tabBarAppearance.inlineLayoutAppearance.selected.titleTextAttributes = selectedAttrs
+        tabBarAppearance.compactInlineLayoutAppearance.normal.titleTextAttributes = normalAttrs
+        tabBarAppearance.compactInlineLayoutAppearance.selected.titleTextAttributes = selectedAttrs
+
         UITabBar.appearance().standardAppearance = tabBarAppearance
         UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
 
-        // Make navigation bar fully transparent
+        // Make navigation bar fully transparent with custom font
         let navBarAppearance = UINavigationBarAppearance()
         navBarAppearance.configureWithTransparentBackground()
         navBarAppearance.backgroundColor = UIColor.clear
         navBarAppearance.shadowColor = UIColor.clear
+        navBarAppearance.titleTextAttributes = [.font: navTitleFont]
+        navBarAppearance.largeTitleTextAttributes = [.font: largeTitleFont]
+
         UINavigationBar.appearance().standardAppearance = navBarAppearance
         UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
         UINavigationBar.appearance().compactAppearance = navBarAppearance

@@ -29,7 +29,7 @@ struct HabitDetailView: View {
                     if editingName {
                         HStack {
                             TextField("Habit name", text: $editedName)
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 22))
                                 .foregroundStyle(JournalTheme.Colors.inkBlack)
                                 .multilineTextAlignment(.center)
                                 .textFieldStyle(.plain)
@@ -40,15 +40,16 @@ struct HabitDetailView: View {
                                 store.updateHabit(habit)
                                 editingName = false
                             }
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 14))
                             .foregroundStyle(JournalTheme.Colors.teal)
                         }
                         .padding(.horizontal)
                     } else {
                         Text(habit.name)
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 22))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
                             .onTapGesture {
+                                Feedback.selection()
                                 editedName = habit.name
                                 editingName = true
                             }
@@ -57,7 +58,7 @@ struct HabitDetailView: View {
                     // Badges
                     HStack(spacing: 8) {
                         Text(habit.tier.displayName.uppercased())
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                             .foregroundStyle(habit.tier == .mustDo ? JournalTheme.Colors.amber : JournalTheme.Colors.completedGray)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
@@ -67,7 +68,7 @@ struct HabitDetailView: View {
                             )
 
                         Text(habit.frequencyDisplayName.uppercased())
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
@@ -78,7 +79,7 @@ struct HabitDetailView: View {
 
                         if habit.type == .negative {
                             Text("QUIT")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                                 .foregroundStyle(JournalTheme.Colors.coral)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
@@ -132,6 +133,7 @@ struct HabitDetailView: View {
                             label: "Frequency",
                             value: habit.frequencyDisplayName
                         ) {
+                            Feedback.selection()
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 showFrequencyEditor.toggle()
                             }
@@ -143,6 +145,7 @@ struct HabitDetailView: View {
                                 Picker("Frequency", selection: Binding(
                                     get: { habit.frequencyType },
                                     set: { newValue in
+                                        Feedback.selection()
                                         habit.frequencyType = newValue
                                         if newValue == .daily { habit.frequencyTarget = 1 }
                                         store.updateHabit(habit)
@@ -159,22 +162,22 @@ struct HabitDetailView: View {
                                         "Target: \(habit.frequencyTarget)x per week",
                                         value: Binding(
                                             get: { habit.frequencyTarget },
-                                            set: { habit.frequencyTarget = $0; store.updateHabit(habit) }
+                                            set: { Feedback.selection(); habit.frequencyTarget = $0; store.updateHabit(habit) }
                                         ),
                                         in: 1...7
                                     )
-                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 14))
                                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                                 } else if habit.frequencyType == .monthly {
                                     Stepper(
                                         "Target: \(habit.frequencyTarget)x per month",
                                         value: Binding(
                                             get: { habit.frequencyTarget },
-                                            set: { habit.frequencyTarget = $0; store.updateHabit(habit) }
+                                            set: { Feedback.selection(); habit.frequencyTarget = $0; store.updateHabit(habit) }
                                         ),
                                         in: 1...31
                                     )
-                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 14))
                                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                                 }
                             }
@@ -202,7 +205,7 @@ struct HabitDetailView: View {
                         // Notes & Photos toggle
                         HStack(spacing: 12) {
                             Image(systemName: "camera.fill")
-                                .font(.system(size: 14))
+                                .font(.custom("PatrickHand-Regular", size: 14))
                                 .foregroundStyle(JournalTheme.Colors.teal)
                                 .frame(width: 24)
 
@@ -215,6 +218,7 @@ struct HabitDetailView: View {
                             Toggle("", isOn: Binding(
                                 get: { habit.enableNotesPhotos },
                                 set: { newValue in
+                                    Feedback.selection()
                                     habit.enableNotesPhotos = newValue
                                     habit.isHobby = newValue
                                     store.updateHabit(habit)
@@ -231,12 +235,12 @@ struct HabitDetailView: View {
                         if editingPrompt {
                             HStack(spacing: 12) {
                                 Image(systemName: "sparkles")
-                                    .font(.system(size: 14))
+                                    .font(.custom("PatrickHand-Regular", size: 14))
                                     .foregroundStyle(JournalTheme.Colors.amber)
                                     .frame(width: 24)
 
                                 TextField("e.g. Put on your trainers and step outside", text: $editedPrompt)
-                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 14))
                                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                                     .textFieldStyle(.plain)
 
@@ -246,7 +250,7 @@ struct HabitDetailView: View {
                                     store.updateHabit(habit)
                                     editingPrompt = false
                                 }
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 14))
                                 .foregroundStyle(JournalTheme.Colors.teal)
                             }
                             .padding(14)
@@ -257,6 +261,7 @@ struct HabitDetailView: View {
                                 label: "Habit prompt",
                                 value: habit.habitPrompt.isEmpty ? "Not set" : habit.habitPrompt
                             ) {
+                                Feedback.selection()
                                 editedPrompt = habit.habitPrompt
                                 editingPrompt = true
                             }
@@ -269,12 +274,12 @@ struct HabitDetailView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 HStack(spacing: 12) {
                                     Image(systemName: "target")
-                                        .font(.system(size: 14))
+                                        .font(.custom("PatrickHand-Regular", size: 14))
                                         .foregroundStyle(JournalTheme.Colors.successGreen)
                                         .frame(width: 24)
 
                                     Text("Success criteria")
-                                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                                        .font(.custom("PatrickHand-Regular", size: 14))
                                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                                     Spacer()
@@ -286,7 +291,7 @@ struct HabitDetailView: View {
                                         store.updateHabit(habit)
                                         editingCriteria = false
                                     }
-                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 14))
                                     .foregroundStyle(JournalTheme.Colors.teal)
                                 }
 
@@ -300,6 +305,7 @@ struct HabitDetailView: View {
                                 label: "Success criteria",
                                 value: habit.successCriteria ?? "None"
                             ) {
+                                Feedback.selection()
                                 editedCriteria = CriteriaEditorView.parseCriteriaString(habit.successCriteria)
                                 editingCriteria = true
                             }
@@ -314,6 +320,7 @@ struct HabitDetailView: View {
                             label: "Time of day",
                             value: timeSlotSummary
                         ) {
+                            Feedback.selection()
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 showTimeSlots.toggle()
                             }
@@ -323,6 +330,7 @@ struct HabitDetailView: View {
                             TimeSlotPicker(selectedSlots: Binding(
                                 get: { Set(habit.scheduleTimes) },
                                 set: { newSlots in
+                                    Feedback.selection()
                                     habit.scheduleTimes = Array(newSlots)
                                     store.updateHabit(habit)
                                 }
@@ -342,6 +350,7 @@ struct HabitDetailView: View {
                 // MARK: - Actions
                 VStack(spacing: 12) {
                     Button {
+                        Feedback.archive()
                         if habit.isActive {
                             store.archiveHabit(habit)
                         } else {
@@ -364,6 +373,7 @@ struct HabitDetailView: View {
                     }
 
                     Button {
+                        Feedback.buttonPress()
                         showingDeleteConfirmation = true
                     } label: {
                         HStack {
@@ -389,8 +399,9 @@ struct HabitDetailView: View {
         .navigationTitle(habit.name)
         .navigationBarTitleDisplayMode(.inline)
         .alert("Delete Habit?", isPresented: $showingDeleteConfirmation) {
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) { Feedback.buttonPress() }
             Button("Delete", role: .destructive) {
+                Feedback.delete()
                 store.deleteHabit(habit)
                 dismiss()
             }
@@ -453,10 +464,10 @@ struct HabitDetailView: View {
 
                 if let emoji = emoji {
                     Text(emoji)
-                        .font(.system(size: 36))
+                        .font(.custom("PatrickHand-Regular", size: 36))
                 } else {
                     Text(initials)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(.white)
                 }
             }
@@ -469,7 +480,7 @@ struct HabitDetailView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(iconColor)
                     .frame(width: 24)
 
@@ -484,7 +495,7 @@ struct HabitDetailView: View {
                     .foregroundStyle(JournalTheme.Colors.completedGray)
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
             .padding(14)
@@ -551,11 +562,11 @@ struct StatCard: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 20))
+                .font(.custom("PatrickHand-Regular", size: 20))
                 .foregroundStyle(iconColor)
 
             Text(value)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 24))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
             Text(label)
@@ -600,7 +611,7 @@ struct RecentActivitySection: View {
                 ForEach(last7Days, id: \.self) { date in
                     VStack(spacing: 4) {
                         Text(dayFormatter.string(from: date))
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
 
                         if habit.isCompleted(for: date) {
@@ -737,7 +748,7 @@ struct HobbyLogRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(dateFormatter.string(from: log.date))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                 if let note = log.note, !note.isEmpty {
@@ -755,7 +766,7 @@ struct HobbyLogRow: View {
             Spacer()
 
             Image(systemName: "pencil")
-                .font(.system(size: 14, weight: .medium))
+                .font(.custom("PatrickHand-Regular", size: 14))
                 .foregroundStyle(JournalTheme.Colors.inkBlue)
         }
         .padding(12)

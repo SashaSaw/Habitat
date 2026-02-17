@@ -28,7 +28,7 @@ struct EndOfDayNoteView: View {
                     // Date header
                     VStack(alignment: .leading, spacing: 4) {
                         Text(dateFormatter.string(from: date))
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 22))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                         if store.isGoodDay(for: date) {
@@ -37,7 +37,7 @@ struct EndOfDayNoteView: View {
                                     .fill(JournalTheme.Colors.goodDayGreenDark)
                                     .frame(width: 8, height: 8)
                                 Text("Good Day")
-                                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 13))
                                     .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
                             }
                         }
@@ -59,7 +59,7 @@ struct EndOfDayNoteView: View {
                                         .frame(width: 28, height: 28)
                                         .overlay(
                                             Text("\(value)")
-                                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                                .font(.custom("PatrickHand-Regular", size: 12))
                                                 .foregroundStyle(value <= score ? .white : JournalTheme.Colors.completedGray)
                                         )
                                 }
@@ -79,7 +79,7 @@ struct EndOfDayNoteView: View {
                                             .frame(width: 28, height: 28)
                                             .overlay(
                                                 Text("\(value)")
-                                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                                    .font(.custom("PatrickHand-Regular", size: 12))
                                                     .foregroundStyle(value <= score ? .white : JournalTheme.Colors.completedGray)
                                             )
                                     }
@@ -145,7 +145,7 @@ struct EndOfDayNoteView: View {
                     if isLocked {
                         HStack(spacing: 8) {
                             Image(systemName: "lock.fill")
-                                .font(.system(size: 12))
+                                .font(.custom("PatrickHand-Regular", size: 12))
                             Text("This entry is now locked and can no longer be edited")
                                 .font(JournalTheme.Fonts.habitCriteria())
                         }

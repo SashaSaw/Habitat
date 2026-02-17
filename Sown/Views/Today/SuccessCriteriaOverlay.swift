@@ -34,11 +34,11 @@ struct SuccessCriteriaOverlay: View {
                 // Header
                 VStack(spacing: 6) {
                     Text("Well done!")
-                        .font(.system(size: 28, weight: .bold, design: .serif))
+                        .font(.custom("PatrickHand-Regular", size: 28))
                         .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
 
                     Text(habit.name)
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 18))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
                 }
 
@@ -55,7 +55,7 @@ struct SuccessCriteriaOverlay: View {
                         onCancel()
                     } label: {
                         Text("Cancel")
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 16))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
@@ -69,7 +69,7 @@ struct SuccessCriteriaOverlay: View {
                         onSave()
                     } label: {
                         Text("Save")
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 16))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
@@ -122,13 +122,13 @@ struct SuccessCriteriaOverlay: View {
         VStack(alignment: .leading, spacing: 6) {
             // Recommended minimum label
             Text("Aim: \(criterion.targetValue) \(criterion.unit)")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 12))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
             HStack(spacing: 10) {
                 // Number input
                 TextField("0", text: $criteria[index].enteredValue)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 20))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
@@ -151,7 +151,7 @@ struct SuccessCriteriaOverlay: View {
 
                 // Unit label
                 Text(criterion.unit)
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                 Spacer()
@@ -163,7 +163,7 @@ struct SuccessCriteriaOverlay: View {
         VStack(alignment: .leading, spacing: 6) {
             // Target time label
             Text("Target: \(criterion.label)")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 12))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
             DatePicker(

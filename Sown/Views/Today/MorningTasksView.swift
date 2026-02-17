@@ -57,11 +57,11 @@ struct MorningTasksView: View {
     private var greetingSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(greetingText)
-                .font(.system(size: 28, weight: .bold, design: .serif))
+                .font(.custom("PatrickHand-Regular", size: 28))
                 .foregroundStyle(JournalTheme.Colors.navy)
 
             Text("What tasks have you got to get done today?")
-                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 15))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .lineSpacing(2)
         }
@@ -92,7 +92,7 @@ struct MorningTasksView: View {
                 .frame(width: 22, height: 22)
 
             TextField("Task \(index + 1)", text: $taskEntries[index].text)
-                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 16))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
                 .focused($focusedId, equals: entry.id)
                 .submitLabel(index == taskEntries.count - 1 ? .done : .next)
@@ -105,7 +105,7 @@ struct MorningTasksView: View {
                     }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.custom("PatrickHand-Regular", size: 11))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
             }
@@ -139,11 +139,11 @@ struct MorningTasksView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.teal)
 
                 Text("Add another task")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.teal)
 
                 Spacer()
@@ -172,7 +172,7 @@ struct MorningTasksView: View {
                 onDismiss()
             } label: {
                 Text(hasTasks ? "Add tasks & start my day" : "Skip for now")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(hasTasks ? Color.white : JournalTheme.Colors.navy)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)

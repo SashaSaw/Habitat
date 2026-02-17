@@ -97,11 +97,11 @@ struct StatItem: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 24))
+                .font(.custom("PatrickHand-Regular", size: 24))
                 .foregroundStyle(color)
 
             Text(value)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 24))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
             Text(label)
@@ -145,7 +145,7 @@ struct GoodDayStreakCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "flame.fill")
-                    .font(.system(size: 20))
+                    .font(.custom("PatrickHand-Regular", size: 20))
                     .foregroundStyle(.orange)
 
                 Text("Good Day Streak")
@@ -157,7 +157,7 @@ struct GoodDayStreakCard: View {
 
             HStack(alignment: .bottom, spacing: 4) {
                 Text("\(currentStreak)")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 48))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                 Text("days")
@@ -260,7 +260,7 @@ struct HabitCompletionRow: View {
             if habit.currentStreak > 0 {
                 HStack(spacing: 4) {
                     Image(systemName: "flame.fill")
-                        .font(.system(size: 10))
+                        .font(.custom("PatrickHand-Regular", size: 10))
                         .foregroundStyle(.orange)
                     Text("\(habit.currentStreak) day streak")
                         .font(JournalTheme.Fonts.streakCount())
@@ -319,7 +319,7 @@ struct FulfillmentChartCard: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Image(systemName: "heart.fill")
-                    .font(.system(size: 20))
+                    .font(.custom("PatrickHand-Regular", size: 20))
                     .foregroundStyle(JournalTheme.Colors.teal)
 
                 Text("Fulfillment")
@@ -338,7 +338,7 @@ struct FulfillmentChartCard: View {
             if dataPoints.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 32))
+                        .font(.custom("PatrickHand-Regular", size: 32))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
 
                     Text("No reflections yet")
@@ -400,7 +400,7 @@ struct FulfillmentChartCard: View {
                 .chartYAxis {
                     AxisMarks(values: [1, 5, 10]) { value in
                         AxisValueLabel()
-                            .font(.system(size: 10, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [3]))
                             .foregroundStyle(JournalTheme.Colors.lineLight)
                     }
@@ -408,7 +408,7 @@ struct FulfillmentChartCard: View {
                 .chartXAxis {
                     AxisMarks(values: .stride(by: .day, count: 7)) { value in
                         AxisValueLabel(format: .dateTime.day().month(.abbreviated))
-                            .font(.system(size: 10, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [3]))
                             .foregroundStyle(JournalTheme.Colors.lineLight)
                     }

@@ -124,18 +124,18 @@ struct AddGroupView: View {
                 ForEach(selectedHabits) { habit in
                     HStack(spacing: 10) {
                         Image(systemName: "circle.fill")
-                            .font(.system(size: 5))
+                            .font(.custom("PatrickHand-Regular", size: 5))
                             .foregroundStyle(JournalTheme.Colors.inkBlue)
 
                         Text(habit.name)
-                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 15))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                         Spacer()
 
                         if habit.tier == .mustDo {
                             Text("Must-do → Nice-to-do")
-                                .font(.system(size: 10, weight: .medium, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                                 .foregroundStyle(JournalTheme.Colors.amber)
                         }
                     }
@@ -161,11 +161,11 @@ struct AddGroupView: View {
     private var conversionNotice: some View {
         HStack(spacing: 8) {
             Image(systemName: "info.circle")
-                .font(.system(size: 14))
+                .font(.custom("PatrickHand-Regular", size: 14))
                 .foregroundStyle(JournalTheme.Colors.amber)
 
             Text("Must-dos will become nice-to-dos (1× per week) when added to a group.")
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 13))
                 .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
         }
         .padding(12)
@@ -181,7 +181,7 @@ struct AddGroupView: View {
     private var submitButton: some View {
         Button { createGroup() } label: {
             Text("Create Group")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 17))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
@@ -300,6 +300,7 @@ struct EditGroupView: View {
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {
+                            Feedback.selection()
                             if selectedHabitIds.contains(habit.id) {
                                 selectedHabitIds.remove(habit.id)
                             } else {
@@ -317,6 +318,7 @@ struct EditGroupView: View {
                 // Danger Zone
                 Section {
                     Button(role: .destructive) {
+                        Feedback.buttonPress()
                         showingDeleteConfirmation = true
                     } label: {
                         Label("Delete Group", systemImage: "trash")
@@ -342,8 +344,9 @@ struct EditGroupView: View {
                 }
             }
             .alert("Delete Group?", isPresented: $showingDeleteConfirmation) {
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) { Feedback.buttonPress() }
                 Button("Delete", role: .destructive) {
+                    Feedback.delete()
                     store.deleteGroup(group)
                     dismiss()
                 }

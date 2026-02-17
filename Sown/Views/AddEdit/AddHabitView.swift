@@ -228,14 +228,14 @@ struct HabitIconPicker: View {
 
                     if let emoji = emoji {
                         Text(emoji)
-                            .font(.system(size: 40))
+                            .font(.custom("PatrickHand-Regular", size: 40))
                     } else if !name.isEmpty {
                         Text(initials)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 28))
                             .foregroundStyle(.white)
                     } else {
                         Image(systemName: "photo")
-                            .font(.system(size: 28))
+                            .font(.custom("PatrickHand-Regular", size: 28))
                             .foregroundStyle(.white.opacity(0.7))
                     }
                 }
@@ -246,7 +246,7 @@ struct HabitIconPicker: View {
                     HStack {
                         Spacer()
                         Image(systemName: "pencil.circle.fill")
-                            .font(.system(size: 24))
+                            .font(.custom("PatrickHand-Regular", size: 24))
                             .foregroundStyle(.white)
                             .background(
                                 Circle()
@@ -743,7 +743,7 @@ struct DayOfWeekSelector: View {
                     }
                 } label: {
                     Text(day.label)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(selectedDays.contains(day.index) ? .white : JournalTheme.Colors.inkBlack)
                         .frame(width: 36, height: 36)
                         .background(
@@ -789,7 +789,7 @@ struct AddHabitConfirmationView: View {
                     .frame(width: 80, height: 80)
 
                 Image(systemName: "checkmark")
-                    .font(.system(size: 32, weight: .bold))
+                    .font(.custom("PatrickHand-Regular", size: 32))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
             }
             .scaleEffect(showCheck ? 1.0 : 0.5)
@@ -895,7 +895,7 @@ struct AddHabitMoreOptionsPanel: View {
             withAnimation(.easeInOut(duration: 0.2)) { tier = .mustDo }
         } label: {
             HStack(spacing: 4) {
-                Image(systemName: "star.fill").font(.system(size: 11))
+                Image(systemName: "star.fill").font(.custom("PatrickHand-Regular", size: 11))
                 Text("Must do")
                     .font(JournalTheme.Fonts.habitCriteria())
                     .fontWeight(tier == .mustDo ? .semibold : .regular)
@@ -981,7 +981,7 @@ struct FrequencyDetailSection: View {
 
     private var taskInfoNote: some View {
         HStack(spacing: 8) {
-            Image(systemName: "info.circle").font(.system(size: 14)).foregroundStyle(JournalTheme.Colors.teal)
+            Image(systemName: "info.circle").font(.custom("PatrickHand-Regular", size: 14)).foregroundStyle(JournalTheme.Colors.teal)
             Text("One-off task \u{00B7} won't affect your streak")
                 .font(JournalTheme.Fonts.habitCriteria()).foregroundStyle(JournalTheme.Colors.teal)
         }
@@ -1001,13 +1001,13 @@ struct FrequencyDetailSection: View {
                 Button {
                     if frequencyTarget > min { frequencyTarget -= 1; selectedWeekDays.removeAll() }
                 } label: {
-                    Image(systemName: "minus").font(.system(size: 14, weight: .semibold)).foregroundStyle(JournalTheme.Colors.navy)
+                    Image(systemName: "minus").font(.custom("PatrickHand-Regular", size: 14)).foregroundStyle(JournalTheme.Colors.navy)
                         .frame(width: 36, height: 36).background(Circle().fill(JournalTheme.Colors.paperLight))
                 }.buttonStyle(.plain)
                 Button {
                     if frequencyTarget < max { frequencyTarget += 1; selectedWeekDays.removeAll() }
                 } label: {
-                    Image(systemName: "plus").font(.system(size: 14, weight: .semibold)).foregroundStyle(JournalTheme.Colors.navy)
+                    Image(systemName: "plus").font(.custom("PatrickHand-Regular", size: 14)).foregroundStyle(JournalTheme.Colors.navy)
                         .frame(width: 36, height: 36).background(Circle().fill(JournalTheme.Colors.paperLight))
                 }.buttonStyle(.plain)
             }
@@ -1135,7 +1135,7 @@ struct AddHabitView: View {
                         Feedback.selection()
                     } label: {
                         HStack(spacing: 6) {
-                            Text(suggestion.emoji).font(.system(size: 15))
+                            Text(suggestion.emoji).font(.custom("PatrickHand-Regular", size: 15))
                             Text(suggestion.name)
                                 .font(JournalTheme.Fonts.habitCriteria())
                                 .foregroundStyle(JournalTheme.Colors.inkBlack)
@@ -1174,7 +1174,7 @@ struct AddHabitView: View {
             // Submit button
             Button { addHabit() } label: {
                 Text(submitButtonText)
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 17))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -1204,7 +1204,7 @@ struct AddHabitView: View {
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                     Spacer()
                     Image(systemName: showMoreOptions ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.custom("PatrickHand-Regular", size: 12))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
                 .padding(14)

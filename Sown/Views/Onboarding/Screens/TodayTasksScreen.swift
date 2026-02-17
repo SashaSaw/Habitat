@@ -86,12 +86,12 @@ struct OnboardingTaskPill: View {
         Button(action: onRemove) {
             HStack(spacing: 6) {
                 Text("\u{1F4CC}")
-                    .font(.system(size: 15))
+                    .font(.custom("PatrickHand-Regular", size: 15))
                 Text(name)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(Color.white)
                 Image(systemName: "xmark")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.custom("PatrickHand-Regular", size: 10))
                     .foregroundStyle(Color.white.opacity(0.7))
             }
             .padding(.horizontal, 14)

@@ -14,7 +14,7 @@ struct ArchivedHabitsListView: View {
                 ScrollView {
                     VStack(spacing: 8) {
                         Image(systemName: "archivebox")
-                            .font(.system(size: 36))
+                            .font(.custom("PatrickHand-Regular", size: 36))
                             .foregroundStyle(JournalTheme.Colors.completedGray.opacity(0.5))
 
                         Text("No archived habits")
@@ -34,7 +34,7 @@ struct ArchivedHabitsListView: View {
                     if showHint {
                         HStack(alignment: .top, spacing: 10) {
                             Text("💡")
-                                .font(.system(size: 16))
+                                .font(.custom("PatrickHand-Regular", size: 16))
 
                             Text("Swipe left to delete a habit, or swipe right to restore it.")
                                 .font(JournalTheme.Fonts.habitCriteria())
@@ -49,7 +49,7 @@ struct ArchivedHabitsListView: View {
                                 }
                             } label: {
                                 Image(systemName: "xmark")
-                                    .font(.system(size: 11, weight: .medium))
+                                    .font(.custom("PatrickHand-Regular", size: 11))
                                     .foregroundStyle(JournalTheme.Colors.completedGray)
                             }
                         }
@@ -87,7 +87,7 @@ struct ArchivedHabitsListView: View {
                                 store.unarchiveHabit(habit)
                             } label: {
                                 Text("Restore")
-                                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 13))
                                     .foregroundStyle(JournalTheme.Colors.inkBlue)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)

@@ -87,7 +87,7 @@ struct HabitRowView: View {
                 if habit.currentStreak > 0 {
                     HStack(spacing: 4) {
                         Image(systemName: "flame.fill")
-                            .font(.system(size: 10))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                             .foregroundStyle(.orange)
                         Text("\(habit.currentStreak) day streak")
                             .font(JournalTheme.Fonts.streakCount())
@@ -162,7 +162,7 @@ struct HabitGroupRowView: View {
                     }
                 } label: {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.custom("PatrickHand-Regular", size: 12))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
             }

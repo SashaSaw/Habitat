@@ -46,7 +46,7 @@ struct FocusModeView: View {
                             dismiss()
                         } label: {
                             Image(systemName: "xmark")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.custom("PatrickHand-Regular", size: 14))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                     }
@@ -66,7 +66,7 @@ struct FocusModeView: View {
 
             // Message
             Text("Instead of scrolling,\nspend some time on this.")
-                .font(.system(size: 17, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 17))
                 .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
@@ -79,7 +79,7 @@ struct FocusModeView: View {
                 startTimer()
             } label: {
                 Text("Start focusing")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 17))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -95,7 +95,7 @@ struct FocusModeView: View {
                 completeHabit()
             } label: {
                 Text("Mark as done (no timer)")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
 
@@ -116,7 +116,7 @@ struct FocusModeView: View {
                     .scaleEffect(0.8)
 
                 Text(habit.name)
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 18))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
             }
 
@@ -141,7 +141,7 @@ struct FocusModeView: View {
 
             // Lock message
             Text("Phone is locked to other apps")
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 13))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
             Spacer()
@@ -152,9 +152,9 @@ struct FocusModeView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.custom("PatrickHand-Regular", size: 18))
                     Text("Done — I did it")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 17))
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -171,7 +171,7 @@ struct FocusModeView: View {
                 stopTimer()
             } label: {
                 Text("End session early")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
             .padding(.bottom, 32)
@@ -187,14 +187,14 @@ struct FocusModeView: View {
 
             // Celebration
             Text("🎉")
-                .font(.system(size: 64))
+                .font(.custom("PatrickHand-Regular", size: 64))
 
             Text("Nice work!")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 28))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
             Text(habit.name)
-                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 18))
                 .foregroundStyle(JournalTheme.Colors.amber)
 
             // Status
@@ -204,18 +204,18 @@ struct FocusModeView: View {
 
                 if undoneCount > 0 {
                     Text("\(undoneCount) thing\(undoneCount == 1 ? "" : "s") left today")
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 15))
                         .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
                 } else {
                     Text("All must-dos complete! 🔥")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 15))
                         .foregroundStyle(JournalTheme.Colors.successGreen)
                 }
 
                 let streak = store.currentGoodDayStreak()
                 if streak > 0 {
                     Text("\(streak)-day streak")
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
             }
@@ -236,7 +236,7 @@ struct FocusModeView: View {
                 dismiss()
             } label: {
                 Text("Back to habits")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 17))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -258,12 +258,12 @@ struct FocusModeView: View {
             habitIcon
 
             Text(habit.name)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 22))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
             if let criteria = habit.successCriteria, !criteria.isEmpty {
                 Text(criteria)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
         }
@@ -284,7 +284,7 @@ struct FocusModeView: View {
                     .frame(width: 72, height: 72)
                     .overlay(
                         Text(String(habit.name.prefix(1)))
-                            .font(.system(size: 32, weight: .semibold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 32))
                             .foregroundStyle(JournalTheme.Colors.amber)
                     )
             }
@@ -300,7 +300,7 @@ struct FocusModeView: View {
                 }
             } label: {
                 Image(systemName: "minus")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(timerMinutes > 5 ? JournalTheme.Colors.inkBlack : JournalTheme.Colors.completedGray)
                     .frame(width: 40, height: 40)
                     .background(
@@ -317,10 +317,10 @@ struct FocusModeView: View {
             // Timer display
             VStack(spacing: 2) {
                 Text("\(timerMinutes)")
-                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 36))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                 Text("minutes")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
             .frame(width: 100)
@@ -332,7 +332,7 @@ struct FocusModeView: View {
                 }
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(timerMinutes < 120 ? JournalTheme.Colors.inkBlack : JournalTheme.Colors.completedGray)
                     .frame(width: 40, height: 40)
                     .background(

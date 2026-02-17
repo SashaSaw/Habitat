@@ -64,7 +64,7 @@ struct CriteriaEditorView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                 Text("Add another")
                     .font(JournalTheme.Fonts.habitCriteria())
             }
@@ -95,7 +95,7 @@ struct CriteriaEditorView: View {
                         }
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 18))
+                            .font(.custom("PatrickHand-Regular", size: 18))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     }
                 }
@@ -136,9 +136,9 @@ struct CriteriaEditorView: View {
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: mode == .measure ? "number" : "clock")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                         Text(mode.rawValue)
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 12))
                     }
                     .foregroundStyle(isSelected ? .white : JournalTheme.Colors.inkBlack)
                     .padding(.horizontal, 10)
@@ -173,7 +173,7 @@ struct CriteriaEditorView: View {
                         onChanged?()
                     }
                 ))
-                .font(.system(size: 17, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 17))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
                 .keyboardType(.decimalPad)
                 .frame(width: 60)
@@ -190,7 +190,7 @@ struct CriteriaEditorView: View {
                 // Unit display
                 if !criteria[index].unit.isEmpty {
                     Text(criteria[index].isCustomUnit ? criteria[index].customUnit : criteria[index].unit)
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 15))
                         .foregroundStyle(JournalTheme.Colors.inkBlue)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -236,7 +236,7 @@ struct CriteriaEditorView: View {
             ForEach(Self.unitCategories, id: \.category) { category in
                 HStack(spacing: 6) {
                     Text(category.category)
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 10))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                         .frame(width: 50, alignment: .trailing)
 
@@ -253,7 +253,7 @@ struct CriteriaEditorView: View {
             // Custom unit row
             HStack(spacing: 6) {
                 Text("Custom")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 10))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
                     .frame(width: 50, alignment: .trailing)
 
@@ -266,7 +266,7 @@ struct CriteriaEditorView: View {
                             onChanged?()
                         }
                     ))
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
@@ -290,9 +290,9 @@ struct CriteriaEditorView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "pencil")
-                                .font(.system(size: 10))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                             Text("Custom")
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 13))
                         }
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                         .padding(.horizontal, 12)
@@ -325,7 +325,7 @@ struct CriteriaEditorView: View {
             Feedback.selection()
         } label: {
             Text(unit)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 13))
                 .foregroundStyle(isSelected ? .white : JournalTheme.Colors.inkBlack)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
@@ -397,22 +397,20 @@ struct CriteriaEditorView: View {
                 return entry
             }
 
-            // Parse as number + unit
+            // Parse as number + unit (handles ranges like "2-3L" or "2-3 litres")
             var numberPart = ""
             var unitPart = ""
-            var foundNonDigit = false
 
-            for char in part {
-                if !foundNonDigit && (char.isNumber || char == ".") {
-                    numberPart.append(char)
-                } else {
-                    foundNonDigit = true
-                    unitPart.append(char)
-                }
+            // Extract trailing unit (letters only) from the end
+            var chars = Array(part)
+            var unitChars: [Character] = []
+            while let last = chars.last, last.isLetter {
+                unitChars.insert(chars.removeLast(), at: 0)
             }
+            unitPart = String(unitChars).trimmingCharacters(in: .whitespaces)
 
-            numberPart = numberPart.trimmingCharacters(in: .whitespaces)
-            unitPart = unitPart.trimmingCharacters(in: .whitespaces)
+            // The rest is the number/range part
+            numberPart = String(chars).trimmingCharacters(in: .whitespaces)
 
             guard !numberPart.isEmpty else { return nil }
 
@@ -420,9 +418,27 @@ struct CriteriaEditorView: View {
             entry.mode = .measure
             entry.value = numberPart
 
-            // Check if unit matches a predefined one
+            // Check if unit matches a predefined one (including common abbreviations)
+            let unitAbbreviations: [String: String] = [
+                "l": "litres", "L": "litres", "ltr": "litres", "litre": "litres",
+                "ml": "ml", "ML": "ml",
+                "kg": "kg", "KG": "kg", "kilo": "kg", "kilos": "kg",
+                "g": "g", "gram": "g", "grams": "g",
+                "lb": "lbs", "pound": "lbs", "pounds": "lbs",
+                "m": "m", "meter": "m", "meters": "m", "metre": "m", "metres": "m",
+                "km": "km", "kilometer": "km", "kilometers": "km",
+                "mi": "miles", "mile": "miles",
+                "sec": "seconds", "secs": "seconds", "second": "seconds",
+                "min": "minutes", "mins": "minutes", "minute": "minutes",
+                "hr": "hours", "hrs": "hours", "hour": "hours",
+            ]
+
             let allPredefined = unitCategories.flatMap(\.units)
-            if allPredefined.contains(where: { $0.lowercased() == unitPart.lowercased() }) {
+            let normalizedUnit = unitAbbreviations[unitPart] ?? unitAbbreviations[unitPart.lowercased()]
+
+            if let normalized = normalizedUnit, allPredefined.contains(normalized) {
+                entry.unit = normalized
+            } else if allPredefined.contains(where: { $0.lowercased() == unitPart.lowercased() }) {
                 entry.unit = allPredefined.first(where: { $0.lowercased() == unitPart.lowercased() }) ?? unitPart
             } else if !unitPart.isEmpty {
                 entry.isCustomUnit = true

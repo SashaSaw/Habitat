@@ -50,14 +50,14 @@ struct GroupIconView: View {
             // Group name with "group" label — same fixed height as HabitIconView
             VStack(spacing: 2) {
                 Text(group.name)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .multilineTextAlignment(.center)
 
                 Text("group")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 9))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
             .frame(width: iconSize + 16, height: 32, alignment: .top)
@@ -118,10 +118,10 @@ struct MiniHabitIcon: View {
 
                 if let emoji = emoji {
                     Text(emoji)
-                        .font(.system(size: 12))
+                        .font(.custom("PatrickHand-Regular", size: 12))
                 } else {
                     Text(initial)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.custom("PatrickHand-Regular", size: 10))
                         .foregroundStyle(.white)
                 }
             }
@@ -176,7 +176,7 @@ struct GroupDetailSheet: View {
 
                         // Inline name editor
                         TextField("Group name", text: $groupName)
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 22))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
                             .multilineTextAlignment(.center)
                             .textFieldStyle(.plain)
@@ -188,7 +188,7 @@ struct GroupDetailSheet: View {
                         // Badges
                         HStack(spacing: 8) {
                             Text(group.tier.displayName.uppercased())
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                                 .foregroundStyle(group.tier == .mustDo ? JournalTheme.Colors.amber : JournalTheme.Colors.completedGray)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
@@ -198,7 +198,7 @@ struct GroupDetailSheet: View {
                                 )
 
                             Text("Complete \(group.requireCount) of \(group.habitIds.count)")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
@@ -266,7 +266,7 @@ struct GroupDetailSheet: View {
                                                         .frame(width: 28, height: 28)
 
                                                     Text(String(habit.name.prefix(1)).uppercased())
-                                                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                                                        .font(.custom("PatrickHand-Regular", size: 12))
                                                         .foregroundStyle(JournalTheme.Colors.inkBlue)
                                                 }
 
@@ -277,7 +277,7 @@ struct GroupDetailSheet: View {
                                                 Spacer()
 
                                                 Image(systemName: "plus.circle")
-                                                    .font(.system(size: 16))
+                                                    .font(.custom("PatrickHand-Regular", size: 16))
                                                     .foregroundStyle(JournalTheme.Colors.teal)
                                             }
                                             .padding(.horizontal, 14)
@@ -304,7 +304,7 @@ struct GroupDetailSheet: View {
                                 } label: {
                                     HStack(spacing: 12) {
                                         Image(systemName: "plus.circle")
-                                            .font(.system(size: 18))
+                                            .font(.custom("PatrickHand-Regular", size: 18))
                                             .foregroundStyle(JournalTheme.Colors.teal)
 
                                         Text("Create new sub-habit")
@@ -327,7 +327,7 @@ struct GroupDetailSheet: View {
                                         }
                                     } label: {
                                         Text("Cancel")
-                                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                                            .font(.custom("PatrickHand-Regular", size: 14))
                                             .foregroundStyle(JournalTheme.Colors.completedGray)
                                     }
                                     .padding(.horizontal, 14)
@@ -350,7 +350,7 @@ struct GroupDetailSheet: View {
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "plus")
-                                        .font(.system(size: 14, weight: .medium))
+                                        .font(.custom("PatrickHand-Regular", size: 14))
                                         .foregroundStyle(JournalTheme.Colors.completedGray)
 
                                     Text("Add sub-habit...")
@@ -377,7 +377,7 @@ struct GroupDetailSheet: View {
                     // MARK: - Explanatory Callout
                     HStack(spacing: 10) {
                         Text("Complete any one of these sub-habits to tick off \(group.name) for the day. Stats track each one separately.")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 13))
                             .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.6))
                     }
                     .padding(14)
@@ -414,7 +414,7 @@ struct GroupDetailSheet: View {
                             // Hobby toggle
                             HStack(spacing: 12) {
                                 Image(systemName: "camera.fill")
-                                    .font(.system(size: 14))
+                                    .font(.custom("PatrickHand-Regular", size: 14))
                                     .foregroundStyle(JournalTheme.Colors.teal)
                                     .frame(width: 24)
 
@@ -537,7 +537,7 @@ struct GroupDetailSheet: View {
                     .frame(width: 28, height: 28)
 
                 Text(String(habit.name.prefix(1)).uppercased())
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.inkBlue)
             }
 
@@ -559,7 +559,7 @@ struct GroupDetailSheet: View {
                     editingHabitId = nil
                 } label: {
                     Text("Save")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(JournalTheme.Colors.teal)
                 }
             } else {
@@ -571,7 +571,7 @@ struct GroupDetailSheet: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
         }
@@ -610,7 +610,7 @@ struct GroupDetailSheet: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(iconColor)
                     .frame(width: 24)
 
@@ -625,7 +625,7 @@ struct GroupDetailSheet: View {
                     .foregroundStyle(JournalTheme.Colors.completedGray)
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
             .padding(14)

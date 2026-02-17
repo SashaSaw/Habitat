@@ -46,7 +46,7 @@ struct TimelineSchedulerView: View {
             HStack {
                 ForEach(hourMarkers, id: \.self) { hour in
                     Text(formatHour(hour))
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.custom("PatrickHand-Regular", size: 10))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                     if hour < 24 {
                         Spacer()
@@ -64,7 +64,7 @@ struct TimelineSchedulerView: View {
 
                 if notificationMinutes.count > 0 {
                     Text("Tap point to remove")
-                        .font(.system(size: 11))
+                        .font(.custom("PatrickHand-Regular", size: 11))
                         .foregroundStyle(JournalTheme.Colors.completedGray.opacity(0.7))
                 }
             }
@@ -140,7 +140,7 @@ struct TimelinePoint: View {
         VStack(spacing: 2) {
             // Time label
             Text(timeString)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.custom("PatrickHand-Regular", size: 10))
                 .foregroundStyle(JournalTheme.Colors.inkBlue)
                 .opacity(isDragging ? 1 : 0.9)
 

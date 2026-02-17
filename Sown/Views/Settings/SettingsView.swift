@@ -20,12 +20,12 @@ struct SettingsView: View {
                     // Sound Effects toggle
                     HStack {
                         Image(systemName: soundEffectsEnabled ? "speaker.wave.2" : "speaker.slash")
-                            .font(.system(size: 18))
+                            .font(.custom("PatrickHand-Regular", size: 18))
                             .foregroundStyle(JournalTheme.Colors.teal)
                             .frame(width: 24)
 
                         Text("Sound Effects")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 17))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                         Spacer()
@@ -54,17 +54,17 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: "lock.shield")
-                                .font(.system(size: 18))
+                                .font(.custom("PatrickHand-Regular", size: 18))
                                 .foregroundStyle(JournalTheme.Colors.amber)
 
                             Text("App Blocking")
-                                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 17))
                                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                             Spacer()
 
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.custom("PatrickHand-Regular", size: 14))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                         .padding(16)
@@ -86,23 +86,23 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: "archivebox")
-                                .font(.system(size: 18))
+                                .font(.custom("PatrickHand-Regular", size: 18))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
                             Text("Archived Habits")
-                                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 17))
                                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                             Spacer()
 
                             if !store.archivedHabits.isEmpty {
                                 Text("\(store.archivedHabits.count)")
-                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 14))
                                     .foregroundStyle(JournalTheme.Colors.completedGray)
                             }
 
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.custom("PatrickHand-Regular", size: 14))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                         .padding(16)
@@ -149,11 +149,11 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Image(systemName: "clock")
-                    .font(.system(size: 18))
+                    .font(.custom("PatrickHand-Regular", size: 18))
                     .foregroundStyle(JournalTheme.Colors.teal)
 
                 Text("My Schedule")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 17))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
             }
 
@@ -163,14 +163,14 @@ struct SettingsView: View {
             }
 
             Text("Change your times to adjust reminder schedule.")
-                .font(.system(size: 12, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 12))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
             // Time adjustment pickers
             VStack(spacing: 8) {
                 HStack {
                     Text("Wake time")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 14))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
                     Spacer()
                     DatePicker("", selection: Binding(
@@ -187,7 +187,7 @@ struct SettingsView: View {
 
                 HStack {
                     Text("Bed time")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 14))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
                     Spacer()
                     DatePicker("", selection: Binding(
@@ -217,9 +217,9 @@ struct SettingsView: View {
     private func scheduleRow(label: String, time: String, emoji: String) -> some View {
         HStack {
             Text(emoji)
-                .font(.system(size: 14))
+                .font(.custom("PatrickHand-Regular", size: 14))
             Text(label)
-                .font(.system(size: 14, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 14))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
             Spacer()
             Text(time)

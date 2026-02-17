@@ -118,11 +118,11 @@ struct JournalSummaryCard: View {
             HStack(spacing: 24) {
                 VStack(spacing: 8) {
                     Image(systemName: "book.fill")
-                        .font(.system(size: 24))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(JournalTheme.Colors.inkBlue)
 
                     Text("\(notesThisMonth)")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                     Text("Entries")
@@ -133,11 +133,11 @@ struct JournalSummaryCard: View {
 
                 VStack(spacing: 8) {
                     Image(systemName: "heart.fill")
-                        .font(.system(size: 24))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(averageFulfillment >= 6 ? JournalTheme.Colors.goodDayGreenDark : JournalTheme.Colors.amber)
 
                     Text(averageFulfillment > 0 ? String(format: "%.1f", averageFulfillment) : "—")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                     Text("Avg Score")
@@ -148,11 +148,11 @@ struct JournalSummaryCard: View {
 
                 VStack(spacing: 8) {
                     Image(systemName: "star.fill")
-                        .font(.system(size: 24))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(.yellow)
 
                     Text("\(Int(store.goodDayRate(days: 30) * 100))%")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                     Text("Good Days")
@@ -193,12 +193,12 @@ struct JournalDayRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(isToday ? "Today" : dateFormatter.string(from: date))
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 14))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                     if let note = note, note.isLocked {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 9))
+                            .font(.custom("PatrickHand-Regular", size: 9))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     }
                 }
@@ -207,7 +207,7 @@ struct JournalDayRow: View {
                     HStack(spacing: 6) {
                         // Fulfillment score badge
                         Text("\(note.fulfillmentScore)/10")
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 11))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -235,7 +235,7 @@ struct JournalDayRow: View {
             Spacer()
 
             Image(systemName: note != nil ? "chevron.right" : (canCreateNote(for: date) ? "plus" : ""))
-                .font(.system(size: 12, weight: .medium))
+                .font(.custom("PatrickHand-Regular", size: 12))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
         }
         .padding(12)

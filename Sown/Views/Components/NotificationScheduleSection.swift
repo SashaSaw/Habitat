@@ -40,7 +40,7 @@ struct NotificationScheduleSection: View {
                         DaySelectorView(selectedDays: $weeklyNotificationDays)
 
                         Text("Notifications will be sent at 9:00 AM")
-                            .font(.system(size: 11))
+                            .font(.custom("PatrickHand-Regular", size: 11))
                             .foregroundStyle(JournalTheme.Colors.completedGray.opacity(0.7))
                     }
 

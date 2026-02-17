@@ -57,7 +57,7 @@ struct BlockSetupView: View {
                         Feedback.buttonPress()
                         dismiss()
                     }
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(JournalTheme.Colors.inkBlue)
                 }
             }
@@ -96,15 +96,15 @@ struct BlockSetupView: View {
     private var authorizationCard: some View {
         VStack(spacing: 16) {
             Image(systemName: "lock.shield")
-                .font(.system(size: 36))
+                .font(.custom("PatrickHand-Regular", size: 36))
                 .foregroundStyle(JournalTheme.Colors.amber)
 
             Text("Screen Time Access Required")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 17))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
             Text("Sown needs Screen Time permission to block distracting apps and show your habits instead.")
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 14))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -116,7 +116,7 @@ struct BlockSetupView: View {
                 }
             } label: {
                 Text("Grant Access")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -148,16 +148,16 @@ struct BlockSetupView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("App Blocking")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                     if isLocked, let remaining = blockSettings.timeRemainingString {
                         Text("Locked · \(remaining)")
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 13))
                             .foregroundStyle(JournalTheme.Colors.negativeRedDark)
                     } else {
                         Text(blockSettings.isEnabled ? "Active · \(selectedCount) selected" : "Disabled")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 13))
                             .foregroundStyle(blockSettings.isEnabled ? JournalTheme.Colors.successGreen : JournalTheme.Colors.completedGray)
                     }
                 }
@@ -167,7 +167,7 @@ struct BlockSetupView: View {
                 if isLocked {
                     // Show a locked icon instead of a toggle
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(JournalTheme.Colors.negativeRedDark)
                         .frame(width: 44, height: 30)
                 } else {
@@ -192,10 +192,10 @@ struct BlockSetupView: View {
             if isLocked {
                 HStack(spacing: 8) {
                     Image(systemName: "info.circle.fill")
-                        .font(.system(size: 12))
+                        .font(.custom("PatrickHand-Regular", size: 12))
                         .foregroundStyle(JournalTheme.Colors.negativeRedDark.opacity(0.6))
                     Text("App blocking cannot be turned off until the schedule ends.")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 12))
                         .foregroundStyle(JournalTheme.Colors.negativeRedDark.opacity(0.7))
                     Spacer()
                 }
@@ -244,11 +244,11 @@ struct BlockSetupView: View {
     private var scheduleCardHeader: some View {
         HStack {
             Image(systemName: "clock")
-                .font(.system(size: 15))
+                .font(.custom("PatrickHand-Regular", size: 15))
                 .foregroundStyle(JournalTheme.Colors.amber)
 
             Text("Block Schedule")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 15))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
         }
     }
@@ -265,7 +265,7 @@ struct BlockSetupView: View {
             }
 
             Image(systemName: "arrow.right")
-                .font(.system(size: 14, weight: .medium))
+                .font(.custom("PatrickHand-Regular", size: 14))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
             timeButton(
@@ -288,10 +288,10 @@ struct BlockSetupView: View {
         return Button(action: action) {
             VStack(spacing: 2) {
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 11))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
                 Text(time)
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 18))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
             }
             .padding(.horizontal, 16)
@@ -313,6 +313,7 @@ struct BlockSetupView: View {
             DatePicker("Start time", selection: $blockSettings.startTime, displayedComponents: .hourAndMinute)
                 .datePickerStyle(.wheel)
                 .labelsHidden()
+                .colorScheme(.light)
                 .frame(maxHeight: 120)
                 .transition(.opacity.combined(with: .move(edge: .top)))
         }
@@ -321,6 +322,7 @@ struct BlockSetupView: View {
             DatePicker("End time", selection: $blockSettings.endTime, displayedComponents: .hourAndMinute)
                 .datePickerStyle(.wheel)
                 .labelsHidden()
+                .colorScheme(.light)
                 .frame(maxHeight: 120)
                 .transition(.opacity.combined(with: .move(edge: .top)))
         }
@@ -342,7 +344,7 @@ struct BlockSetupView: View {
                     }
                 } label: {
                     Text(label)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(isActive ? .white : JournalTheme.Colors.completedGray)
                         .frame(width: 36, height: 36)
                         .background(
@@ -373,23 +375,23 @@ struct BlockSetupView: View {
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "apps.iphone")
-                        .font(.system(size: 20))
+                        .font(.custom("PatrickHand-Regular", size: 20))
                         .foregroundStyle(JournalTheme.Colors.coral)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Choose Apps & Categories")
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 15))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                         let appCount = screenTimeManager.activitySelection.applicationTokens.count
                         let catCount = screenTimeManager.activitySelection.categoryTokens.count
                         if appCount > 0 || catCount > 0 {
                             Text(selectionSummary(apps: appCount, categories: catCount))
-                                .font(.system(size: 12, weight: .regular, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 12))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         } else {
                             Text("No apps selected yet")
-                                .font(.system(size: 12, weight: .regular, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 12))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                     }
@@ -397,7 +399,7 @@ struct BlockSetupView: View {
                     Spacer()
 
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
                 .padding(16)
@@ -429,7 +431,7 @@ struct BlockSetupView: View {
     private var infoCallout: some View {
         HStack(alignment: .top, spacing: 12) {
             Text("💡")
-                .font(.system(size: 20))
+                .font(.custom("PatrickHand-Regular", size: 20))
 
             Text("When you try to open a blocked app, you'll see a shield. Open Sown to see your habits for today instead.")
                 .font(JournalTheme.Fonts.habitCriteria())

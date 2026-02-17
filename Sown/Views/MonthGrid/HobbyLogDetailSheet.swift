@@ -56,7 +56,7 @@ struct HobbyLogDetailSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Habit name
                     Text(habit.name)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                     // Date right above the log content
@@ -178,7 +178,7 @@ struct HobbyLogDetailSheet: View {
         if loadedImages.isEmpty && (currentLog?.note == nil || currentLog?.note?.isEmpty == true) {
             VStack(spacing: 12) {
                 Image(systemName: "photo.on.rectangle.angled")
-                    .font(.system(size: 48))
+                    .font(.custom("PatrickHand-Regular", size: 48))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
 
                 Text("No photo or notes recorded")
@@ -190,7 +190,7 @@ struct HobbyLogDetailSheet: View {
                         startEditing()
                     } label: {
                         Text("Add Notes & Photos")
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 16))
                             .foregroundStyle(JournalTheme.Colors.inkBlue)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
@@ -241,7 +241,7 @@ struct HobbyLogDetailSheet: View {
                             }
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 18))
+                                .font(.custom("PatrickHand-Regular", size: 18))
                                 .foregroundStyle(.white)
                                 .background(Circle().fill(Color.black.opacity(0.5)).frame(width: 16, height: 16))
                         }
@@ -255,11 +255,11 @@ struct HobbyLogDetailSheet: View {
                     } label: {
                         VStack(spacing: 6) {
                             Image(systemName: "camera")
-                                .font(.system(size: 24))
+                                .font(.custom("PatrickHand-Regular", size: 24))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
                             Text(editImages.isEmpty ? "Add Photo" : "+")
-                                .font(.system(size: 10, weight: .medium))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                         .frame(width: 80, height: 80)
@@ -360,7 +360,7 @@ struct GroupHobbyLogSheet: View {
                     // Header
                     VStack(alignment: .leading, spacing: 8) {
                         Text(group.name)
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 24))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                         Text(dateFormatter.string(from: date))
@@ -377,7 +377,7 @@ struct GroupHobbyLogSheet: View {
                     if habits.isEmpty {
                         VStack(spacing: 12) {
                             Image(systemName: "photo.on.rectangle.angled")
-                                .font(.system(size: 48))
+                                .font(.custom("PatrickHand-Regular", size: 48))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
                             Text("No hobby logs for this date")
@@ -418,7 +418,7 @@ struct GroupSubHabitLogView: View {
         VStack(alignment: .leading, spacing: 12) {
             // Sub-habit name
             Text(habit.name)
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 18))
                 .foregroundStyle(JournalTheme.Colors.inkBlue)
 
             // Photos

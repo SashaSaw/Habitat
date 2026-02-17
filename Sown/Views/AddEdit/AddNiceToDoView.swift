@@ -161,7 +161,7 @@ struct AddNiceToDoView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Text(suggestion.emoji)
-                                .font(.system(size: 15))
+                                .font(.custom("PatrickHand-Regular", size: 15))
                             Text(suggestion.name)
                                 .font(JournalTheme.Fonts.habitCriteria())
                                 .foregroundStyle(JournalTheme.Colors.inkBlack)
@@ -218,7 +218,7 @@ struct AddNiceToDoView: View {
                             }
                         } label: {
                             Image(systemName: "minus")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.custom("PatrickHand-Regular", size: 14))
                                 .foregroundStyle(JournalTheme.Colors.navy)
                                 .frame(width: 36, height: 36)
                                 .background(Circle().fill(JournalTheme.Colors.paperLight))
@@ -233,7 +233,7 @@ struct AddNiceToDoView: View {
                             }
                         } label: {
                             Image(systemName: "plus")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.custom("PatrickHand-Regular", size: 14))
                                 .foregroundStyle(JournalTheme.Colors.navy)
                                 .frame(width: 36, height: 36)
                                 .background(Circle().fill(JournalTheme.Colors.paperLight))
@@ -454,7 +454,7 @@ struct AddNiceToDoView: View {
     private var submitButton: some View {
         Button { addNiceToDo() } label: {
             Text("Add Nice-to-do")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 17))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)

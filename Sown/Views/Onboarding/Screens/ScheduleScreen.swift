@@ -28,7 +28,7 @@ struct ScheduleScreen: View {
                         HStack {
                             Toggle(isOn: $data.hasSetWorkHours) {
                                 Text("I have set work hours")
-                                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 15))
                                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                             }
                             .tint(JournalTheme.Colors.navy)
@@ -58,7 +58,7 @@ struct ScheduleScreen: View {
             VStack {
                 Button(action: onContinue) {
                     Text("Continue")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
@@ -98,10 +98,10 @@ struct ScheduleScreen: View {
     private func timeRow(label: String, emoji: String, time: Binding<Date>) -> some View {
         HStack {
             Text(emoji)
-                .font(.system(size: 20))
+                .font(.custom("PatrickHand-Regular", size: 20))
 
             Text(label)
-                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 15))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
             Spacer()

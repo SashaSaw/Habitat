@@ -82,10 +82,10 @@ struct HabitIconView: View {
 
                     if let emoji = emoji {
                         Text(emoji)
-                            .font(.system(size: 36))
+                            .font(.custom("PatrickHand-Regular", size: 36))
                     } else {
                         Text(initials)
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 24))
                             .foregroundStyle(.white)
                     }
                 }
@@ -93,7 +93,7 @@ struct HabitIconView: View {
 
             // Habit name — fixed height so icons stay aligned across the grid
             Text(displayName)
-                .font(.system(size: 12, weight: .medium))
+                .font(.custom("PatrickHand-Regular", size: 12))
                 .foregroundStyle(isArchived ? JournalTheme.Colors.completedGray : JournalTheme.Colors.inkBlack)
                 .lineLimit(2)
                 .truncationMode(.tail)
@@ -141,13 +141,13 @@ struct AddHabitIconView: View {
                     .frame(width: iconSize, height: iconSize)
 
                 Image(systemName: "plus")
-                    .font(.system(size: 28, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 28))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
 
             // Label — same fixed height as HabitIconView for alignment
             Text("Add Habit")
-                .font(.system(size: 12, weight: .medium))
+                .font(.custom("PatrickHand-Regular", size: 12))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)

@@ -61,19 +61,19 @@ struct AddCustomPillField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Something else?")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 13))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
             HStack(spacing: 10) {
                 TextField(placeholder, text: $text)
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 15))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .focused($isFocused)
                     .onSubmit { addPill() }
 
                 Button(action: addPill) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 24))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(trimmedText.isEmpty ? JournalTheme.Colors.lineLight : JournalTheme.Colors.navy)
                 }
                 .disabled(trimmedText.isEmpty)
@@ -127,15 +127,15 @@ private struct SuggestionPill: View {
         Button(action: onTap) {
             HStack(spacing: 6) {
                 Text(emoji)
-                    .font(.system(size: 15))
+                    .font(.custom("PatrickHand-Regular", size: 15))
                 Text(name)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(isSelected ? Color.white : JournalTheme.Colors.inkBlack)
 
                 // Show X on custom pills to hint they can be removed
                 if isCustom {
                     Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.custom("PatrickHand-Regular", size: 10))
                         .foregroundStyle(Color.white.opacity(0.7))
                 }
             }

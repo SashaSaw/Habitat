@@ -53,7 +53,7 @@ struct InterceptView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 14))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     }
                 }
@@ -73,9 +73,9 @@ struct InterceptView: View {
                         } label: {
                             HStack(spacing: 4) {
                                 Image(systemName: "chevron.left")
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.custom("PatrickHand-Regular", size: 13))
                                 Text("Back")
-                                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 15))
                             }
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
@@ -97,7 +97,7 @@ struct InterceptView: View {
 
             // Message
             Text("Every moment of weakness is a chance to choose the right path.")
-                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 15))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
@@ -106,7 +106,7 @@ struct InterceptView: View {
 
             // Question
             Text("Choose wisely.")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 28))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
@@ -121,10 +121,10 @@ struct InterceptView: View {
             } label: {
                 VStack(spacing: 6) {
                     Text("I am the kind of person who")
-                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 15))
                         .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
                     Text("is controlled by their phone")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 17))
                         .foregroundStyle(JournalTheme.Colors.negativeRedDark)
                 }
                 .frame(maxWidth: .infinity)
@@ -147,7 +147,7 @@ struct InterceptView: View {
                     .fill(JournalTheme.Colors.lineLight)
                     .frame(height: 1)
                 Text("or")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
                 Rectangle()
                     .fill(JournalTheme.Colors.lineLight)
@@ -165,10 +165,10 @@ struct InterceptView: View {
             } label: {
                 VStack(spacing: 6) {
                     Text("I am the kind of person who")
-                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 15))
                         .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
                     Text("I promised myself I would be")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 17))
                         .foregroundStyle(JournalTheme.Colors.successGreen)
                 }
                 .frame(maxWidth: .infinity)
@@ -206,13 +206,13 @@ struct InterceptView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     // Header
                     Text("Be honest with yourself first:")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 22))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
                         .padding(.top, 20)
 
                     // The sentence to copy
                     Text("\u{201C}\(shameSentence)\u{201D}")
-                        .font(.system(size: 16, weight: .medium, design: .serif))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(JournalTheme.Colors.negativeRedDark.opacity(0.8))
                         .italic()
                         .lineSpacing(6)
@@ -231,11 +231,11 @@ struct InterceptView: View {
                     // Text editor
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Type it here:")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 14))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
 
                         TextEditor(text: $typedSentence)
-                            .font(.system(size: 16, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 16))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 100)
@@ -262,7 +262,7 @@ struct InterceptView: View {
                             Feedback.selection()
                         } label: {
                             Text("Continue to \(blockedAppName) (5 min)")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 16))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
@@ -282,7 +282,7 @@ struct InterceptView: View {
                         Feedback.selection()
                     } label: {
                         Text("You can still choose the right path")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 14))
                             .foregroundStyle(JournalTheme.Colors.successGreen)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
@@ -319,19 +319,19 @@ struct InterceptView: View {
                     .animation(.linear(duration: 1), value: countdownSeconds)
 
                 Text("\(countdownSeconds)")
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 40))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .contentTransition(.numericText())
             }
             .padding(.bottom, 32)
 
             Text("Are you sure?")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 22))
                 .foregroundStyle(JournalTheme.Colors.inkBlack)
                 .padding(.bottom, 8)
 
             Text("You still have time to change your mind.")
-                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 15))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, contentPadding)
@@ -347,7 +347,7 @@ struct InterceptView: View {
                 Feedback.selection()
             } label: {
                 Text("I want to choose the right path")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -371,7 +371,7 @@ struct InterceptView: View {
                     dismiss()
                 } label: {
                     Text("Continue to \(blockedAppName) (5 min)")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -445,11 +445,11 @@ struct InterceptView: View {
                     .frame(width: 36, height: 36)
 
                 Text(blockedAppEmoji)
-                    .font(.system(size: 18))
+                    .font(.custom("PatrickHand-Regular", size: 18))
             }
 
             Text("\(blockedAppName) is blocked")
-                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 14))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
         }
         .padding(.horizontal, 14)
@@ -475,27 +475,27 @@ struct InterceptView: View {
             if allDone {
                 HStack {
                     Text("🔥 All done! Your streak is safe.")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(JournalTheme.Colors.successGreen)
                     Spacer()
                 }
             } else {
                 HStack {
                     Text("You chose to be the person you promised.")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(JournalTheme.Colors.successGreen)
                     Spacer()
                 }
 
                 if undoneCount > 0 {
                     Text("You have \(undoneCount) thing\(undoneCount == 1 ? "" : "s") to do — let's go.")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
                 }
 
                 if streak > 0 {
                     Text("Keep your \(streak)-day streak alive 🔥")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.5))
                 }
             }
@@ -606,7 +606,7 @@ struct InterceptView: View {
                 ForEach(completedMustDo) { habit in
                     HStack(spacing: 12) {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.custom("PatrickHand-Regular", size: 12))
                             .foregroundStyle(JournalTheme.Colors.successGreen)
 
                         Text(habit.name)
@@ -624,7 +624,7 @@ struct InterceptView: View {
                 ForEach(completedTasks) { task in
                     HStack(spacing: 12) {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.custom("PatrickHand-Regular", size: 12))
                             .foregroundStyle(JournalTheme.Colors.teal)
 
                         Text(task.name)
@@ -710,7 +710,7 @@ struct InterceptHabitRow: View {
                         .frame(width: 28, height: 28)
                         .overlay(
                             Text(String(habit.name.prefix(1)))
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 14))
                                 .foregroundStyle(habit.tier == .mustDo
                                     ? JournalTheme.Colors.amber
                                     : JournalTheme.Colors.teal)
@@ -721,12 +721,12 @@ struct InterceptHabitRow: View {
                     // Show habit prompt as primary text for hobbies, with name smaller
                     if showPrompt && !habit.habitPrompt.isEmpty {
                         Text(habit.habitPrompt)
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 14))
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
                             .lineLimit(2)
 
                         Text(habit.name)
-                            .font(.system(size: 11, weight: .regular, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 11))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     } else {
                         Text(habit.name)
@@ -735,11 +735,11 @@ struct InterceptHabitRow: View {
 
                         if let group = groupName {
                             Text(group)
-                                .font(.system(size: 11, weight: .regular, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 11))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         } else if let criteria = habit.successCriteria, !criteria.isEmpty {
                             Text(criteria)
-                                .font(.system(size: 11, weight: .regular, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 11))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                     }
@@ -748,7 +748,7 @@ struct InterceptHabitRow: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
             .padding(.horizontal, 24)
@@ -782,7 +782,7 @@ struct InterceptTaskRow: View {
                     .overlay {
                         if isCompleted {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                                 .foregroundStyle(JournalTheme.Colors.teal)
                         }
                     }

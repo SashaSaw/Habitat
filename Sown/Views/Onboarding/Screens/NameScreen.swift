@@ -18,20 +18,20 @@ struct NameScreen: View {
 
             VStack(spacing: 24) {
                 Text("What\u{2019}s your name?")
-                    .font(.system(size: 28, weight: .bold, design: .serif))
+                    .font(.custom("PatrickHand-Regular", size: 28))
                     .foregroundStyle(JournalTheme.Colors.navy)
                     .opacity(showContent ? 1 : 0)
                     .offset(y: showContent ? 0 : 15)
 
                 Text("We\u{2019}ll use this to personalise your experience.")
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 15))
                     .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .opacity(showContent ? 1 : 0)
                     .offset(y: showContent ? 0 : 10)
 
                 TextField("Your name", text: $nameInput)
-                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 20))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
@@ -61,7 +61,7 @@ struct NameScreen: View {
                     onContinue()
                 } label: {
                     Text("Continue")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)

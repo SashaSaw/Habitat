@@ -40,9 +40,9 @@ struct TimeSlotPicker: View {
         } label: {
             HStack(spacing: 5) {
                 Text(slot.emoji)
-                    .font(.system(size: 13))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                 Text(slot.label)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 13))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

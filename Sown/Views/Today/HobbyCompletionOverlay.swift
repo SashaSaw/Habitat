@@ -35,11 +35,11 @@ struct HobbyCompletionOverlay: View {
                 // Header
                 VStack(spacing: 4) {
                     Text(habit.name)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                     Text("Completed!")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
                 }
 
@@ -64,7 +64,7 @@ struct HobbyCompletionOverlay: View {
                                 }
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 18))
+                                    .font(.custom("PatrickHand-Regular", size: 18))
                                     .foregroundStyle(.white)
                                     .background(Circle().fill(Color.black.opacity(0.5)).frame(width: 16, height: 16))
                             }
@@ -79,11 +79,11 @@ struct HobbyCompletionOverlay: View {
                         } label: {
                             VStack(spacing: 6) {
                                 Image(systemName: "camera")
-                                    .font(.system(size: 24))
+                                    .font(.custom("PatrickHand-Regular", size: 24))
                                     .foregroundStyle(JournalTheme.Colors.completedGray)
 
                                 Text(selectedImages.isEmpty ? "Add Photo" : "+")
-                                    .font(.system(size: 10, weight: .medium))
+                                    .font(.custom("PatrickHand-Regular", size: 10))
                                     .foregroundStyle(JournalTheme.Colors.completedGray)
                             }
                             .frame(width: 80, height: 80)
@@ -109,7 +109,7 @@ struct HobbyCompletionOverlay: View {
                 // Note section
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Notes")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.custom("PatrickHand-Regular", size: 14))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
 
                     TextEditor(text: $note)
@@ -135,7 +135,7 @@ struct HobbyCompletionOverlay: View {
                         onDismiss()
                     } label: {
                         Text("Skip")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 16))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
@@ -150,7 +150,7 @@ struct HobbyCompletionOverlay: View {
                         onSave(noteToSave, selectedImages.map(\.image))
                     } label: {
                         Text("Save")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.custom("PatrickHand-Regular", size: 16))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)

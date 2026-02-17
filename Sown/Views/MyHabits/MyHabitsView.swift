@@ -109,7 +109,7 @@ struct MyHabitsView: View {
                         showingSettings = true
                     } label: {
                         Image(systemName: "gearshape")
-                            .font(.system(size: 20, weight: .regular))
+                            .font(.custom("PatrickHand-Regular", size: 20))
                             .foregroundStyle(JournalTheme.Colors.inkBlue)
                             .padding(8)
                     }
@@ -121,7 +121,7 @@ struct MyHabitsView: View {
                 if showGroupCallout && !store.groups.isEmpty {
                     HStack(alignment: .top, spacing: 12) {
                         Text("💡")
-                            .font(.system(size: 20))
+                            .font(.custom("PatrickHand-Regular", size: 20))
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Habit groups")
@@ -144,7 +144,7 @@ struct MyHabitsView: View {
                             }
                         } label: {
                             Image(systemName: "xmark")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.custom("PatrickHand-Regular", size: 12))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                     }

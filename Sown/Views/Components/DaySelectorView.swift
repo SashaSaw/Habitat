@@ -56,7 +56,7 @@ struct DayButton: View {
             impactFeedback.impactOccurred()
         }) {
             Text(letter)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.custom("PatrickHand-Regular", size: 14))
                 .frame(width: 36, height: 36)
                 .background(
                     Circle()

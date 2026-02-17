@@ -123,7 +123,7 @@ struct AddTodayTaskView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Text(suggestion.emoji)
-                                .font(.system(size: 15))
+                                .font(.custom("PatrickHand-Regular", size: 15))
                             Text(suggestion.name)
                                 .font(JournalTheme.Fonts.habitCriteria())
                                 .foregroundStyle(JournalTheme.Colors.inkBlack)
@@ -150,7 +150,7 @@ struct AddTodayTaskView: View {
     private var submitButton: some View {
         Button { addTask() } label: {
             Text("Add Task")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 17))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)

@@ -41,14 +41,14 @@ struct RefinementScreen: View {
             Spacer()
 
             Text("\u{1F4DD}")
-                .font(.system(size: 48))
+                .font(.custom("PatrickHand-Regular", size: 48))
 
             Text("No habits yet")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 22))
                 .foregroundStyle(JournalTheme.Colors.navy)
 
             Text("Go back and pick some habits,\nor start fresh and add them later.")
-                .font(.system(size: 15, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 15))
                 .foregroundStyle(JournalTheme.Colors.completedGray)
                 .multilineTextAlignment(.center)
 
@@ -57,7 +57,7 @@ struct RefinementScreen: View {
             VStack(spacing: 12) {
                 Button(action: onGoBack) {
                     Text("Go back")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
@@ -66,7 +66,7 @@ struct RefinementScreen: View {
 
                 Button(action: onContinue) {
                     Text("Start without habits")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
             }
@@ -99,12 +99,12 @@ struct RefinementScreen: View {
                         ForEach(data.draftGroups) { group in
                             HStack(spacing: 8) {
                                 Text(group.emoji)
-                                    .font(.system(size: 16))
+                                    .font(.custom("PatrickHand-Regular", size: 16))
                                 Text(group.name)
-                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 14))
                                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                                 Text("· do any \(group.requireCount)")
-                                    .font(.system(size: 12, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 12))
                                     .foregroundStyle(JournalTheme.Colors.completedGray)
                                 Spacer()
                                 Text("MUST DO")
@@ -126,7 +126,7 @@ struct RefinementScreen: View {
                         }
 
                         Text("These habits will be grouped together. Complete any one to satisfy the group.")
-                            .font(.system(size: 12, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 12))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     }
                     .opacity(appeared ? 1 : 0)
@@ -147,7 +147,7 @@ struct RefinementScreen: View {
             VStack(spacing: 8) {
                 Button(action: onContinue) {
                     Text(selectedCount > 0 ? "Create \(selectedCount) habit\(selectedCount == 1 ? "" : "s")" : "Start without habits")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(selectedCount > 0 ? .white : JournalTheme.Colors.navy)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
@@ -191,7 +191,7 @@ struct RefinementScreen: View {
             // Section header
             HStack(spacing: 6) {
                 Text(timeOfDay.emoji)
-                    .font(.system(size: 14))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                 Text(timeOfDay.rawValue.uppercased())
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
@@ -232,7 +232,7 @@ struct RefinementScreen: View {
                     Feedback.selection()
                 } label: {
                     Image(systemName: habit.isSelected ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 22))
+                        .font(.custom("PatrickHand-Regular", size: 22))
                         .foregroundStyle(habit.isSelected ? JournalTheme.Colors.navy : JournalTheme.Colors.lineLight)
                 }
 
@@ -240,9 +240,9 @@ struct RefinementScreen: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Text(habit.emoji)
-                            .font(.system(size: 15))
+                            .font(.custom("PatrickHand-Regular", size: 15))
                         Text(habit.name)
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 15))
                             .foregroundStyle(habit.isSelected ? JournalTheme.Colors.inkBlack : JournalTheme.Colors.completedGray)
                             .strikethrough(!habit.isSelected, color: JournalTheme.Colors.completedGray)
                     }
@@ -250,9 +250,9 @@ struct RefinementScreen: View {
                     if let group = belongsToGroup {
                         HStack(spacing: 4) {
                             Text(group.emoji)
-                                .font(.system(size: 10))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                             Text(group.name)
-                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 11))
                                 .foregroundStyle(JournalTheme.Colors.amber)
                         }
                     }
@@ -263,7 +263,7 @@ struct RefinementScreen: View {
                 // Criteria badge (tappable)
                 if !habit.successCriteria.isEmpty && !isExpanded {
                     Text(habit.successCriteria)
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 12))
                         .foregroundStyle(JournalTheme.Colors.amber)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -274,7 +274,7 @@ struct RefinementScreen: View {
 
                 // Frequency pill
                 Text(habit.frequencyType == .once ? "One-off" : habit.frequencyType.displayName)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 11))
                     .foregroundStyle(habit.frequencyType == .once ? JournalTheme.Colors.teal : JournalTheme.Colors.completedGray)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -302,11 +302,11 @@ struct RefinementScreen: View {
             if isExpanded && habit.isSelected {
                 HStack(spacing: 8) {
                     Text("Measure:")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
 
                     TextField("How will you measure this?", text: $data.draftHabits[index].successCriteria)
-                        .font(.system(size: 14, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 14))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
                         .padding(10)
                         .background(

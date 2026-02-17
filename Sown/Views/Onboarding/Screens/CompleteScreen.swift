@@ -34,13 +34,13 @@ struct CompleteScreen: View {
             VStack(spacing: 28) {
                 // Small decorative mark
                 Text("\u{270F}\u{FE0F}")
-                    .font(.system(size: 40))
+                    .font(.custom("PatrickHand-Regular", size: 40))
                     .opacity(pledgeAppeared ? 1 : 0)
                     .offset(y: pledgeAppeared ? 0 : 10)
 
                 // Intro
                 Text("Before you start, one small promise.")
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 15))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
                     .opacity(pledgeAppeared ? 1 : 0)
                     .offset(y: pledgeAppeared ? 0 : 10)
@@ -48,12 +48,12 @@ struct CompleteScreen: View {
                 // The pledge
                 VStack(spacing: 16) {
                     Text("\u{201C}I\u{2019}ll be honest with myself.\u{201D}")
-                        .font(.system(size: 24, weight: .bold, design: .serif))
+                        .font(.custom("PatrickHand-Regular", size: 24))
                         .foregroundStyle(JournalTheme.Colors.navy)
                         .multilineTextAlignment(.center)
 
                     Text("When I cross something off, it means I actually did it. No half-credits. No \u{201C}close enough.\u{201D}\n\nThis list only works if I trust it \u{2014} and I can only trust it if I\u{2019}m truthful.\n\nSome days I\u{2019}ll get everything done. Some days I won\u{2019}t. Both are fine. What matters is that when I look at my streaks, they\u{2019}re real.")
-                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 15))
                         .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.65))
                         .multilineTextAlignment(.center)
                         .lineSpacing(5)
@@ -80,7 +80,7 @@ struct CompleteScreen: View {
                 }
             } label: {
                 Text("I promise")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
@@ -111,11 +111,11 @@ struct CompleteScreen: View {
                     HandDrawnCheckmark(size: 60, color: JournalTheme.Colors.successGreen, animated: true)
 
                     Text("You\u{2019}re all set.")
-                        .font(.system(size: 26, weight: .bold, design: .serif))
+                        .font(.custom("PatrickHand-Regular", size: 26))
                         .foregroundStyle(JournalTheme.Colors.navy)
 
                     Text("Add habits anytime from the app.")
-                        .font(.system(size: 15, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 15))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
             } else {
@@ -124,15 +124,15 @@ struct CompleteScreen: View {
                     ForEach(Array(selectedHabits.enumerated()), id: \.element.id) { index, habit in
                         HStack(spacing: 10) {
                             Text(habit.emoji)
-                                .font(.system(size: 14))
+                                .font(.custom("PatrickHand-Regular", size: 14))
 
                             Text(habit.name)
-                                .font(.system(size: 15, weight: .regular, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 15))
                                 .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                             if !habit.successCriteria.isEmpty {
                                 Text("\u{00B7} \(habit.successCriteria)")
-                                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                                    .font(.custom("PatrickHand-Regular", size: 13))
                                     .foregroundStyle(JournalTheme.Colors.completedGray)
                             }
                         }
@@ -152,11 +152,11 @@ struct CompleteScreen: View {
                         HandDrawnCheckmark(size: 50, color: JournalTheme.Colors.successGreen, animated: true)
 
                         Text("You\u{2019}re all set.")
-                            .font(.system(size: 26, weight: .bold, design: .serif))
+                            .font(.custom("PatrickHand-Regular", size: 26))
                             .foregroundStyle(JournalTheme.Colors.navy)
 
                         Text("\(selectedHabits.count) habit\(selectedHabits.count == 1 ? "" : "s") ready to track")
-                            .font(.system(size: 15, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 15))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     }
                     .frame(maxWidth: .infinity)
@@ -170,7 +170,7 @@ struct CompleteScreen: View {
             if showFinalButton {
                 Button(action: onFinish) {
                     Text("Start my day")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)

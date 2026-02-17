@@ -10,11 +10,11 @@ struct SmartReminderSettingsCard: View {
             // Header
             HStack {
                 Image(systemName: "bell.badge")
-                    .font(.system(size: 18))
+                    .font(.custom("PatrickHand-Regular", size: 18))
                     .foregroundStyle(JournalTheme.Colors.amber)
 
                 Text("Smart Reminders")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 17))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                 Spacer()
@@ -30,7 +30,7 @@ struct SmartReminderSettingsCard: View {
             if schedule.smartRemindersEnabled {
                 // Explanation
                 Text("You'll get 5 nudges throughout the day, timed around your habits.")
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -84,10 +84,10 @@ struct SmartReminderSettingsCard: View {
             // Description
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.inkBlack)
                 Text(description)
-                    .font(.system(size: 12, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
                     .fixedSize(horizontal: false, vertical: true)
             }

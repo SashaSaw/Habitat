@@ -8,7 +8,7 @@ struct OnboardingContinueButton: View {
     var body: some View {
         Button(action: action) {
             Text(hasSelections ? "Continue" : "Skip")
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.custom("PatrickHand-Regular", size: 16))
                 .foregroundStyle(hasSelections ? Color.white : JournalTheme.Colors.navy)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)

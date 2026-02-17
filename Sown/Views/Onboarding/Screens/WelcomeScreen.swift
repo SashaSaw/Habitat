@@ -16,21 +16,21 @@ struct WelcomeScreen: View {
                 // App icon
                 VStack(spacing: 4) {
                     Text("\u{1F331}")
-                        .font(.system(size: 56))
+                        .font(.custom("PatrickHand-Regular", size: 56))
                         .opacity(showTitle ? 1 : 0)
                         .offset(y: showTitle ? 0 : 10)
                 }
 
                 // Title
                 Text("Welcome to Sown")
-                    .font(.system(size: 32, weight: .bold, design: .serif))
+                    .font(.custom("PatrickHand-Regular", size: 32))
                     .foregroundStyle(JournalTheme.Colors.navy)
                     .opacity(showTitle ? 1 : 0)
                     .offset(y: showTitle ? 0 : 15)
 
                 // Subtitle
                 Text("Before we start, let\u{2019}s take a moment\nto think about your day.")
-                    .font(.system(size: 17, weight: .regular, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 17))
                     .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
@@ -39,7 +39,7 @@ struct WelcomeScreen: View {
 
                 // Promise
                 Text("You\u{2019}ll be ready in about 60 seconds.")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.amber)
                     .italic()
                     .opacity(showPromise ? 1 : 0)
@@ -51,7 +51,7 @@ struct WelcomeScreen: View {
             // Button
             Button(action: onContinue) {
                 Text("Let\u{2019}s begin")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)

@@ -22,7 +22,7 @@ struct ArchivedHabitsSection: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.custom("PatrickHand-Regular", size: 12))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
 
                         Text("Archived")
@@ -30,7 +30,7 @@ struct ArchivedHabitsSection: View {
                             .foregroundStyle(JournalTheme.Colors.completedGray)
 
                         Text("(\(habits.count))")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 12))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)

@@ -31,8 +31,11 @@ enum JournalTheme {
     // MARK: - Fonts
 
     enum Fonts {
+        /// The custom handwritten font name
+        private static let patrickHand = "PatrickHand-Regular"
+
         static func handwritten(size: CGFloat) -> Font {
-            .system(size: size, weight: .medium, design: .rounded)
+            .custom(patrickHand, size: size)
         }
 
         static func typewriter(size: CGFloat) -> Font {
@@ -40,27 +43,27 @@ enum JournalTheme {
         }
 
         static func title() -> Font {
-            .system(size: 28, weight: .bold, design: .rounded)
+            .custom(patrickHand, size: 30)
         }
 
         static func dateHeader() -> Font {
-            .system(size: 22, weight: .bold, design: .rounded)
+            .custom(patrickHand, size: 24)
         }
 
         static func sectionHeader() -> Font {
-            .system(size: 13, weight: .bold, design: .monospaced)
+            .custom(patrickHand, size: 15)
         }
 
         static func habitName() -> Font {
-            .system(size: 17, weight: .regular, design: .rounded)
+            .custom(patrickHand, size: 19)
         }
 
         static func habitCriteria() -> Font {
-            .system(size: 14, weight: .light, design: .rounded)
+            .custom(patrickHand, size: 16)
         }
 
         static func streakCount() -> Font {
-            .system(size: 12, weight: .medium, design: .rounded)
+            .custom(patrickHand, size: 14)
         }
     }
 

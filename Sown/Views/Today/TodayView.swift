@@ -107,7 +107,7 @@ struct TodayContentView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         if !userName.isEmpty {
                             Text(greetingText)
-                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 15))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                                 .padding(.bottom, 2)
                         }
@@ -117,13 +117,13 @@ struct TodayContentView: View {
                             .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                         Text(formattedDate)
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 15))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                             .padding(.top, 4)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, contentPadding)
-                    .padding(.top, userName.isEmpty ? lineHeight * 2 : lineHeight)
+                    .padding(.top, userName.isEmpty ? lineHeight : lineHeight / 2)
                     .padding(.bottom, 8)
 
                     // Streak tracker bar
@@ -259,7 +259,7 @@ struct TodayContentView: View {
                         showingAddGroup = true
                     } label: {
                         Text("Create Group")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 17))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -346,7 +346,7 @@ struct TodayContentView: View {
                         showingAddHabit = true
                     } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.custom("PatrickHand-Regular", size: 16))
                             .foregroundStyle(JournalTheme.Colors.inkBlue)
                     }
                 }
@@ -502,17 +502,17 @@ struct TodayContentView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         if isGoodDay {
                             Text("All must-dos done!")
-                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 15))
                                 .foregroundStyle(JournalTheme.Colors.successGreen)
                         } else {
                             Text("\(completed)/\(total) must-dos complete")
-                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 15))
                                 .foregroundStyle(JournalTheme.Colors.amber)
                         }
 
                         if streak > 0 {
                             Text("\(streak) day streak · keep it going!")
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 12))
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
                     }
@@ -520,7 +520,7 @@ struct TodayContentView: View {
                     Spacer()
 
                     Text("🔥")
-                        .font(.system(size: 28))
+                        .font(.custom("PatrickHand-Regular", size: 28))
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal, 14)
@@ -549,22 +549,22 @@ struct TodayContentView: View {
             } label: {
                 HStack(spacing: 8) {
                     Text("🔒")
-                        .font(.system(size: 14))
+                        .font(.custom("PatrickHand-Regular", size: 14))
 
                     Text("\(count) app\(count == 1 ? "" : "s") blocked")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 13))
                         .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.7))
 
                     if blockSettings.isCurrentlyActive {
                         Text("· until \(blockSettings.endTimeString)")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 13))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                     }
 
                     Spacer()
 
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.custom("PatrickHand-Regular", size: 10))
                         .foregroundStyle(JournalTheme.Colors.completedGray)
                 }
                 .padding(.vertical, 8)
@@ -594,7 +594,7 @@ struct TodayContentView: View {
 
             if let badge = badge, badge > 0 {
                 Text("\(badge)")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 10))
                     .foregroundStyle(.white)
                     .frame(width: 18, height: 18)
                     .background(Circle().fill(color))
@@ -697,7 +697,7 @@ struct TodayContentView: View {
     private var groupCalloutView: some View {
         HStack(alignment: .top, spacing: 12) {
             Text("💡")
-                .font(.system(size: 20))
+                .font(.custom("PatrickHand-Regular", size: 20))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Habit groups")
@@ -720,7 +720,7 @@ struct TodayContentView: View {
                 }
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
         }
@@ -745,11 +745,11 @@ struct TodayContentView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.amber)
 
                 Text("New must-do")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.amber)
 
                 Spacer()
@@ -833,11 +833,11 @@ struct TodayContentView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.navy)
 
                 Text("New nice-to-do")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.navy)
 
                 Spacer()
@@ -864,11 +864,11 @@ struct TodayContentView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.teal)
 
                 Text("New today task")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.teal)
 
                 Spacer()
@@ -952,11 +952,11 @@ struct TodayContentView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 13))
                     .foregroundStyle(JournalTheme.Colors.negativeRedDark)
 
                 Text("New don't-do")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.negativeRedDark)
 
                 Spacer()
@@ -1050,12 +1050,12 @@ struct TodayContentView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: hasNote ? "book.fill" : "book")
-                    .font(.system(size: 16))
+                    .font(.custom("PatrickHand-Regular", size: 16))
                     .foregroundStyle(JournalTheme.Colors.inkBlue)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(hasNote ? "View Today's Reflection" : "Write Today's Reflection")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 14))
                         .foregroundStyle(JournalTheme.Colors.inkBlack)
 
                     if !hasNote {
@@ -1073,7 +1073,7 @@ struct TodayContentView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("PatrickHand-Regular", size: 12))
                     .foregroundStyle(JournalTheme.Colors.completedGray)
             }
             .padding(14)
@@ -1126,7 +1126,7 @@ struct SelectableHabitRow: View {
                         .overlay {
                             if isSelected {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.custom("PatrickHand-Regular", size: 11))
                                     .foregroundStyle(.white)
                             }
                         }
@@ -1147,7 +1147,7 @@ struct SelectableHabitRow: View {
 
                 // Tier badge
                 Text(habit.tier == .mustDo ? "Must-do" : "Nice-to-do")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 10))
                     .foregroundStyle(habit.tier == .mustDo ? JournalTheme.Colors.amber : JournalTheme.Colors.navy)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -1252,7 +1252,7 @@ struct HabitLinedRow: View {
                         Color.orange
 
                         Image(systemName: "archivebox")
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 18))
                             .foregroundStyle(.white)
                             .opacity(archiveProgress > 0.3 ? 1 : archiveProgress * 3)
                     }
@@ -1279,7 +1279,7 @@ struct HabitLinedRow: View {
                     .overlay {
                         if isVisuallyCompleted {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 11, weight: .bold))
+                                .font(.custom("PatrickHand-Regular", size: 11))
                                 .foregroundStyle(JournalTheme.Colors.inkBlue)
                         }
                     }
@@ -1544,7 +1544,7 @@ struct NegativeHabitLinedRow: View {
                         Color.orange
 
                         Image(systemName: "archivebox")
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 18))
                             .foregroundStyle(.white)
                             .opacity(archiveProgress > 0.3 ? 1 : archiveProgress * 3)
                     }
@@ -1571,7 +1571,7 @@ struct NegativeHabitLinedRow: View {
                     .overlay {
                         if isCompleted {
                             Image(systemName: "xmark")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.custom("PatrickHand-Regular", size: 10))
                                 .foregroundStyle(JournalTheme.Colors.negativeRedDark)
                         }
                     }
@@ -1597,7 +1597,7 @@ struct NegativeHabitLinedRow: View {
                 // Days since / slipped pill badge
                 if !isCompleted {
                     Text("\(daysSince) days")
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 10))
                         .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -1609,11 +1609,11 @@ struct NegativeHabitLinedRow: View {
                     HStack(spacing: 4) {
                         if isLocked {
                             Image(systemName: "lock.fill")
-                                .font(.system(size: 8, weight: .bold))
+                                .font(.custom("PatrickHand-Regular", size: 8))
                                 .foregroundStyle(JournalTheme.Colors.negativeRedDark)
                         }
                         Text("Slipped")
-                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                             .foregroundStyle(JournalTheme.Colors.negativeRedDark)
                     }
                     .padding(.horizontal, 8)
@@ -1775,7 +1775,7 @@ struct TaskLinedRow: View {
                         JournalTheme.Colors.coral
 
                         Image(systemName: "trash")
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.custom("PatrickHand-Regular", size: 18))
                             .foregroundStyle(.white)
                             .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
                     }
@@ -1798,7 +1798,7 @@ struct TaskLinedRow: View {
                     .overlay {
                         if isVisuallyCompleted {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 11, weight: .bold))
+                                .font(.custom("PatrickHand-Regular", size: 11))
                                 .foregroundStyle(JournalTheme.Colors.teal)
                         }
                     }
@@ -1839,7 +1839,7 @@ struct TaskLinedRow: View {
                 // TODAY badge
                 if !isVisuallyCompleted {
                     Text("TODAY")
-                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .font(.custom("PatrickHand-Regular", size: 9))
                         .foregroundStyle(JournalTheme.Colors.teal)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -2059,7 +2059,7 @@ struct GroupLinedRow: View {
                         ZStack {
                             JournalTheme.Colors.negativeRedDark
                             Image(systemName: "trash")
-                                .font(.system(size: 18, weight: .medium))
+                                .font(.custom("PatrickHand-Regular", size: 18))
                                 .foregroundStyle(.white)
                                 .opacity(deleteProgress > 0.3 ? 1 : deleteProgress * 3)
                         }
@@ -2086,7 +2086,7 @@ struct GroupLinedRow: View {
                         .overlay {
                             if isSatisfied {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.custom("PatrickHand-Regular", size: 11))
                                     .foregroundStyle(JournalTheme.Colors.inkBlue)
                             }
                         }
@@ -2100,7 +2100,7 @@ struct GroupLinedRow: View {
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
 
                             Text("— \(chosen.name)")
-                                .font(.system(size: 15, weight: .regular, design: .rounded))
+                                .font(.custom("PatrickHand-Regular", size: 15))
                                 .italic()
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
                         }
@@ -2129,7 +2129,7 @@ struct GroupLinedRow: View {
                     // Options badge when uncompleted
                     if !isSatisfied {
                         Text("\(habits.count) options")
-                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .font(.custom("PatrickHand-Regular", size: 10))
                             .foregroundStyle(JournalTheme.Colors.completedGray)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
@@ -2327,7 +2327,7 @@ struct SubHabitRow: View {
                 .overlay {
                     if isVisuallyCompleted {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.custom("PatrickHand-Regular", size: 9))
                             .foregroundStyle(JournalTheme.Colors.inkBlue.opacity(0.7))
                     }
                 }
@@ -2336,7 +2336,7 @@ struct SubHabitRow: View {
             // Sub-habit text (slightly smaller, muted)
             HStack(spacing: 4) {
                 Text(habit.name)
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 15))
                     .foregroundStyle(
                         isVisuallyCompleted
                             ? JournalTheme.Colors.completedGray
@@ -2496,20 +2496,20 @@ struct CelebrationOverlay: View {
             // Celebration text
             VStack(spacing: 16) {
                 Text("Congratulations!")
-                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 44))
                     .foregroundStyle(JournalTheme.Colors.goodDayGreenDark)
                     .scaleEffect(congratsScale)
 
                 Text("Today was a good day!")
-                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 20))
                     .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.8))
                 
                 Text("Give yourself a pat on the back!")
-                    .font(.system(size: 20, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 20))
                     .foregroundStyle(JournalTheme.Colors.inkBlack.opacity(0.8))
 
                 Text("Tap anywhere to continue")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.custom("PatrickHand-Regular", size: 14))
                     .foregroundStyle(JournalTheme.Colors.goodDayGreenDark.opacity(0.8))
                     .padding(.top, 20)
             }
