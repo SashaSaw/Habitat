@@ -38,6 +38,12 @@ final class Habit {
     // e.g. "No scrolling" — opening a blocked app means you've scrolled
     var triggersAppBlockSlip: Bool = false
 
+    // HealthKit integration
+    // Raw value stored for SwiftData compatibility
+    var healthKitMetricType: String? = nil
+    var healthKitTarget: Double? = nil
+    var healthKitAutoComplete: Bool = true
+
     // Notification scheduling
     var notificationsEnabled: Bool = false
     var dailyNotificationMinutes: [Int] = []      // Minutes from midnight (0-1440), up to 5
@@ -150,5 +156,25 @@ extension Habit {
             calendar.compare(log.date, to: startDate, toGranularity: .day) != .orderedAscending &&
             calendar.compare(log.date, to: endDate, toGranularity: .day) != .orderedDescending
         }.count
+    }
+}
+
+// MARK: - HealthKit Extensions
+
+extension Habit {
+    /// Computed property to get/set HealthKit metric type enum
+    var healthKitMetric: HealthKitMetricType? {
+        get {
+            guard let rawValue = healthKitMetricType else { return nil }
+            return HealthKitMetricType(rawValue: rawValue)
+        }
+        set {
+            healthKitMetricType = newValue?.rawValue
+        }
+    }
+
+    /// Whether this habit is linked to a HealthKit metric
+    var isHealthKitLinked: Bool {
+        healthKitMetric != nil && healthKitTarget != nil
     }
 }

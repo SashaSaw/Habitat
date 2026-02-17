@@ -16,6 +16,8 @@ struct HabitDetailView: View {
     @State private var showFrequencyEditor = false
     @State private var editingPrompt = false
     @State private var editedPrompt: String = ""
+    @State private var showHealthKitEditor = false
+    @State private var healthKitManager = HealthKitManager.shared
 
     var body: some View {
         ScrollView {
@@ -363,6 +365,30 @@ struct HabitDetailView: View {
                             .padding(.bottom, 14)
                             .transition(.opacity.combined(with: .move(edge: .top)))
                         }
+
+                        // HealthKit Link (only show if HealthKit is available)
+                        if healthKitManager.isAvailable {
+                            Divider().padding(.leading, 48)
+
+                            settingsRow(
+                                icon: "heart.fill",
+                                iconColor: .red,
+                                label: "Apple Health",
+                                value: healthKitLinkSummary
+                            ) {
+                                Feedback.selection()
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    showHealthKitEditor.toggle()
+                                }
+                            }
+
+                            if showHealthKitEditor {
+                                healthKitEditorContent
+                                    .padding(.horizontal, 14)
+                                    .padding(.bottom, 14)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+                        }
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 12)
@@ -431,6 +457,151 @@ struct HabitDetailView: View {
             }
         } message: {
             Text("This will permanently delete '\(habit.name)' and all its history.")
+        }
+    }
+
+    // MARK: - HealthKit Summary & Editor
+
+    private var healthKitLinkSummary: String {
+        if let metric = habit.healthKitMetric, let target = habit.healthKitTarget {
+            let formattedTarget = HealthKitManager.shared.formatValue(target, for: metric)
+            return "\(formattedTarget) \(metric.unit)"
+        }
+        return "Not linked"
+    }
+
+    @ViewBuilder
+    private var healthKitEditorContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Metric picker
+            Menu {
+                Button("None") {
+                    Feedback.selection()
+                    habit.healthKitMetricType = nil
+                    habit.healthKitTarget = nil
+                    store.updateHabit(habit)
+                }
+                ForEach(HealthKitMetricType.allCases, id: \.self) { metric in
+                    Button {
+                        Feedback.selection()
+                        habit.healthKitMetricType = metric.rawValue
+                        if habit.healthKitTarget == nil {
+                            habit.healthKitTarget = metric.defaultTarget
+                        }
+                        store.updateHabit(habit)
+                    } label: {
+                        Label(metric.displayName, systemImage: metric.icon)
+                    }
+                }
+            } label: {
+                HStack {
+                    if let metric = habit.healthKitMetric {
+                        Image(systemName: metric.icon)
+                            .foregroundStyle(.red)
+                        Text(metric.displayName)
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+                    } else {
+                        Image(systemName: "heart.fill")
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                        Text("Select a metric")
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(.custom("PatrickHand-Regular", size: 12))
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+                }
+                .font(JournalTheme.Fonts.habitName())
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(JournalTheme.Colors.paperLight)
+                )
+            }
+
+            // Target input (only if metric selected)
+            if let metric = habit.healthKitMetric {
+                HStack {
+                    Text("Target:")
+                        .font(.custom("PatrickHand-Regular", size: 14))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                    TextField("", value: Binding(
+                        get: { habit.healthKitTarget ?? metric.defaultTarget },
+                        set: { newValue in
+                            habit.healthKitTarget = newValue
+                            store.updateHabit(habit)
+                        }
+                    ), format: .number)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundStyle(JournalTheme.Colors.inkBlack)
+                    .keyboardType(.decimalPad)
+                    .frame(width: 70)
+                    .multilineTextAlignment(.center)
+                    .padding(6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.white)
+                    )
+
+                    Text(metric.unit)
+                        .font(.custom("PatrickHand-Regular", size: 14))
+                        .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                    Spacer()
+                }
+
+                // Auto-complete toggle
+                HStack {
+                    Text("Auto-complete")
+                        .font(.custom("PatrickHand-Regular", size: 14))
+                        .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                    Spacer()
+
+                    Toggle("", isOn: Binding(
+                        get: { habit.healthKitAutoComplete },
+                        set: { newValue in
+                            Feedback.selection()
+                            habit.healthKitAutoComplete = newValue
+                            store.updateHabit(habit)
+                        }
+                    ))
+                    .labelsHidden()
+                    .tint(.red)
+                }
+
+                // Current progress indicator
+                if let currentValue = healthKitManager.currentValues[metric] {
+                    let target = habit.healthKitTarget ?? metric.defaultTarget
+                    let progress = min(currentValue / target, 1.0)
+                    let isComplete = currentValue >= target
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Today's progress")
+                                .font(.custom("PatrickHand-Regular", size: 12))
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                            Spacer()
+                            Text("\(HealthKitManager.shared.formatValue(currentValue, for: metric))/\(HealthKitManager.shared.formatValue(target, for: metric)) \(metric.unit)")
+                                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                .foregroundStyle(isComplete ? JournalTheme.Colors.successGreen : JournalTheme.Colors.inkBlack)
+                        }
+
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(JournalTheme.Colors.lineLight)
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(isComplete ? JournalTheme.Colors.successGreen : .red.opacity(0.7))
+                                    .frame(width: geo.size.width * progress)
+                            }
+                        }
+                        .frame(height: 8)
+                    }
+                    .padding(.top, 4)
+                }
+            }
         }
     }
 

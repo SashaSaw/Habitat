@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Main Today View showing all habits for the current day
 struct TodayView: View {
@@ -67,6 +68,10 @@ struct TodayContentView: View {
     @State private var showingMorningTasks: Bool = false
     @AppStorage("lastMorningPromptDate") private var lastMorningPromptDate: String = ""
     private var schedule: UserSchedule { UserSchedule.shared }
+
+    // HealthKit integration
+    @State private var healthKitManager = HealthKitManager.shared
+    @State private var healthKitCancellable: AnyCancellable?
 
 
     private let lineHeight = JournalTheme.Dimensions.lineSpacing
@@ -377,6 +382,14 @@ struct TodayContentView: View {
             }
             // Check for morning tasks prompt
             checkMorningTasksPrompt()
+
+            // Set up HealthKit integration
+            setupHealthKitObserver()
+        }
+        .onDisappear {
+            // Clean up HealthKit observer
+            healthKitCancellable?.cancel()
+            healthKitCancellable = nil
         }
         .onChange(of: store.habits.map { $0.isCompleted(for: selectedDate) }) { _, _ in
             let isNowGoodDay = store.isGoodDay(for: selectedDate)
@@ -412,6 +425,14 @@ struct TodayContentView: View {
                 }
                 // Check for morning tasks prompt when returning to app
                 checkMorningTasksPrompt()
+
+                // Refresh HealthKit values when app becomes active
+                Task {
+                    await healthKitManager.refreshValues(for: store.activeHealthKitMetrics)
+                    await MainActor.run {
+                        store.checkHealthKitCompletions(triggerNotification: false)
+                    }
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
@@ -442,6 +463,34 @@ struct TodayContentView: View {
             timeOfDay = "Good evening"
         }
         return "\(timeOfDay), \(userName)!"
+    }
+
+    // MARK: - HealthKit Integration
+
+    /// Set up HealthKit observer for auto-completion
+    private func setupHealthKitObserver() {
+        guard healthKitManager.isAuthorized else { return }
+
+        let activeMetrics = store.activeHealthKitMetrics
+        guard !activeMetrics.isEmpty else { return }
+
+        // Enable background delivery for active metrics
+        healthKitManager.enableBackgroundDelivery(for: activeMetrics)
+
+        // Initial fetch
+        Task {
+            await healthKitManager.refreshValues(for: activeMetrics)
+            await MainActor.run {
+                store.checkHealthKitCompletions(triggerNotification: false)
+            }
+        }
+
+        // Subscribe to value updates
+        healthKitCancellable = healthKitManager.valueUpdatesPublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak store] _ in
+                store?.checkHealthKitCompletions(triggerNotification: true)
+            }
     }
 
     // MARK: - Morning Tasks Prompt

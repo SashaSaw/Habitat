@@ -27,6 +27,12 @@ struct AddNiceToDoView: View {
     @State private var hasSetReminders: Bool = false
     @State private var selectedTimeSlots: Set<String> = []
 
+    // Step 6: HealthKit (optional, only shown if authorized)
+    @State private var healthKitManager = HealthKitManager.shared
+    @State private var healthKitMetric: HealthKitMetricType? = nil
+    @State private var healthKitTarget: Double = 0
+    @State private var hasSetHealthKit: Bool = false
+
     // Confirmation
     @State private var showConfirmation = false
     @State private var addedHabitName = ""
@@ -38,7 +44,8 @@ struct AddNiceToDoView: View {
     private var showStep3: Bool { hasSetFrequency }
     private var showStep4: Bool { hasSetCriteria }
     private var showStep5: Bool { hasSetPrompt }
-    private var showSubmit: Bool { hasSetReminders }
+    private var showStep6: Bool { hasSetReminders && healthKitManager.isAuthorized }
+    private var showSubmit: Bool { hasSetReminders && (!healthKitManager.isAuthorized || hasSetHealthKit) }
 
     /// Quick-pick suggestions appropriate for nice-to-do habits
     private let niceToDoSuggestions: [(emoji: String, name: String)] = [
@@ -90,6 +97,10 @@ struct AddNiceToDoView: View {
 
                     if showStep5 {
                         remindersSection
+                    }
+
+                    if showStep6 {
+                        healthKitSection
                     }
 
                     if showSubmit {
@@ -449,6 +460,130 @@ struct AddNiceToDoView: View {
         .transition(.opacity.combined(with: .move(edge: .bottom)))
     }
 
+    // MARK: - Step 6: HealthKit Link (Optional)
+
+    private var healthKitSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("LINK TO APPLE HEALTH")
+                .font(JournalTheme.Fonts.sectionHeader())
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+                .tracking(1.5)
+
+            Text("Auto-complete this habit when you reach a health goal")
+                .font(JournalTheme.Fonts.habitCriteria())
+                .foregroundStyle(JournalTheme.Colors.completedGray)
+                .italic()
+
+            VStack(spacing: 12) {
+                // Metric picker
+                Menu {
+                    Button("None") {
+                        healthKitMetric = nil
+                        healthKitTarget = 0
+                        markHealthKitSet()
+                    }
+                    ForEach(HealthKitMetricType.allCases, id: \.self) { metric in
+                        Button {
+                            healthKitMetric = metric
+                            healthKitTarget = metric.defaultTarget
+                            markHealthKitSet()
+                        } label: {
+                            Label(metric.displayName, systemImage: metric.icon)
+                        }
+                    }
+                } label: {
+                    HStack {
+                        if let metric = healthKitMetric {
+                            Image(systemName: metric.icon)
+                                .foregroundStyle(.red)
+                            Text(metric.displayName)
+                                .foregroundStyle(JournalTheme.Colors.inkBlack)
+                        } else {
+                            Image(systemName: "heart.fill")
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                            Text("Select a metric")
+                                .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .font(.custom("PatrickHand-Regular", size: 12))
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+                    }
+                    .font(JournalTheme.Fonts.habitName())
+                    .padding(14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.85))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .strokeBorder(JournalTheme.Colors.lineLight, lineWidth: 1)
+                            )
+                    )
+                }
+
+                // Target input (only if metric selected)
+                if let metric = healthKitMetric {
+                    HStack {
+                        Text("Target:")
+                            .font(JournalTheme.Fonts.habitName())
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+
+                        TextField("", value: $healthKitTarget, format: .number)
+                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                            .foregroundStyle(JournalTheme.Colors.inkBlack)
+                            .keyboardType(.decimalPad)
+                            .frame(width: 80)
+                            .multilineTextAlignment(.center)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(JournalTheme.Colors.paperLight)
+                            )
+
+                        Text(metric.unit)
+                            .font(JournalTheme.Fonts.habitCriteria())
+                            .foregroundStyle(JournalTheme.Colors.completedGray)
+
+                        Spacer()
+                    }
+                    .padding(14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.85))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .strokeBorder(JournalTheme.Colors.lineLight, lineWidth: 1)
+                            )
+                    )
+                }
+            }
+
+            // Skip link
+            if !hasSetHealthKit {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        hasSetHealthKit = true
+                    }
+                } label: {
+                    Text("Skip")
+                        .font(JournalTheme.Fonts.habitCriteria())
+                        .foregroundStyle(JournalTheme.Colors.inkBlue)
+                        .underline()
+                }
+                .padding(.leading, 4)
+            }
+        }
+        .transition(.opacity.combined(with: .move(edge: .bottom)))
+    }
+
+    private func markHealthKitSet() {
+        if !hasSetHealthKit {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                hasSetHealthKit = true
+            }
+        }
+    }
+
     // MARK: - Submit
 
     private var submitButton: some View {
@@ -494,7 +629,9 @@ struct AddNiceToDoView: View {
             notificationsEnabled: enableReminders,
             enableNotesPhotos: false,
             habitPrompt: habitPrompt.trimmingCharacters(in: .whitespaces),
-            scheduleTimes: Array(selectedTimeSlots)
+            scheduleTimes: Array(selectedTimeSlots),
+            healthKitMetricType: healthKitMetric?.rawValue,
+            healthKitTarget: healthKitMetric != nil ? healthKitTarget : nil
         )
 
         withAnimation(.easeInOut(duration: 0.3)) {

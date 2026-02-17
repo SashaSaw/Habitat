@@ -11,6 +11,7 @@ final class DailyLog {
     var photoPath: String?        // Legacy single photo (kept for backward compat)
     var photoPaths: [String] = [] // Up to 3 photos
     var selectedOption: String?
+    var autoCompletedByHealthKit: Bool = false
 
     // Relationship to habit
     var habit: Habit?

@@ -64,3 +64,72 @@ enum FrequencyType: String, Codable, CaseIterable, Sendable {
         [.daily, .weekly, .monthly]
     }
 }
+
+/// Represents the type of HealthKit metric that can be linked to a habit
+enum HealthKitMetricType: String, Codable, CaseIterable, Sendable {
+    case steps
+    case distanceWalkingRunning
+    case distanceCycling
+    case activeEnergyBurned
+    case appleExerciseTime
+    case flightsClimbed
+    case mindfulMinutes
+    case sleepHours
+    case waterIntake
+
+    var displayName: String {
+        switch self {
+        case .steps: return "Steps"
+        case .distanceWalkingRunning: return "Walking + Running Distance"
+        case .distanceCycling: return "Cycling Distance"
+        case .activeEnergyBurned: return "Active Calories"
+        case .appleExerciseTime: return "Exercise Minutes"
+        case .flightsClimbed: return "Flights Climbed"
+        case .mindfulMinutes: return "Mindful Minutes"
+        case .sleepHours: return "Sleep Hours"
+        case .waterIntake: return "Water Intake"
+        }
+    }
+
+    var unit: String {
+        switch self {
+        case .steps: return "steps"
+        case .distanceWalkingRunning: return "km"
+        case .distanceCycling: return "km"
+        case .activeEnergyBurned: return "kcal"
+        case .appleExerciseTime: return "min"
+        case .flightsClimbed: return "flights"
+        case .mindfulMinutes: return "min"
+        case .sleepHours: return "hrs"
+        case .waterIntake: return "L"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .steps: return "figure.walk"
+        case .distanceWalkingRunning: return "figure.run"
+        case .distanceCycling: return "bicycle"
+        case .activeEnergyBurned: return "flame.fill"
+        case .appleExerciseTime: return "figure.strengthtraining.traditional"
+        case .flightsClimbed: return "figure.stairs"
+        case .mindfulMinutes: return "brain.head.profile"
+        case .sleepHours: return "bed.double.fill"
+        case .waterIntake: return "drop.fill"
+        }
+    }
+
+    var defaultTarget: Double {
+        switch self {
+        case .steps: return 10000
+        case .distanceWalkingRunning: return 5.0
+        case .distanceCycling: return 10.0
+        case .activeEnergyBurned: return 500
+        case .appleExerciseTime: return 30
+        case .flightsClimbed: return 10
+        case .mindfulMinutes: return 10
+        case .sleepHours: return 8
+        case .waterIntake: return 2.5
+        }
+    }
+}

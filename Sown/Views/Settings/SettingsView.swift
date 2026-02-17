@@ -14,6 +14,9 @@ struct SettingsView: View {
                     // Smart Reminders section
                     SmartReminderSettingsCard()
 
+                    // HealthKit integration
+                    HealthKitSettingsCard()
+
                     // Schedule section (wake/bed times)
                     scheduleCard
 

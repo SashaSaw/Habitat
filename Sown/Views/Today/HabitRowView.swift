@@ -12,6 +12,7 @@ struct HabitRowView: View {
     @State private var showStrikethrough = false
     @State private var strikethroughProgress: CGFloat = 0
     @State private var strikethroughWidth: CGFloat = 0
+    @State private var healthKitManager = HealthKitManager.shared
 
     init(
         habit: Habit,
@@ -61,6 +62,15 @@ struct HabitRowView: View {
                             Text("(\(criteria))")
                                 .font(JournalTheme.Fonts.habitCriteria())
                                 .foregroundStyle(JournalTheme.Colors.completedGray)
+                        }
+
+                        // HealthKit progress badge
+                        if habit.isHealthKitLinked, let metric = habit.healthKitMetric {
+                            HealthKitProgressBadge(
+                                metric: metric,
+                                target: habit.healthKitTarget ?? 0,
+                                currentValue: healthKitManager.currentValues[metric] ?? 0
+                            )
                         }
 
                         Spacer()
@@ -183,6 +193,41 @@ struct HabitGroupRowView: View {
                 }
             }
         }
+    }
+}
+
+/// Progress badge showing HealthKit metric progress
+struct HealthKitProgressBadge: View {
+    let metric: HealthKitMetricType
+    let target: Double
+    let currentValue: Double
+
+    private var isComplete: Bool {
+        currentValue >= target
+    }
+
+    private var progressText: String {
+        let current = HealthKitManager.shared.formatValue(currentValue, for: metric)
+        let targetFormatted = HealthKitManager.shared.formatValue(target, for: metric)
+        return "\(current)/\(targetFormatted)"
+    }
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: metric.icon)
+                .font(.system(size: 9))
+            Text(progressText)
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+        }
+        .foregroundStyle(isComplete ? JournalTheme.Colors.successGreen : JournalTheme.Colors.completedGray)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(
+            Capsule()
+                .fill(isComplete
+                    ? JournalTheme.Colors.successGreen.opacity(0.12)
+                    : JournalTheme.Colors.lineLight.opacity(0.5))
+        )
     }
 }
 

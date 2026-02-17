@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import SwiftUI
+import UserNotifications
 
 @Observable
 final class HabitStore {
@@ -273,7 +274,9 @@ final class HabitStore {
         enableNotesPhotos: Bool = false,
         habitPrompt: String = "",
         scheduleTimes: [String] = [],
-        triggersAppBlockSlip: Bool = false
+        triggersAppBlockSlip: Bool = false,
+        healthKitMetricType: String? = nil,
+        healthKitTarget: Double? = nil
     ) -> Habit {
         let maxSortOrder = habits.map { $0.sortOrder }.max() ?? 0
 
@@ -302,6 +305,8 @@ final class HabitStore {
         habit.habitPrompt = habitPrompt
         habit.scheduleTimes = scheduleTimes
         habit.triggersAppBlockSlip = triggersAppBlockSlip
+        habit.healthKitMetricType = healthKitMetricType
+        habit.healthKitTarget = healthKitTarget
 
         modelContext.insert(habit)
         saveContext()
@@ -921,5 +926,72 @@ final class HabitStore {
         } catch {
             print("Failed to save context: \(error)")
         }
+    }
+
+    // MARK: - HealthKit Integration
+
+    /// All habits linked to a HealthKit metric that are active
+    var healthKitLinkedHabits: [Habit] {
+        habits.filter { $0.isHealthKitLinked && $0.isActive }
+    }
+
+    /// Unique HealthKit metrics currently being tracked
+    var activeHealthKitMetrics: [HealthKitMetricType] {
+        Array(Set(healthKitLinkedHabits.compactMap { $0.healthKitMetric }))
+    }
+
+    /// Check all HealthKit habits and auto-complete if target reached
+    /// - Parameter triggerNotification: Whether to send a notification (for background updates)
+    func checkHealthKitCompletions(triggerNotification: Bool = false) {
+        let today = Date()
+        let healthKitManager = HealthKitManager.shared
+
+        for habit in healthKitLinkedHabits {
+            guard let metric = habit.healthKitMetric,
+                  let target = habit.healthKitTarget,
+                  habit.healthKitAutoComplete else { continue }
+
+            let currentValue = healthKitManager.currentValues[metric] ?? 0
+
+            // Check if target reached and not already completed
+            if currentValue >= target && !habit.isCompleted(for: today) {
+                autoCompleteHealthKitHabit(habit, value: currentValue, triggerNotification: triggerNotification)
+            }
+        }
+    }
+
+    /// Auto-complete a habit via HealthKit
+    private func autoCompleteHealthKitHabit(_ habit: Habit, value: Double, triggerNotification: Bool) {
+        let today = Date()
+
+        // Create or update the log with auto-completion flag
+        let log = DailyLog.createOrUpdate(
+            for: habit,
+            on: today,
+            completed: true,
+            value: value,
+            context: modelContext
+        )
+        log.autoCompletedByHealthKit = true
+
+        // Update streak
+        updateStreak(for: habit)
+
+        saveContext()
+
+        // Send notification if app is backgrounded
+        if triggerNotification {
+            let isAppInBackground = UIApplication.shared.applicationState != .active
+            if isAppInBackground, let metric = habit.healthKitMetric {
+                HealthKitManager.shared.sendAchievementNotification(
+                    habitName: habit.name,
+                    metricType: metric,
+                    value: value
+                )
+            }
+        }
+
+        // Refresh smart reminders since completion state changed
+        refreshSmartReminders()
     }
 }
