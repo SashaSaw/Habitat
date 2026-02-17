@@ -14,6 +14,9 @@ final class HabitStore {
     var endOfDayNotes: [EndOfDayNote] = []
     var selectedDate: Date = Date()
 
+    /// Counter that increments whenever a habit completion changes - used for efficient change detection
+    var completionChangeCounter: Int = 0
+
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchData()
@@ -463,6 +466,7 @@ final class HabitStore {
         // Update streaks
         updateStreak(for: habit)
 
+        completionChangeCounter += 1
         saveContext()
         refreshSmartReminders()
     }
@@ -479,6 +483,7 @@ final class HabitStore {
         // Update streaks
         updateStreak(for: habit)
 
+        completionChangeCounter += 1
         saveContext()
         refreshSmartReminders()
     }

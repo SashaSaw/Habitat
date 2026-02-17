@@ -391,7 +391,7 @@ struct TodayContentView: View {
             healthKitCancellable?.cancel()
             healthKitCancellable = nil
         }
-        .onChange(of: store.habits.map { $0.isCompleted(for: selectedDate) }) { _, _ in
+        .onChange(of: store.completionChangeCounter) { _, _ in
             let isNowGoodDay = store.isGoodDay(for: selectedDate)
             if isNowGoodDay && !wasGoodDay {
                 // If an overlay is showing, defer celebration until it's dismissed

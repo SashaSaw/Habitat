@@ -214,6 +214,13 @@
                                 <color key="textColor" name="NavyText"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="redLine-001">
+                                <rect key="frame" x="40" y="0" width="1" height="852"/>
+                                <color key="backgroundColor" red="0.98823529411764705" green="0.50588235294117645" blue="0.50588235294117645" alpha="0.3" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="1" id="redLine-w-001"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                         <color key="backgroundColor" name="Background"/>
@@ -224,6 +231,9 @@
                             <constraint firstItem="fI1-uh-DS7" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="stk-lead-001"/>
                             <constraint firstItem="fI1-uh-DS7" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="stk-top-001"/>
                             <constraint firstItem="fI1-uh-DS7" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="stk-trail-001"/>
+                            <constraint firstItem="redLine-001" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="40" id="redLine-lead-001"/>
+                            <constraint firstItem="redLine-001" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="redLine-top-001"/>
+                            <constraint firstItem="redLine-001" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" id="redLine-bot-001"/>
                         </constraints>
                     </view>
                 </viewController>

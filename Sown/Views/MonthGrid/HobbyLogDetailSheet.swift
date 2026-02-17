@@ -1,5 +1,11 @@
 import SwiftUI
 
+/// Wrapper to make UIImage identifiable for sheet presentation
+struct IdentifiableImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
 /// Helper struct for hobby log sheet presentation (used by both MonthGridView and HabitDetailView)
 struct HobbyLogSelection: Identifiable {
     let id = UUID()
